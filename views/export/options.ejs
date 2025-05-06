@@ -1,0 +1,181 @@
+<%- include('../partials/_header', { user: true }) %>
+
+<div class="container mt-4">
+  <div class="export-container">
+    <h1 class="mb-4">Export Website: <%= website.businessName %></h1>
+    
+    <div class="row">
+      <div class="col-lg-8 mx-auto">
+        <div class="card">
+          <div class="card-body">
+            <h2 class="card-title">Choose Export Format</h2>
+            <p class="card-text">Select how you want to export your website.</p>
+            
+            <div class="export-options mt-4">
+              <div class="row">
+                <div class="col-md-4 mb-4">
+                  <div class="export-option-card h-100" data-format="html">
+                    <div class="card">
+                      <div class="card-body text-center">
+                        <div class="icon-container mb-3">
+                          <i class="fas fa-file-code"></i>
+                        </div>
+                        <h3 class="h5">HTML Only</h3>
+                        <p class="small">Simple export with everything in HTML files. Best for quick viewing.</p>
+                      </div>
+                      <div class="card-footer bg-transparent">
+                        <button class="btn btn-outline-primary w-100 format-select" data-format="html">
+                          Select
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="col-md-4 mb-4">
+                  <div class="export-option-card h-100" data-format="static">
+                    <div class="card border-primary">
+                      <div class="card-header text-white bg-primary text-center">
+                        Recommended
+                      </div>
+                      <div class="card-body text-center">
+                        <div class="icon-container mb-3">
+                          <i class="fas fa-globe"></i>
+                        </div>
+                        <h3 class="h5">Static Website</h3>
+                        <p class="small">Optimized HTML/CSS/JS files ready for hosting. Best for most use cases.</p>
+                      </div>
+                      <div class="card-footer bg-transparent">
+                        <button class="btn btn-primary w-100 format-select" data-format="static">
+                          Select
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="col-md-4 mb-4">
+                  <div class="export-option-card h-100" data-format="development">
+                    <div class="card">
+                      <div class="card-body text-center">
+                        <div class="icon-container mb-3">
+                          <i class="fas fa-code"></i>
+                        </div>
+                        <h3 class="h5">Development</h3>
+                        <p class="small">Source files for further development. Best for developers.</p>
+                      </div>
+                      <div class="card-footer bg-transparent">
+                        <button class="btn btn-outline-primary w-100 format-select" data-format="development">
+                          Select
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <form id="exportForm" action="/export/<%= website._id %>" method="POST">
+              <input type="hidden" name="format" id="formatInput" value="static">
+              
+              <div class="export-summary mt-4">
+                <div class="card">
+                  <div class="card-header bg-light">
+                    <h3 class="h5 mb-0">Export Summary</h3>
+                  </div>
+                  <div class="card-body">
+                    <div class="row">
+                      <div class="col-md-6">
+                        <p><strong>Website:</strong> <%= website.businessName %></p>
+                        <p><strong>Pages:</strong> <%= website.pages ? website.pages.length : 0 %></p>
+                      </div>
+                      <div class="col-md-6">
+                        <p><strong>Format:</strong> <span id="formatDisplay">Static Website</span></p>
+                        <p><strong>Estimated Size:</strong> <span id="sizeEstimate">~500KB</span></p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="text-center mt-4">
+                <button type="submit" class="btn btn-lg btn-success export-btn">
+                  <i class="fas fa-download"></i> Download Website
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/_footer') %>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const formatButtons = document.querySelectorAll('.format-select');
+    const formatInput = document.getElementById('formatInput');
+    const formatDisplay = document.getElementById('formatDisplay');
+    const sizeEstimate = document.getElementById('sizeEstimate');
+    const exportForm = document.getElementById('exportForm');
+    const exportBtn = document.querySelector('.export-btn');
+    
+    // Format display mapping
+    const formatDisplayNames = {
+      'html': 'HTML Only',
+      'static': 'Static Website',
+      'development': 'Development'
+    };
+    
+    // Size estimates mapping (rough estimates)
+    const sizeEstimates = {
+      'html': '~200KB',
+      'static': '~500KB',
+      'development': '~1MB'
+    };
+    
+    // Handle format selection
+    formatButtons.forEach(button => {
+      button.addEventListener('click', function() {
+        const format = this.getAttribute('data-format');
+        
+        // Update hidden input
+        formatInput.value = format;
+        
+        // Update display text
+        formatDisplay.textContent = formatDisplayNames[format];
+        sizeEstimate.textContent = sizeEstimates[format];
+        
+        // Update active card
+        document.querySelectorAll('.export-option-card').forEach(card => {
+          card.querySelector('.card').classList.remove('border-primary');
+          card.querySelector('.card-header')?.remove();
+          card.querySelector('button').classList.remove('btn-primary');
+          card.querySelector('button').classList.add('btn-outline-primary');
+        });
+        
+        const selectedCard = document.querySelector(`.export-option-card[data-format="${format}"]`);
+        selectedCard.querySelector('.card').classList.add('border-primary');
+        
+        // Only add header if it doesn't already exist
+        if (!selectedCard.querySelector('.card-header')) {
+          const cardHeader = document.createElement('div');
+          cardHeader.className = 'card-header text-white bg-primary text-center';
+          cardHeader.textContent = 'Selected';
+          selectedCard.querySelector('.card').prepend(cardHeader);
+        }
+        
+        selectedCard.querySelector('button').classList.remove('btn-outline-primary');
+        selectedCard.querySelector('button').classList.add('btn-primary');
+      });
+    });
+    
+    // Handle export form submission
+    exportForm.addEventListener('submit', function() {
+      exportBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
+      exportBtn.disabled = true;
+    });
+  });
+</script>

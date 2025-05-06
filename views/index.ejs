@@ -1,0 +1,15 @@
+<%- include('partials/_header') %>
+
+<div class="container mt-5">
+  <div class="jumbotron text-center">
+    <h1 class="display-4">Website Builder</h1>
+    <p class="lead">Create your website with a single click using AI</p>
+    <hr class="my-4">
+    <p>Use our powerful wizard to collect your business information, and we'll generate a complete website for you instantly.</p>
+    <a class="btn btn-primary btn-lg" href="<%= user ? '/wizard' : '/login' %>" role="button">
+      <%= user ? 'Create Website' : 'Get Started' %>
+    </a>
+  </div>
+</div>
+
+<%- include('partials/_footer') %>

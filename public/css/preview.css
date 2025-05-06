@@ -1,0 +1,83 @@
+/* Preview dashboard styling */
+.preview-dashboard {
+    overflow-x: hidden;
+  }
+  
+  .sidebar {
+    height: 100vh;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    padding-top: 70px;
+    box-shadow: inset -1px 0 0 rgba(0, 0, 0, .1);
+  }
+  
+  .sidebar-heading {
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    color: #6c757d;
+  }
+  
+  .preview-main {
+    padding-top: 70px;
+  }
+  
+  .device-frame {
+    margin: 0 auto;
+    transition: all 0.3s ease;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+    overflow: hidden;
+    background-color: white;
+  }
+  
+  .device-frame.desktop {
+    width: 100%;
+    height: calc(100vh - 180px);
+  }
+  
+  .device-frame.tablet {
+    width: 768px;
+    height: calc(100vh - 180px);
+    border: 12px solid #333;
+    border-radius: 20px;
+  }
+  
+  .device-frame.mobile {
+    width: 375px;
+    height: 667px;
+    border: 12px solid #333;
+    border-radius: 30px;
+  }
+  
+  .preview-frame {
+    width: 100%;
+    height: 100%;
+    border: none;
+  }
+  
+  .preview-container {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    min-height: calc(100vh - 180px);
+    padding: 20px;
+  }
+  
+  .nav-link {
+    transition: all 0.2s ease;
+  }
+  
+  .nav-link.active {
+    color: #007bff;
+    font-weight: 600;
+  }
+  
+  .nav-link:hover {
+    background-color: rgba(0, 123, 255, 0.1);
+  }
+  
+  .device-buttons .btn.active {
+    background-color: #6c757d;
+    color: white;
+  }

@@ -1,0 +1,95 @@
+<%- include('../partials/_header', { user: true }) %>
+
+<div class="container mt-4">
+  <div class="wizard-container">
+    <div class="wizard-progress">
+      <div class="progress">
+        <div class="progress-bar" role="progressbar" style="width: <%= (step / totalSteps) * 100 %>%" aria-valuenow="<%= (step / totalSteps) * 100 %>" aria-valuemin="0" aria-valuemax="100"></div>
+      </div>
+      <div class="step-indicator">
+        Step <%= step %> of <%= totalSteps %>: <%= title %>
+      </div>
+    </div>
+    
+    <div class="card">
+      <div class="card-body">
+        <h2 class="card-title text-center">Theme Selection</h2>
+        <p class="card-text text-center">Choose colors and fonts for your website</p>
+        
+        <form action="/wizard/theme" method="POST" class="wizard-form" id="themeForm">
+          <div class="row">
+            <div class="col-md-6">
+              <div class="form-group mb-3">
+                <label for="primaryColor">Primary Color</label>
+                <div class="input-group">
+                  <input type="color" class="form-control form-control-color" id="primaryColor" name="primaryColor" value="<%= typeof data !== 'undefined' && data.primaryColor ? data.primaryColor : '#007bff' %>" data-preview="primaryColorPreview">
+                  <input type="text" class="form-control" id="primaryColorHex" value="<%= typeof data !== 'undefined' && data.primaryColor ? data.primaryColor : '#007bff' %>" readonly>
+                  <span class="input-group-text"><span id="primaryColorPreview" class="color-preview" style="background-color: <%= typeof data !== 'undefined' && data.primaryColor ? data.primaryColor : '#007bff' %>"></span></span>
+                </div>
+                <div class="form-text">Used for buttons, headings, and accents.</div>
+              </div>
+            </div>
+            
+            <div class="col-md-6">
+              <div class="form-group mb-3">
+                <label for="secondaryColor">Secondary Color</label>
+                <div class="input-group">
+                  <input type="color" class="form-control form-control-color" id="secondaryColor" name="secondaryColor" value="<%= typeof data !== 'undefined' && data.secondaryColor ? data.secondaryColor : '#6c757d' %>" data-preview="secondaryColorPreview">
+                  <input type="text" class="form-control" id="secondaryColorHex" value="<%= typeof data !== 'undefined' && data.secondaryColor ? data.secondaryColor : '#6c757d' %>" readonly>
+                  <span class="input-group-text"><span id="secondaryColorPreview" class="color-preview" style="background-color: <%= typeof data !== 'undefined' && data.secondaryColor ? data.secondaryColor : '#6c757d' %>"></span></span>
+                </div>
+                <div class="form-text">Used for highlights and secondary elements.</div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="row">
+            <div class="col-md-6">
+              <div class="form-group mb-3">
+                <label for="fontFamily">Font Family</label>
+                <select class="form-select" id="fontFamily" name="fontFamily">
+                  <option value="Open Sans" <%= typeof data !== 'undefined' && data.fontFamily === 'Open Sans' ? 'selected' : '' %>>Open Sans</option>
+                  <option value="Roboto" <%= typeof data !== 'undefined' && data.fontFamily === 'Roboto' ? 'selected' : '' %>>Roboto</option>
+                  <option value="Lato" <%= typeof data !== 'undefined' && data.fontFamily === 'Lato' ? 'selected' : '' %>>Lato</option>
+                  <option value="Montserrat" <%= typeof data !== 'undefined' && data.fontFamily === 'Montserrat' ? 'selected' : '' %>>Montserrat</option>
+                  <option value="Raleway" <%= typeof data !== 'undefined' && data.fontFamily === 'Raleway' ? 'selected' : '' %>>Raleway</option>
+                  <option value="Playfair Display" <%= typeof data !== 'undefined' && data.fontFamily === 'Playfair Display' ? 'selected' : '' %>>Playfair Display</option>
+                </select>
+              </div>
+            </div>
+            
+            <div class="col-md-6">
+              <div class="form-group mb-3">
+                <label for="fontStyle">Font Style Description</label>
+                <input type="text" class="form-control" id="fontStyle" name="fontStyle" placeholder="e.g., Clean, professional, modern" value="<%= typeof data !== 'undefined' ? data.fontStyle : 'Clean, professional, modern' %>">
+              </div>
+            </div>
+          </div>
+          
+          <div class="preview-box mt-3 mb-3 p-3 border rounded">
+            <h4 style="font-family: <%= typeof data !== 'undefined' ? data.fontFamily : 'Open Sans' %>; color: <%= typeof data !== 'undefined' && data.primaryColor ? data.primaryColor : '#007bff' %>;">
+              Preview Heading
+            </h4>
+            <p style="font-family: <%= typeof data !== 'undefined' ? data.fontFamily : 'Open Sans' %>;">
+              This is how your text will look with the <strong style="color: <%= typeof data !== 'undefined' && data.primaryColor ? data.primaryColor : '#007bff' %>;">selected font family</strong> and colors.
+              <span style="color: <%= typeof data !== 'undefined' && data.secondaryColor ? data.secondaryColor : '#6c757d' %>;">This text uses your secondary color.</span>
+            </p>
+            <button class="btn" style="background-color: <%= typeof data !== 'undefined' && data.primaryColor ? data.primaryColor : '#007bff' %>; color: white;">
+              Primary Button
+            </button>
+            <button class="btn" style="background-color: <%= typeof data !== 'undefined' && data.secondaryColor ? data.secondaryColor : '#6c757d' %>; color: white;">
+              Secondary Button
+            </button>
+          </div>
+          
+          <div class="wizard-navigation d-flex justify-content-between">
+            <a href="/wizard/website-info" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Back</a>
+            <button type="submit" class="btn btn-primary">Next <i class="fas fa-arrow-right"></i></button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/_footer') %>

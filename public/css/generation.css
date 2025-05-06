@@ -1,0 +1,177 @@
+/* Generation progress page */
+.generation-container {
+    max-width: 800px;
+    margin: 0 auto;
+  }
+  
+  .progress-container {
+    margin: 30px 0;
+  }
+  
+  .progress-status {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  
+  .progress {
+    height: 20px !important;
+    border-radius: 10px;
+  }
+  
+  .progress-bar {
+    transition: width 0.5s ease-in-out;
+  }
+  
+  /* Generation steps */
+  .generation-steps {
+    margin-top: 30px;
+    background-color: #f8f9fa;
+    border-radius: 10px;
+    padding: 20px;
+  }
+  
+  .step {
+    padding: 12px 15px;
+    margin-bottom: 10px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    opacity: 0.6;
+    background-color: #f0f0f0;
+    transition: all 0.3s ease;
+  }
+  
+  .step i {
+    margin-right: 15px;
+    width: 20px;
+    text-align: center;
+  }
+  
+  .step.active {
+    opacity: 1;
+    background-color: rgba(0, 123, 255, 0.1);
+    color: #0d6efd;
+    font-weight: 500;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  }
+  
+  .step.completed {
+    opacity: 1;
+    background-color: rgba(40, 167, 69, 0.1);
+    color: #28a745;
+  }
+  
+  /* Tips carousel */
+  .generation-tips {
+    background-color: #f8f9fa;
+    border-radius: 10px;
+    padding: 20px;
+  }
+  
+  .generation-tips h4 {
+    margin-bottom: 20px;
+    text-align: center;
+  }
+  
+  .tip-card {
+    padding: 15px;
+    text-align: center;
+    min-height: 100px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .tip-icon {
+    font-size: 2rem;
+    color: #0d6efd;
+    margin-bottom: 15px;
+  }
+  
+  /* Generation complete page */
+  .generation-complete {
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  
+  .success-icon {
+    font-size: 5rem;
+    color: #28a745;
+    animation: success-pulse 2s infinite;
+  }
+  
+  @keyframes success-pulse {
+    0% {
+      transform: scale(1);
+      opacity: 1;
+    }
+    50% {
+      transform: scale(1.1);
+      opacity: 0.8;
+    }
+    100% {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+  
+  .stat-card {
+    background-color: #f8f9fa;
+    border-radius: 10px;
+    padding: 20px;
+    text-align: center;
+    transition: all 0.3s ease;
+  }
+  
+  .stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  }
+  
+  .stat-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #0d6efd;
+  }
+  
+  .stat-label {
+    color: #6c757d;
+    font-size: 1rem;
+  }
+  
+  .page-card {
+    background-color: #f8f9fa;
+    border-radius: 10px;
+    padding: 20px;
+    text-align: center;
+    height: 100%;
+    transition: all 0.3s ease;
+  }
+  
+  .page-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  }
+  
+  .action-buttons .btn {
+    padding: 15px;
+    margin-bottom: 10px;
+    transition: all 0.3s ease;
+  }
+  
+  .action-buttons .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  }
+  
+  /* Error modal */
+  .modal .modal-header {
+    background-color: #dc3545;
+    color: white;
+  }
+  
+  .modal .modal-title {
+    font-weight: 500;
+  }

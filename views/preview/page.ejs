@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= page.seoTitle || `${page.name} - ${website.businessName}` %></title>
+  <meta name="description" content="<%= page.seoDescription || website.businessDescription %>">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=<%= website.fontFamily.replace(' ', '+') %>:wght@300;400;500;700&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --primary-color: <%= website.primaryColor %>;
+      --secondary-color: <%= website.secondaryColor %>;
+      --font-family: '<%= website.fontFamily %>', sans-serif;
+    }
+    
+    body {
+      font-family: var(--font-family);
+    }
+    
+    /* Add website header CSS */
+    <% if (website.header && website.header.css) { %>
+      <%- website.header.css %>
+    <% } %>
+    
+    /* Add website footer CSS */
+    <% if (website.footer && website.footer.css) { %>
+      <%- website.footer.css %>
+    <% } %>
+    
+    /* Add page section CSS */
+    <% if (page.sections && page.sections.length > 0) { %>
+      <% page.sections.forEach(section => { %>
+        <% if (section.css) { %>
+          <%- section.css %>
+        <% } %>
+      <% }); %>
+    <% } %>
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header>
+    <% if (website.header && website.header.content) { %>
+      <%- website.header.content %>
+    <% } else { %>
+      <!-- Default header if none exists -->
+      <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+          <a class="navbar-brand" href="#"><%= website.businessName %></a>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+          </button>
+          <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+              <% pages.forEach(p => { %>
+                <li class="nav-item">
+                  <a class="nav-link<%= p._id.toString() === page._id.toString() ? ' active' : '' %>" 
+                     href="/preview/<%= website._id %>/page/<%= p._id %>"><%= p.name %></a>
+                </li>
+              <% }); %>
+            </ul>
+          </div>
+        </div>
+      </nav>
+    <% } %>
+  </header>
+  
+  <!-- Main Content -->
+  <main>
+    <% if (page.sections && page.sections.length > 0) { %>
+      <% page.sections.forEach(section => { %>
+        <section id="<%= section.sectionReference %>">
+          <%- section.content %>
+        </section>
+      <% }); %>
+    <% } else { %>
+      <!-- Empty page placeholder -->
+      <div class="container py-5 text-center">
+        <h1>No content yet</h1>
+        <p>This page doesn't have any sections. Go back to the editor to add content.</p>
+      </div>
+    <% } %>
+  </main>
+  
+  <!-- Footer -->
+  <footer>
+    <% if (website.footer && website.footer.content) { %>
+      <%- website.footer.content %>
+    <% } else { %>
+      <!-- Default footer if none exists -->
+      <div class="bg-dark text-white py-4">
+        <div class="container">
+          <div class="row">
+            <div class="col-md-6">
+              <h5><%= website.businessName %></h5>
+              <p><%= website.businessDescription %></p>
+            </div>
+            <div class="col-md-6 text-md-end">
+              <p>&copy; <%= new Date().getFullYear() %> <%= website.businessName %>. All rights reserved.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    <% } %>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

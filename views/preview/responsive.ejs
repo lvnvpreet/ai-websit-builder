@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %></title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-color: #f0f0f0;
+    }
+    
+    .device-container {
+      position: relative;
+      margin: 0 auto;
+      background-color: white;
+      box-shadow: 0 0 50px rgba(0, 0, 0, 0.1);
+      border-radius: 20px;
+      overflow: hidden;
+    }
+    
+    .device-frame {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+    
+    /* Device-specific styles */
+    .mobile-container {
+      width: 375px;
+      height: 667px;
+    }
+    
+    .tablet-container {
+      width: 768px;
+      height: 1024px;
+    }
+    
+    .desktop-container {
+      width: 1280px;
+      height: 800px;
+    }
+    
+    .device-header {
+      height: 40px;
+      background-color: #f8f8f8;
+      border-bottom: 1px solid #e0e0e0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+    
+    .device-notch {
+      width: 150px;
+      height: 20px;
+      background-color: #333;
+      border-radius: 0 0 10px 10px;
+      position: absolute;
+      top: 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="device-container <%= device %>-container">
+    <% if (device === 'mobile') { %>
+      <div class="device-header">
+        <div class="device-notch"></div>
+      </div>
+    <% } %>
+    <iframe src="/preview/<%= website._id %>/page/<%= page._id %>" class="device-frame"></iframe>
+  </div>
+</body>
+</html>

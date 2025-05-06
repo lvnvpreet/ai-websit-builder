@@ -1,0 +1,176 @@
+<%- include('../partials/_header', { user: true }) %>
+
+<div class="preview-dashboard">
+  <div class="container-fluid">
+    <div class="row">
+      <!-- Sidebar -->
+      <div class="col-md-3 col-lg-2 bg-light sidebar">
+        <div class="position-sticky pt-3">
+          <h5 class="sidebar-heading px-3 pb-2 mb-3">
+            <%= website.businessName %>
+          </h5>
+          
+          <ul class="nav flex-column">
+            <li class="nav-item">
+              <a class="nav-link" href="/dashboard">
+                <i class="fas fa-arrow-left"></i> Back to Dashboard
+              </a>
+            </li>
+            
+            <li class="nav-item mt-3">
+              <div class="dropdown">
+                <button class="btn btn-outline-secondary dropdown-toggle w-100" type="button" id="deviceDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                  <i class="fas fa-mobile-alt"></i> Preview Devices
+                </button>
+                <ul class="dropdown-menu w-100" aria-labelledby="deviceDropdown">
+                  <li><a class="dropdown-item device-option" data-device="desktop" href="#"><i class="fas fa-desktop"></i> Desktop</a></li>
+                  <li><a class="dropdown-item device-option" data-device="tablet" href="#"><i class="fas fa-tablet-alt"></i> Tablet</a></li>
+                  <li><a class="dropdown-item device-option" data-device="mobile" href="#"><i class="fas fa-mobile-alt"></i> Mobile</a></li>
+                </ul>
+              </div>
+            </li>
+            
+            <li class="nav-item mt-3">
+              <h6 class="sidebar-heading px-3 mt-4 mb-1 text-muted">Pages</h6>
+              <ul class="nav flex-column">
+                <% pages.forEach(page => { %>
+                  <li class="nav-item">
+                    <a class="nav-link page-link" href="#" data-page-id="<%= page._id %>">
+                      <%= page.name %>
+                    </a>
+                  </li>
+                <% }); %>
+              </ul>
+            </li>
+            
+            <li class="nav-item mt-3">
+              <h6 class="sidebar-heading px-3 mt-4 mb-1 text-muted">Actions</h6>
+              <a href="/export/<%= website._id %>" class="btn btn-success w-100 mt-2">
+                <i class="fas fa-download"></i> Export Website
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
+      
+      <!-- Preview area -->
+      <div class="col-md-9 col-lg-10 ms-sm-auto preview-main">
+        <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+          <h1 class="h2">Website Preview</h1>
+          <div class="btn-toolbar mb-2 mb-md-0">
+            <div class="device-buttons btn-group me-2">
+              <button type="button" class="btn btn-sm btn-outline-secondary active" data-device="desktop">
+                <i class="fas fa-desktop"></i> Desktop
+              </button>
+              <button type="button" class="btn btn-sm btn-outline-secondary" data-device="tablet">
+                <i class="fas fa-tablet-alt"></i> Tablet
+              </button>
+              <button type="button" class="btn btn-sm btn-outline-secondary" data-device="mobile">
+                <i class="fas fa-mobile-alt"></i> Mobile
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        <div class="preview-container">
+          <div class="device-frame desktop">
+            <iframe id="previewFrame" class="preview-frame" src="/preview/<%= website._id %>/page/<%= pages[0]?._id || 'home' %>"></iframe>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/_footer') %>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const previewFrame = document.getElementById('previewFrame');
+    const deviceButtons = document.querySelectorAll('.device-buttons .btn');
+    const deviceOptions = document.querySelectorAll('.device-option');
+    const pageLinks = document.querySelectorAll('.page-link');
+    const deviceFrame = document.querySelector('.device-frame');
+    
+    // Current state
+    let currentDevice = 'desktop';
+    let currentPageId = '<%= pages[0]?._id || "home" %>';
+    
+    // Handle device button clicks
+    deviceButtons.forEach(button => {
+      button.addEventListener('click', function() {
+        const device = this.getAttribute('data-device');
+        changeDevice(device);
+        
+        // Update active button
+        deviceButtons.forEach(btn => btn.classList.remove('active'));
+        this.classList.add('active');
+      });
+    });
+    
+    // Handle device dropdown options
+    deviceOptions.forEach(option => {
+      option.addEventListener('click', function(e) {
+        e.preventDefault();
+        const device = this.getAttribute('data-device');
+        changeDevice(device);
+        
+        // Update dropdown button text
+        document.getElementById('deviceDropdown').innerHTML = `<i class="fas fa-${getDeviceIcon(device)}"></i> ${device.charAt(0).toUpperCase() + device.slice(1)}`;
+      });
+    });
+    
+    // Handle page link clicks
+    pageLinks.forEach(link => {
+      link.addEventListener('click', function(e) {
+        e.preventDefault();
+        const pageId = this.getAttribute('data-page-id');
+        changePage(pageId);
+        
+        // Update active link
+        pageLinks.forEach(lnk => lnk.classList.remove('active'));
+        this.classList.add('active');
+      });
+    });
+    
+    // Change device view
+    function changeDevice(device) {
+      currentDevice = device;
+      
+      // Update device frame class
+      deviceFrame.className = `device-frame ${device}`;
+      
+      // Update iframe src if needed
+      updateIframeSrc();
+    }
+    
+    // Change page
+    function changePage(pageId) {
+      currentPageId = pageId;
+      
+      // Update iframe src
+      updateIframeSrc();
+    }
+    
+    // Update iframe src
+    function updateIframeSrc() {
+      previewFrame.src = `/preview/<%= website._id %>/page/${currentPageId}`;
+    }
+    
+    // Get device icon
+    function getDeviceIcon(device) {
+      switch(device) {
+        case 'desktop': return 'desktop';
+        case 'tablet': return 'tablet-alt';
+        case 'mobile': return 'mobile-alt';
+        default: return 'desktop';
+      }
+    }
+    
+    // Set initial active page
+    const initialPageLink = document.querySelector(`.page-link[data-page-id="${currentPageId}"]`);
+    if (initialPageLink) {
+      initialPageLink.classList.add('active');
+    }
+  });
+</script>

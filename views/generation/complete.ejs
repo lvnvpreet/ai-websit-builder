@@ -1,0 +1,105 @@
+<%- include('../partials/_header', { user: true }) %>
+
+<div class="container mt-4">
+  <div class="generation-complete">
+    <div class="card">
+      <div class="card-body text-center">
+        <div class="success-icon mb-4">
+          <i class="fas fa-check-circle"></i>
+        </div>
+        <h1>Your Website Is Ready!</h1>
+        <p class="lead">Your new website for <%= website.businessName %> has been successfully generated.</p>
+        
+        <div class="generation-stats">
+          <div class="row mt-4 mb-4">
+            <div class="col-md-4">
+              <div class="stat-card">
+                <div class="stat-value"><%= pages.length %></div>
+                <div class="stat-label">Pages</div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="stat-card">
+                <div class="stat-value">
+                  <% let sectionCount = 0; %>
+                  <% pages.forEach(page => { sectionCount += page.sections.length; }); %>
+                  <%= sectionCount %>
+                </div>
+                <div class="stat-label">Sections</div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="stat-card">
+                <div class="stat-value">
+                  <%= new Date(website.generatedAt).toLocaleDateString() %>
+                </div>
+                <div class="stat-label">Generated On</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="action-buttons">
+          <div class="row">
+            <div class="col-md-6">
+              <a href="/websites/<%= website._id %>/preview" class="btn btn-primary btn-lg btn-block">
+                <i class="fas fa-eye"></i> Preview Website
+              </a>
+            </div>
+            <div class="col-md-6">
+              <a href="/export/<%= website._id %>" class="btn btn-success btn-lg btn-block">
+                <i class="fas fa-download"></i> Export Website
+              </a>
+            </div>
+          </div>
+        </div>
+        
+        <div class="page-list mt-5">
+          <h3>Generated Pages</h3>
+          <div class="row">
+            <% pages.forEach(page => { %>
+              <div class="col-md-6 col-lg-4 mb-3">
+                <div class="page-card">
+                  <h4><%= page.name %></h4>
+                  <p><%= page.sections.length %> sections</p>
+                  <a href="/websites/<%= website._id %>/preview/<%= page._id %>" class="btn btn-outline-primary btn-sm">
+                    View Page
+                  </a>
+                </div>
+              </div>
+            <% }); %>
+          </div>
+        </div>
+        
+        <div class="next-steps mt-4">
+          <h3>Next Steps</h3>
+          <ul class="list-group">
+            <li class="list-group-item d-flex align-items-center">
+              <i class="fas fa-pen-fancy text-primary me-3"></i>
+              <div>
+                <strong>Customize Content</strong>
+                <p class="mb-0 text-muted">Fine-tune the content to better match your brand voice</p>
+              </div>
+            </li>
+            <li class="list-group-item d-flex align-items-center">
+              <i class="fas fa-images text-primary me-3"></i>
+              <div>
+                <strong>Add Your Images</strong>
+                <p class="mb-0 text-muted">Replace placeholders with your actual product or service images</p>
+              </div>
+            </li>
+            <li class="list-group-item d-flex align-items-center">
+              <i class="fas fa-cloud-upload-alt text-primary me-3"></i>
+              <div>
+                <strong>Publish Your Website</strong>
+                <p class="mb-0 text-muted">Export and upload to your hosting provider</p>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/_footer') %>

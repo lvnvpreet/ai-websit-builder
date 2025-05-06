@@ -1,0 +1,83 @@
+<%- include('../partials/_header', { user: true }) %>
+
+<div class="container mt-4">
+  <div class="wizard-container">
+    <div class="wizard-progress">
+      <div class="progress">
+        <div class="progress-bar" role="progressbar" style="width: <%= (step / totalSteps) * 100 %>%" aria-valuenow="<%= (step / totalSteps) * 100 %>" aria-valuemin="0" aria-valuemax="100"></div>
+      </div>
+      <div class="step-indicator">
+        Step <%= step %> of <%= totalSteps %>: <%= title %>
+      </div>
+    </div>
+    
+    <div class="card">
+      <div class="card-body">
+        <h2 class="card-title text-center">Footer Information</h2>
+        <p class="card-text text-center">Provide contact details and social media links for your website's footer</p>
+        
+        <form action="/wizard/footer" method="POST" class="wizard-form" id="footerForm">
+          <div class="row">
+            <div class="col-md-6">
+              <div class="form-group mb-3">
+                <label for="address">Business Address</label>
+                <textarea class="form-control" id="address" name="address" rows="3" placeholder="e.g., 23 Main Street, Brooklyn, NY 11201"><%= typeof data !== 'undefined' ? data.address : '' %></textarea>
+              </div>
+              
+              <div class="form-group mb-3">
+                <label for="email">Email Address</label>
+                <input type="email" class="form-control" id="email" name="email" placeholder="e.g., contact@yourbusiness.com" value="<%= typeof data !== 'undefined' ? data.email : '' %>">
+              </div>
+              
+              <div class="form-group mb-3">
+                <label for="phone">Phone Number</label>
+                <input type="tel" class="form-control" id="phone" name="phone" placeholder="e.g., (212) 555-0134" value="<%= typeof data !== 'undefined' ? data.phone : '' %>">
+              </div>
+            </div>
+            
+            <div class="col-md-6">
+              <div class="form-group mb-3">
+                <label for="facebook">Facebook</label>
+                <div class="input-group">
+                  <span class="input-group-text">facebook.com/</span>
+                  <input type="text" class="form-control" id="facebook" name="facebook" placeholder="yourbusiness" value="<%= typeof data !== 'undefined' && data.socialLinks ? data.socialLinks.facebook : '' %>">
+                </div>
+              </div>
+              
+              <div class="form-group mb-3">
+                <label for="instagram">Instagram</label>
+                <div class="input-group">
+                  <span class="input-group-text">instagram.com/</span>
+                  <input type="text" class="form-control" id="instagram" name="instagram" placeholder="yourbusiness" value="<%= typeof data !== 'undefined' && data.socialLinks ? data.socialLinks.instagram : '' %>">
+                </div>
+              </div>
+              
+              <div class="form-group mb-3">
+                <label for="twitter">Twitter</label>
+                <div class="input-group">
+                  <span class="input-group-text">twitter.com/</span>
+                  <input type="text" class="form-control" id="twitter" name="twitter" placeholder="yourbusiness" value="<%= typeof data !== 'undefined' && data.socialLinks ? data.socialLinks.twitter : '' %>">
+                </div>
+              </div>
+              
+              <div class="form-group mb-3">
+                <label for="linkedin">LinkedIn</label>
+                <div class="input-group">
+                  <span class="input-group-text">linkedin.com/company/</span>
+                  <input type="text" class="form-control" id="linkedin" name="linkedin" placeholder="yourbusiness" value="<%= typeof data !== 'undefined' && data.socialLinks ? data.socialLinks.linkedin : '' %>">
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="wizard-navigation d-flex justify-content-between mt-4">
+            <a href="/wizard/structure" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Back</a>
+            <button type="submit" class="btn btn-primary">Next <i class="fas fa-arrow-right"></i></button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/_footer') %>

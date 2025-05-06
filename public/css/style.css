@@ -1,0 +1,45 @@
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  }
+  
+  .jumbotron {
+    padding: 2rem 1rem;
+    background-color: #e9ecef;
+    border-radius: 0.3rem;
+  }
+  
+  .card {
+    margin-bottom: 20px;
+    transition: transform 0.3s;
+  }
+  
+  .card:hover {
+    transform: translateY(-5px);
+  }
+  
+  .wizard-progress {
+    margin-bottom: 30px;
+  }
+  
+  .wizard-progress .progress {
+    height: 5px;
+  }
+  
+  .wizard-navigation {
+    margin-top: 30px;
+  }
+  
+  /* Wizard form styling */
+  .wizard-form {
+    max-width: 800px;
+    margin: 0 auto;
+  }
+  
+  .color-preview {
+    display: inline-block;
+    width: 25px;
+    height: 25px;
+    margin-left: 10px;
+    border: 1px solid #ccc;
+    vertical-align: middle;
+  }

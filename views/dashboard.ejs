@@ -1,0 +1,28 @@
+<%- include('partials/_header', { user: true }) %>
+
+<div class="container mt-4">
+  <h1>Dashboard</h1>
+  <p class="lead">Welcome to your dashboard</p>
+  <div class="row mt-5">
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-body">
+          <h5 class="card-title">Create New Website</h5>
+          <p class="card-text">Start the wizard to create a new website</p>
+          <a href="/wizard" class="btn btn-primary">Start Wizard</a>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-body">
+          <h5 class="card-title">My Websites</h5>
+          <p class="card-text">View and manage your existing websites</p>
+          <a href="/websites" class="btn btn-primary">View Websites</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('partials/_footer') %>

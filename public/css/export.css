@@ -1,0 +1,68 @@
+/* Export page styling */
+.export-container {
+    max-width: 1000px;
+    margin: 0 auto;
+  }
+  
+  .website-export-card {
+    transition: all 0.3s ease;
+  }
+  
+  .website-export-card:hover {
+    transform: translateY(-5px);
+  }
+  
+  .export-option-card {
+    transition: all 0.3s ease;
+    cursor: pointer;
+  }
+  
+  .export-option-card:hover {
+    transform: translateY(-5px);
+  }
+  
+  .icon-container {
+    font-size: 3rem;
+    color: #007bff;
+  }
+  
+  .export-option-card[data-format="html"] .icon-container {
+    color: #17a2b8;
+  }
+  
+  .export-option-card[data-format="static"] .icon-container {
+    color: #007bff;
+  }
+  
+  .export-option-card[data-format="development"] .icon-container {
+    color: #6f42c1;
+  }
+  
+  .website-meta {
+    margin-top: 10px;
+  }
+  
+  .export-btn {
+    transition: all 0.3s ease;
+    padding: 12px 30px;
+  }
+  
+  .export-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(40, 167, 69, 0.3);
+  }
+  
+  .export-summary {
+    animation: fade-in 0.5s ease-in-out;
+  }
+  
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }

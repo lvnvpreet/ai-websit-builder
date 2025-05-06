@@ -1,0 +1,36 @@
+<div class="profile-sidebar card mb-4">
+    <div class="card-header">
+      <h5 class="mb-0">User Profile</h5>
+    </div>
+    <div class="list-group list-group-flush">
+      <a href="/profile" class="list-group-item list-group-item-action <%= active === 'profile' ? 'active' : '' %>">
+        <i class="fas fa-user me-2"></i> Profile Overview
+      </a>
+      <a href="/profile/ai-settings" class="list-group-item list-group-item-action <%= active === 'ai-settings' ? 'active' : '' %>">
+        <i class="fas fa-cog me-2"></i> AI Provider Settings
+      </a>
+      <a href="/profile/change-password" class="list-group-item list-group-item-action <%= active === 'change-password' ? 'active' : '' %>">
+        <i class="fas fa-key me-2"></i> Change Password
+      </a>
+      <a href="/my-sites" class="list-group-item list-group-item-action">
+        <i class="fas fa-globe me-2"></i> My Websites
+      </a>
+    </div>
+  </div>
+  
+  <div class="card">
+    <div class="card-header">
+      <h5 class="mb-0">Quick Links</h5>
+    </div>
+    <div class="list-group list-group-flush">
+      <a href="/wizard" class="list-group-item list-group-item-action">
+        <i class="fas fa-magic me-2"></i> Create New Website
+      </a>
+      <a href="/export" class="list-group-item list-group-item-action">
+        <i class="fas fa-download me-2"></i> Export Websites
+      </a>
+      <a href="/logout" class="list-group-item list-group-item-action text-danger">
+        <i class="fas fa-sign-out-alt me-2"></i> Logout
+      </a>
+    </div>
+  </div>

@@ -1,0 +1,126 @@
+/* Profile Styles */
+.profile-sidebar {
+    position: sticky;
+    top: 20px;
+  }
+  
+  .content-wrapper {
+    padding-bottom: 30px;
+  }
+  
+  /* Stats Cards */
+  .stat-card {
+    transition: all 0.3s ease;
+    border-radius: 10px;
+  }
+  
+  .stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  }
+  
+  /* Provider Cards */
+  .provider-options {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-bottom: 20px;
+  }
+  
+  .provider-card {
+    padding: 15px;
+    border: 1px solid #dee2e6;
+    border-radius: 10px;
+    transition: all 0.3s ease;
+    margin: 0;
+  }
+  
+  .provider-card:hover {
+    background-color: #f8f9fa;
+  }
+  
+  .provider-card.active {
+    border-color: #007bff;
+    background-color: rgba(0, 123, 255, 0.05);
+    box-shadow: 0 2px 8px rgba(0, 123, 255, 0.1);
+  }
+  
+  .provider-card .form-check-input {
+    margin-top: 10px;
+  }
+  
+  .provider-card .form-check-label {
+    display: block;
+    width: 100%;
+    cursor: pointer;
+  }
+  
+  .provider-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background-color: #f8f9fa;
+    border-radius: 50%;
+    font-size: 20px;
+    color: #007bff;
+  }
+  
+  /* Animate status badges */
+  .badge.bg-success {
+    animation: pulse 2s infinite;
+  }
+  
+  @keyframes pulse {
+    0% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.05);
+    }
+    100% {
+      transform: scale(1);
+    }
+  }
+  
+  /* Password strength meter */
+  .password-strength {
+    height: 5px;
+    border-radius: 5px;
+    margin-top: 5px;
+    background-color: #e9ecef;
+  }
+  
+  .password-strength-bar {
+    height: 100%;
+    border-radius: 5px;
+    width: 0;
+    transition: width 0.3s ease, background-color 0.3s ease;
+  }
+  
+  .password-strength-weak {
+    background-color: #dc3545;
+    width: 33%;
+  }
+  
+  .password-strength-medium {
+    background-color: #ffc107;
+    width: 66%;
+  }
+  
+  .password-strength-strong {
+    background-color: #28a745;
+    width: 100%;
+  }
+  
+  /* Responsive adjustments */
+  @media (max-width: 768px) {
+    .provider-options {
+      flex-direction: column;
+    }
+    
+    .provider-card {
+      width: 100%;
+    }
+  }

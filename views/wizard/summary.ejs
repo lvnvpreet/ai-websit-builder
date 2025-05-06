@@ -1,0 +1,286 @@
+<%- include('../partials/_header', { user: true }) %>
+
+  <div class="container mt-4">
+    <div class="wizard-container">
+      <div class="card">
+        <div class="card-body">
+          <h2 class="card-title text-center">Summary & Website Generation</h2>
+          <p class="card-text text-center">Review your information before generating your website</p>
+
+          <div class="summary-container">
+            <div class="accordion" id="summaryAccordion">
+              <!-- Business Information -->
+              <div class="accordion-item">
+                <h2 class="accordion-header" id="businessHeading">
+                  <button class="accordion-button" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#businessCollapse" aria-expanded="true" aria-controls="businessCollapse">
+                    Business Information
+                  </button>
+                </h2>
+                <div id="businessCollapse" class="accordion-collapse collapse show" aria-labelledby="businessHeading">
+                  <div class="accordion-body">
+                    <table class="table table-sm">
+                      <tr>
+                        <th width="30%">Business Name</th>
+                        <td>
+                          <%= data.businessName %>
+                        </td>
+                      </tr>
+                      <tr>
+                        <th>Business Category</th>
+                        <td>
+                          <%= data.businessCategory %>
+                        </td>
+                      </tr>
+                      <tr>
+                        <th>Business Description</th>
+                        <td>
+                          <%= data.businessDescription %>
+                        </td>
+                      </tr>
+                    </table>
+                    <a href="/wizard/business-info" class="btn btn-sm btn-outline-primary">Edit</a>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Website Information -->
+              <div class="accordion-item">
+                <h2 class="accordion-header" id="websiteHeading">
+                  <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#websiteCollapse" aria-expanded="false" aria-controls="websiteCollapse">
+                    Website Information
+                  </button>
+                </h2>
+                <div id="websiteCollapse" class="accordion-collapse collapse" aria-labelledby="websiteHeading">
+                  <div class="accordion-body">
+                    <table class="table table-sm">
+                      <tr>
+                        <th width="30%">Website Title</th>
+                        <td>
+                          <%= data.websiteTitle %>
+                        </td>
+                      </tr>
+                      <tr>
+                        <th>Website Tagline</th>
+                        <td>
+                          <%= data.websiteTagline %>
+                        </td>
+                      </tr>
+                      <tr>
+                        <th>Website Type</th>
+                        <td>
+                          <%= data.websiteType %>
+                        </td>
+                      </tr>
+                      <tr>
+                        <th>Website Purpose</th>
+                        <td>
+                          <%= data.websitePurpose %>
+                        </td>
+                      </tr>
+                    </table>
+                    <a href="/wizard/website-info" class="btn btn-sm btn-outline-primary">Edit</a>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Theme Selection -->
+              <div class="accordion-item">
+                <h2 class="accordion-header" id="themeHeading">
+                  <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#themeCollapse" aria-expanded="false" aria-controls="themeCollapse">
+                    Theme Selection
+                  </button>
+                </h2>
+                <div id="themeCollapse" class="accordion-collapse collapse" aria-labelledby="themeHeading">
+                  <div class="accordion-body">
+                    <table class="table table-sm">
+                      <tr>
+                        <th width="30%">Primary Color</th>
+                        <td>
+                          <span class="color-swatch" style="background-color:<%= data.primaryColor %>"></span>
+                          <%= data.primaryColor %>
+                        </td>
+                      </tr>
+                      <tr>
+                        <th>Secondary Color</th>
+                        <td>
+                          <span class="color-swatch" style="background-color:<%= data.secondaryColor %>"></span>
+                          <%= data.secondaryColor %>
+                        </td>
+                      </tr>
+                      <tr>
+                        <th>Font Family</th>
+                        <td>
+                          <%= data.fontFamily %>
+                        </td>
+                      </tr>
+                      <tr>
+                        <th>Font Style</th>
+                        <td>
+                          <%= data.fontStyle %>
+                        </td>
+                      </tr>
+                    </table>
+                    <a href="/wizard/theme" class="btn btn-sm btn-outline-primary">Edit</a>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Website Structure -->
+              <div class="accordion-item">
+                <h2 class="accordion-header" id="structureHeading">
+                  <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#structureCollapse" aria-expanded="false" aria-controls="structureCollapse">
+                    Website Structure
+                  </button>
+                </h2>
+                <div id="structureCollapse" class="accordion-collapse collapse" aria-labelledby="structureHeading">
+                  <div class="accordion-body">
+                    <table class="table table-sm">
+                      <tr>
+                        <th width="30%">Structure Type</th>
+                        <td>
+                          <%= data.structure %>
+                        </td>
+                      </tr>
+                      <tr>
+                        <th>Pages</th>
+                        <td>
+                          <% if(typeof data.pages !=='undefined' ) { %>
+                            <% data.pages.forEach(page=> { %>
+                              <span class="badge bg-primary me-2 mb-2">
+                                <%= page %>
+                              </span>
+                              <% }); %>
+                                <% } %>
+                        </td>
+                      </tr>
+                    </table>
+                    <a href="/wizard/structure" class="btn btn-sm btn-outline-primary">Edit</a>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Footer Information -->
+              <div class="accordion-item">
+                <h2 class="accordion-header" id="footerHeading">
+                  <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#footerCollapse" aria-expanded="false" aria-controls="footerCollapse">
+                    Footer Information
+                  </button>
+                </h2>
+                <div id="footerCollapse" class="accordion-collapse collapse" aria-labelledby="footerHeading">
+                  <div class="accordion-body">
+                    <table class="table table-sm">
+                      <tr>
+                        <th width="30%">Address</th>
+                        <td>
+                          <%= data.address || 'Not provided' %>
+                        </td>
+                      </tr>
+                      <tr>
+                        <th>Email</th>
+                        <td>
+                          <%= data.email || 'Not provided' %>
+                        </td>
+                      </tr>
+                      <tr>
+                        <th>Phone</th>
+                        <td>
+                          <%= data.phone || 'Not provided' %>
+                        </td>
+                      </tr>
+                      <tr>
+                        <th>Social Media</th>
+                        <td>
+                          <% if(data.socialLinks) { %>
+                            <% if(data.socialLinks.facebook) { %>
+                              <div>Facebook: facebook.com/<%= data.socialLinks.facebook %>
+                              </div>
+                              <% } %>
+                                <% if(data.socialLinks.instagram) { %>
+                                  <div>Instagram: instagram.com/<%= data.socialLinks.instagram %>
+                                  </div>
+                                  <% } %>
+                                    <% if(data.socialLinks.twitter) { %>
+                                      <div>Twitter: twitter.com/<%= data.socialLinks.twitter %>
+                                      </div>
+                                      <% } %>
+                                        <% if(data.socialLinks.linkedin) { %>
+                                          <div>LinkedIn: linkedin.com/company/<%= data.socialLinks.linkedin %>
+                                          </div>
+                                          <% } %>
+                                            <% } else { %>
+                                              No social media provided
+                                              <% } %>
+                        </td>
+                      </tr>
+                    </table>
+                    <a href="/wizard/footer" class="btn btn-sm btn-outline-primary">Edit</a>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Additional Features -->
+              <div class="accordion-item">
+                <h2 class="accordion-header" id="featuresHeading">
+                  <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#featuresCollapse" aria-expanded="false" aria-controls="featuresCollapse">
+                    Additional Features
+                  </button>
+                </h2>
+                <div id="featuresCollapse" class="accordion-collapse collapse" aria-labelledby="featuresHeading">
+                  <div class="accordion-body">
+                    <ul class="list-group">
+                      <li class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-center">
+                          <div>Newsletter Sign-up</div>
+                          <div><i
+                              class="fas fa-<%= data.hasNewsletter ? 'check text-success' : 'times text-danger' %>"></i>
+                          </div>
+                        </div>
+                      </li>
+                      <li class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-center">
+                          <div>Google Maps Integration</div>
+                          <div><i
+                              class="fas fa-<%= data.hasGoogleMap ? 'check text-success' : 'times text-danger' %>"></i>
+                          </div>
+                        </div>
+                        <% if(data.hasGoogleMap && data.googleMapUrl) { %>
+                          <small class="text-muted">URL: <%= data.googleMapUrl %></small>
+                          <% } %>
+                      </li>
+                      <li class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-center">
+                          <div>Image Slider</div>
+                          <div><i
+                              class="fas fa-<%= data.hasImageSlider ? 'check text-success' : 'times text-danger' %>"></i>
+                          </div>
+                        </div>
+                      </li>
+                    </ul>
+                    <a href="/wizard/features" class="btn btn-sm btn-outline-primary mt-3">Edit</a>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Replace the existing generate button with this -->
+            <div class="generate-section text-center mt-4">
+              <p class="lead">Ready to generate your website with Ollama?</p>
+              <a href="/generate/<%= website._id %>" class="btn btn-success btn-lg" id="generateBtn">
+                <i class="fas fa-magic"></i> Generate Website
+              </a>
+              <p class="mt-3 text-muted">This will use Ollama to generate your entire website based on your
+                specifications.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <%- include('../partials/_footer') %>

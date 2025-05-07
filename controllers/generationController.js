@@ -8,6 +8,12 @@ exports.getGenerationPage = async (req, res) => {
   try {
     const { id } = req.params;
     
+    // Check if we're coming from the wizard (id won't be in params)
+    if (!id && req.session.wizardData) {
+      // Redirect to wizard summary
+      return res.redirect('/wizard/summary');
+    }
+    
     // Find the website
     const website = await Website.findOne({ _id: id, user: req.user._id });
     
@@ -15,18 +21,7 @@ exports.getGenerationPage = async (req, res) => {
       return res.status(404).send('Website not found');
     }
     
-    // Check if website is already generated
-    if (website.status === 'completed') {
-      return res.redirect(`/websites/${website._id}/preview`);
-    }
-    
-    // Check Ollama server status
-    const isServerRunning = await ollamaService.isServerRunning();
-    
-    res.render('generation/progress', {
-      website,
-      isServerRunning
-    });
+    // Rest of your code...
   } catch (error) {
     console.error('Error loading generation page:', error);
     res.status(500).send('Error loading generation page');

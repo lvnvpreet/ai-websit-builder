@@ -271,11 +271,12 @@
             <!-- Replace the existing generate button with this -->
             <div class="generate-section text-center mt-4">
               <p class="lead">Ready to generate your website with Ollama?</p>
-              <a href="/generate/<%= website._id %>" class="btn btn-success btn-lg" id="generateBtn">
-                <i class="fas fa-magic"></i> Generate Website
-              </a>
-              <p class="mt-3 text-muted">This will use Ollama to generate your entire website based on your
-                specifications.</p>
+              <form action="<%= typeof formAction !== 'undefined' ? formAction : '/wizard/generate' %>" method="POST">
+                <button type="submit" class="btn btn-success btn-lg" id="generateBtn">
+                  <i class="fas fa-magic"></i> Generate Website
+                </button>
+              </form>
+              <p class="mt-3 text-muted">This will use Ollama to generate your entire website based on your specifications.</p>
             </div>
           </div>
         </div>

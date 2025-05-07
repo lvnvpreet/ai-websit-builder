@@ -1,54 +1,69 @@
 <%- include('../partials/_header', { user: true }) %>
 
-<div class="container mt-4">
-  <div class="wizard-container">
-    <div class="wizard-progress">
-      <div class="progress">
-        <div class="progress-bar" role="progressbar" style="width: <%= (step / totalSteps) * 100 %>%" aria-valuenow="<%= (step / totalSteps) * 100 %>" aria-valuemin="0" aria-valuemax="100"></div>
+  <div class="container mt-4">
+    <div class="wizard-container">
+      <div class="wizard-progress">
+        <div class="progress">
+          <div class="progress-bar" role="progressbar" style="width: <%= (step / totalSteps) * 100 %>%"
+            aria-valuenow="<%= (step / totalSteps) * 100 %>" aria-valuemin="0" aria-valuemax="100"></div>
+        </div>
+        <div class="step-indicator">
+          Step <%= step %> of <%= totalSteps %>: <%= title %>
+        </div>
       </div>
-      <div class="step-indicator">
-        Step <%= step %> of <%= totalSteps %>: <%= title %>
-      </div>
-    </div>
-    
-    <div class="card">
-      <div class="card-body">
-        <h2 class="card-title text-center">Business Information</h2>
-        <p class="card-text text-center">Tell us about your business to create a personalized website</p>
-        
-        <form action="/wizard/business-info" method="POST" class="wizard-form" id="businessForm">
-          <div class="form-group mb-3">
-            <label for="businessName">Business Name</label>
-            <input type="text" class="form-control" id="businessName" name="businessName" placeholder="e.g., Star Plumbers, NY" required value="<%= typeof data !== 'undefined' ? data.businessName : '' %>">
-          </div>
-          
-          <div class="form-group mb-3">
-            <label for="businessCategory">Business Category</label>
-            <select class="form-select" id="businessCategory" name="businessCategory" required>
-              <option value="" selected disabled>Select a category</option>
-              <option value="Home Services" <%= typeof data !== 'undefined' && data.businessCategory === 'Home Services' ? 'selected' : '' %>>Home Services</option>
-              <option value="Professional Services" <%= typeof data !== 'undefined' && data.businessCategory === 'Professional Services' ? 'selected' : '' %>>Professional Services</option>
-              <option value="Retail" <%= typeof data !== 'undefined' && data.businessCategory === 'Retail' ? 'selected' : '' %>>Retail</option>
-              <option value="Restaurant" <%= typeof data !== 'undefined' && data.businessCategory === 'Restaurant' ? 'selected' : '' %>>Restaurant</option>
-              <option value="Healthcare" <%= typeof data !== 'undefined' && data.businessCategory === 'Healthcare' ? 'selected' : '' %>>Healthcare</option>
-              <option value="Education" <%= typeof data !== 'undefined' && data.businessCategory === 'Education' ? 'selected' : '' %>>Education</option>
-              <option value="Technology" <%= typeof data !== 'undefined' && data.businessCategory === 'Technology' ? 'selected' : '' %>>Technology</option>
-              <option value="Other" <%= typeof data !== 'undefined' && data.businessCategory === 'Other' ? 'selected' : '' %>>Other</option>
-            </select>
-          </div>
-          
-          <div class="form-group mb-3">
-            <label for="businessDescription">Business Description</label>
-            <textarea class="form-control" id="businessDescription" name="businessDescription" rows="4" placeholder="Describe what your business does and what makes it special" required><%= typeof data !== 'undefined' ? data.businessDescription : '' %></textarea>
-          </div>
-          
-          <div class="wizard-navigation text-end">
-            <button type="submit" class="btn btn-primary">Next <i class="fas fa-arrow-right"></i></button>
-          </div>
-        </form>
+
+      <div class="card">
+        <div class="card-body">
+          <h2 class="card-title text-center">Business Information</h2>
+          <p class="card-text text-center">Tell us about your business to create a personalized website</p>
+
+          <form action="/wizard/business-info" method="POST" class="wizard-form" id="businessForm">
+
+
+            <div class="form-group mb-3">
+              <label for="businessCategory">Business Category</label>
+              <select class="form-select" id="businessCategory" name="businessCategory" required>
+                <option value="" selected disabled>Select a category</option>
+                <option value="Home Services" <%=typeof data !=='undefined' && data.businessCategory==='Home Services'
+                  ? 'selected' : '' %>>Home Services</option>
+                <option value="Professional Services" <%=typeof data !=='undefined' &&
+                  data.businessCategory==='Professional Services' ? 'selected' : '' %>>Professional Services</option>
+                <option value="Retail" <%=typeof data !=='undefined' && data.businessCategory==='Retail' ? 'selected'
+                  : '' %>>Retail</option>
+                <option value="Restaurant" <%=typeof data !=='undefined' && data.businessCategory==='Restaurant'
+                  ? 'selected' : '' %>>Restaurant</option>
+                <option value="Healthcare" <%=typeof data !=='undefined' && data.businessCategory==='Healthcare'
+                  ? 'selected' : '' %>>Healthcare</option>
+                <option value="Education" <%=typeof data !=='undefined' && data.businessCategory==='Education'
+                  ? 'selected' : '' %>>Education</option>
+                <option value="Technology" <%=typeof data !=='undefined' && data.businessCategory==='Technology'
+                  ? 'selected' : '' %>>Technology</option>
+                <option value="Other" <%=typeof data !=='undefined' && data.businessCategory==='Other' ? 'selected' : ''
+                  %>>Other</option>
+              </select>
+            </div>
+
+            <div class="form-group mb-3">
+              <label for="businessName">Business Name</label>
+              <input type="text" class="form-control" id="businessName" name="businessName"
+                placeholder="e.g., Star Plumbers, NY" required
+                value="<%= typeof data !== 'undefined' ? data.businessName : '' %>">
+            </div>
+
+            <div class="form-group mb-3">
+              <label for="businessDescription">What We Do</label>
+              <textarea class="form-control" id="businessDescription" name="businessDescription" rows="4"
+                placeholder="Describe what your business does and what makes it special"
+                required><%= typeof data !== 'undefined' ? data.businessDescription : '' %></textarea>
+            </div>
+
+            <div class="wizard-navigation text-end">
+              <button type="submit" class="btn btn-primary">Next <i class="fas fa-arrow-right"></i></button>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   </div>
-</div>
 
-<%- include('../partials/_footer') %>
+  <%- include('../partials/_footer') %>

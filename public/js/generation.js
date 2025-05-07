@@ -143,9 +143,32 @@ class GenerationManager {
   }
   
   // Initialize on page load
-  document.addEventListener('DOMContentLoaded', function() {
-    const websiteId = document.getElementById('websiteId').value;
-    if (websiteId) {
-      new GenerationManager(websiteId);
+ // Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+  // Try to get websiteId from:
+  // 1. Hidden input field (if it exists)
+  // 2. Extract from URL as fallback
+  let websiteId = null;
+  
+  // Method 1: Try to get from hidden input
+  const websiteIdElement = document.getElementById('websiteId');
+  if (websiteIdElement && websiteIdElement.value) {
+    websiteId = websiteIdElement.value;
+  }
+  
+  // Method 2: If not found, try to extract from URL path
+  if (!websiteId) {
+    const path = window.location.pathname;
+    const matches = path.match(/\/generate\/([^\/]+)/);
+    if (matches && matches[1]) {
+      websiteId = matches[1];
     }
-  });
+  }
+  
+  // Only initialize if we're on the generation page
+  const progressBar = document.getElementById('progressBar');
+  if (websiteId && progressBar) {
+    console.log('Initializing generation manager with website ID:', websiteId);
+    new GenerationManager(websiteId);
+  }
+});

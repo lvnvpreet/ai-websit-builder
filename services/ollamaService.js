@@ -3,9 +3,14 @@ const config = require('../config/ollamaConfig');
 
 class OllamaService {
   constructor() {
-    this.baseUrl = config.serverUrl;
-    this.model = config.defaultModel;
-    this.defaultParams = config.defaultParams;
+    this.baseUrl = config && config.serverUrl ? config.serverUrl : 'http://175.111.130.242:11434';
+    this.model = config && config.defaultModel ? config.defaultModel : 'qwq:32b-preview-q8_0';
+    this.defaultParams = config && config.defaultParams ? config.defaultParams : {
+      temperature: 0.7,
+      max_tokens: 4096,
+      top_p: 0.9,
+      stop: []
+    };
   }
 
   /**
@@ -14,8 +19,8 @@ class OllamaService {
    */
   async isServerRunning() {
     try {
-      const response = await axios.get(`${this.baseUrl}/api/tags`, { 
-        timeout: 5000 
+      const response = await axios.get(`${this.baseUrl}/api/tags`, {
+        timeout: 5000
       });
       return response.status === 200;
     } catch (error) {
@@ -30,8 +35,8 @@ class OllamaService {
    */
   async listModels() {
     try {
-      const response = await axios.get(`${this.baseUrl}/api/tags`, { 
-        timeout: 10000 
+      const response = await axios.get(`${this.baseUrl}/api/tags`, {
+        timeout: 10000
       });
       return response.data.models || [];
     } catch (error) {
@@ -50,12 +55,12 @@ class OllamaService {
     try {
       console.log(`Generating text with model: ${this.model}`);
       console.log(`Prompt: ${prompt.substring(0, 100)}...`);
-      
+
       const requestParams = {
         ...this.defaultParams,
         ...params
       };
-      
+
       const response = await axios.post(`${this.baseUrl}/api/generate`, {
         model: this.model,
         prompt: prompt,
@@ -64,7 +69,7 @@ class OllamaService {
       }, {
         timeout: 60000, // 1 minute timeout
       });
-      
+
       return response.data.response;
     } catch (error) {
       console.error('Error generating text with Ollama:', error.message);
@@ -82,29 +87,29 @@ class OllamaService {
     try {
       // Add JSON instructions to the prompt
       const jsonPrompt = `${prompt}\n\nYour response must be a valid JSON object with proper formatting. Do not include any text outside of the JSON object. Do not add markdown formatting.`;
-      
+
       const response = await this.generateText(jsonPrompt, params);
-      
+
       // Extract JSON from response
       let jsonStr = response.trim();
-      
+
       // If the response starts with ```json or ``` or has backticks, extract the JSON content
       const jsonRegex = /```(?:json)?\s*([\s\S]+?)```/;
       const match = jsonStr.match(jsonRegex);
       if (match && match[1]) {
         jsonStr = match[1].trim();
       }
-      
+
       // Parse JSON
       try {
         return JSON.parse(jsonStr);
       } catch (parseError) {
         console.error('Failed to parse JSON response:', parseError.message);
         console.log('Raw response:', jsonStr);
-        
+
         // Attempt to fix common JSON parsing issues
         jsonStr = this.fixJsonString(jsonStr);
-        
+
         try {
           return JSON.parse(jsonStr);
         } catch (finalError) {
@@ -125,13 +130,13 @@ class OllamaService {
   fixJsonString(jsonStr) {
     // Replace single quotes with double quotes
     let fixed = jsonStr.replace(/'/g, '"');
-    
+
     // Add quotes to unquoted keys
     fixed = fixed.replace(/([{,])\s*([a-zA-Z0-9_]+)\s*:/g, '$1"$2":');
-    
+
     // Remove trailing commas in objects and arrays
     fixed = fixed.replace(/,\s*([\]}])/g, '$1');
-    
+
     return fixed;
   }
 
@@ -145,7 +150,7 @@ class OllamaService {
     try {
       const prompt = this.createComponentPrompt(component, websiteData);
       const result = await this.generateJson(prompt);
-      
+
       return {
         content: result.content || '',
         css: result.css || ''
@@ -170,39 +175,39 @@ class OllamaService {
         footer: null,
         pages: []
       };
-      
+
       // Update progress
       if (progressCallback) {
         progressCallback(5, 'Starting website generation');
       }
-      
+
       // 1. Generate header
       if (progressCallback) {
         progressCallback(10, 'Generating header');
       }
       website.header = await this.generateComponent('header', websiteData);
-      
+
       // 2. Generate footer
       if (progressCallback) {
         progressCallback(20, 'Generating footer');
       }
       website.footer = await this.generateComponent('footer', websiteData);
-      
+
       // 3. Generate pages
       const pagePromises = [];
       const pageCount = websiteData.pages.length;
-      
+
       for (let i = 0; i < pageCount; i++) {
         const pageName = websiteData.pages[i];
-        
+
         // Calculate progress percentage
         const startProgress = 20 + (i * (60 / pageCount));
         const endProgress = 20 + ((i + 1) * (60 / pageCount));
-        
+
         if (progressCallback) {
           progressCallback(startProgress, `Generating ${pageName} page`);
         }
-        
+
         // Generate page content
         const pagePromise = this.generatePage(pageName, websiteData, website.header, website.footer)
           .then(pageContent => {
@@ -215,23 +220,23 @@ class OllamaService {
               content: pageContent
             };
           });
-        
+
         pagePromises.push(pagePromise);
       }
-      
+
       // Wait for all pages to be generated
       website.pages = await Promise.all(pagePromises);
-      
+
       // 4. Final processing
       if (progressCallback) {
         progressCallback(95, 'Finalizing website');
       }
-      
+
       // Return the complete website
       if (progressCallback) {
         progressCallback(100, 'Website generation complete');
       }
-      
+
       return website;
     } catch (error) {
       console.error('Error generating website:', error.message);
@@ -251,12 +256,12 @@ class OllamaService {
     try {
       const prompt = this.createPagePrompt(pageName, websiteData, header, footer);
       const result = await this.generateJson(prompt);
-      
+
       // Ensure the result is an array of sections
       if (!Array.isArray(result.sections)) {
         throw new Error(`Invalid page generation result for ${pageName}: sections not found or not an array`);
       }
-      
+
       return result.sections;
     } catch (error) {
       console.error(`Error generating page ${pageName}:`, error.message);
@@ -271,10 +276,10 @@ class OllamaService {
    * @returns {string} Formatted prompt
    */
   createComponentPrompt(component, websiteData) {
-    const { 
-      businessName, 
-      businessCategory, 
-      businessDescription, 
+    const {
+      businessName,
+      businessCategory,
+      businessDescription,
       websiteTitle,
       websiteTagline,
       websiteType,
@@ -289,9 +294,9 @@ class OllamaService {
       phone,
       socialLinks
     } = websiteData;
-    
+
     let prompt = '';
-    
+
     if (component === 'header') {
       prompt = `
         Create a responsive header for a website with the following details:
@@ -354,7 +359,7 @@ class OllamaService {
         Use Bootstrap 5 for the responsive design.
       `;
     }
-    
+
     return prompt;
   }
 
@@ -367,10 +372,10 @@ class OllamaService {
    * @returns {string} Formatted prompt
    */
   createPagePrompt(pageName, websiteData, header, footer) {
-    const { 
-      businessName, 
-      businessCategory, 
-      businessDescription, 
+    const {
+      businessName,
+      businessCategory,
+      businessDescription,
       websiteTitle,
       websiteTagline,
       websiteType,
@@ -384,10 +389,10 @@ class OllamaService {
       googleMapUrl,
       hasImageSlider
     } = websiteData;
-    
+
     // Create sections description based on page type
     let sectionsDescription = '';
-    
+
     if (pageName === 'Home') {
       sectionsDescription = `
         1. Hero Section - With business name, tagline and a prominent call-to-action
@@ -396,11 +401,11 @@ class OllamaService {
         4. Testimonials Section - Customer reviews or testimonials
         5. Call to Action Section - Encouraging visitors to take action
       `;
-      
+
       if (hasImageSlider) {
         sectionsDescription += '6. Image Slider - Showcasing products or services\n';
       }
-      
+
       if (hasNewsletter) {
         sectionsDescription += '7. Newsletter Signup Section - To capture visitor emails\n';
       }
@@ -424,7 +429,7 @@ class OllamaService {
         1. Contact Form Section - A form for visitors to submit inquiries
         2. Contact Information Section - Business address, phone, email
       `;
-      
+
       if (hasGoogleMap) {
         sectionsDescription += `3. Map Section - Showing business location ${googleMapUrl ? `using this map URL: ${googleMapUrl}` : ''}\n`;
       }
@@ -444,7 +449,7 @@ class OllamaService {
         4. Call to Action Section - Next steps for visitors
       `;
     }
-    
+
     const prompt = `
       Create a responsive webpage for the "${pageName}" page of a website with the following details:
       
@@ -477,7 +482,7 @@ class OllamaService {
       
       Make sure all content is properly responsive and looks good on all devices.
     `;
-    
+
     return prompt;
   }
 }

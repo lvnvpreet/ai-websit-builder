@@ -41,12 +41,13 @@ console.log(`- Server port: ${port}`);
 console.log(`- Database: ${process.env.DATABASE_URL ? 'Configured' : 'Not configured'}`);
 
 // Check if Ollama server URL is configured
+// Check if Ollama server URL is configured
 if (process.env.OLLAMA_URL) {
   console.log(`- Ollama server URL: ${process.env.OLLAMA_URL}`);
   
   // Optionally, check if Ollama server is reachable
-  const { isServerRunning } = require('./services/ollamaService');
-  isServerRunning()
+  const ollamaService = require('./services/ollamaService');
+  ollamaService.isServerRunning()  // Keep the method attached to the object
     .then(running => {
       if (running) {
         console.log('- Ollama server status: Running');

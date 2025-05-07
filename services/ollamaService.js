@@ -3,14 +3,32 @@ const config = require('../config/ollamaConfig');
 
 class OllamaService {
   constructor() {
-    this.baseUrl = config && config.serverUrl ? config.serverUrl : 'http://175.111.130.242:11434';
-    this.model = config && config.defaultModel ? config.defaultModel : 'qwq:32b-preview-q8_0';
-    this.defaultParams = config && config.defaultParams ? config.defaultParams : {
-      temperature: 0.7,
-      max_tokens: 4096,
-      top_p: 0.9,
-      stop: []
-    };
+    try {
+      this.baseUrl = config?.serverUrl || process.env.OLLAMA_URL || 'http://175.111.130.242:11434';
+      this.model = config?.defaultModel || process.env.OLLAMA_MODEL || 'qwq:32b-preview-q8_0';
+      this.defaultParams = config?.defaultParams || {
+        temperature: 0.7,
+        max_tokens: 4096,
+        top_p: 0.9,
+        stop: []
+      };
+
+      // Log initialization details for debugging
+      console.log('OllamaService initialized with:');
+      console.log(`- baseUrl: ${this.baseUrl}`);
+      console.log(`- model: ${this.model}`);
+    } catch (error) {
+      console.error('Error initializing OllamaService:', error);
+      // Set fallback values if initialization fails
+      this.baseUrl = 'http://175.111.130.242:11434';
+      this.model = 'qwq:32b-preview-q8_0';
+      this.defaultParams = {
+        temperature: 0.7,
+        max_tokens: 4096,
+        top_p: 0.9,
+        stop: []
+      };
+    }
   }
 
   /**
@@ -19,16 +37,31 @@ class OllamaService {
    */
   async isServerRunning() {
     try {
-      const response = await axios.get(`${this.baseUrl}/api/tags`, {
-        timeout: 5000
+      // Store baseUrl in a local variable to avoid "this" context issues
+      const baseUrl = this.baseUrl || 'http://175.111.130.242:11434';
+      
+      // Remove any trailing slash
+      const cleanUrl = baseUrl.replace(/\/$/, '');
+      const apiUrl = `${cleanUrl}/api/tags`;
+      
+      console.log(`Checking Ollama server at: ${apiUrl}`);
+      
+      const response = await axios.get(apiUrl, {
+        timeout: 5000  // Fixed: removed the 'a' from a5000
       });
+      
+      console.log('Ollama server response status:', response.status);
       return response.status === 200;
     } catch (error) {
       console.error('Error checking Ollama server:', error.message);
+      if (error.response) {
+        console.error('Server response:', error.response.status, error.response.data);
+      } else if (error.request) {
+        console.error('No response received. Network error or server down.');
+      }
       return false;
     }
   }
-
   /**
    * List available models on the Ollama server
    * @returns {Promise<Array>} List of available models

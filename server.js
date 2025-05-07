@@ -125,6 +125,12 @@ app.on("error", (error) => {
   console.error(error.stack);
 });
 
+// Add before other routes
+app.get('/test-gen', (req, res) => {
+  console.log("Test generation route hit");
+  res.send("Generation test route is working");
+});
+
 // Authentication Routes
 app.use(authRoutes);
 

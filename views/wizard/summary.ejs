@@ -285,3 +285,18 @@
   </div>
 
   <%- include('../partials/_footer') %>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const generateForm = document.querySelector('form[action="/wizard/generate"]');
+      if (generateForm) {
+        console.log("Form found, adding submit listener");
+        generateForm.addEventListener('submit', function(e) {
+          console.log("Form submitted");
+          // Don't prevent default - let the form submit normally
+        });
+      } else {
+        console.log("Generate form not found!");
+      }
+    });
+  </script>

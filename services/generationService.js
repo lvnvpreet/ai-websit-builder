@@ -17,112 +17,118 @@ class GenerationService {
    */
   async generateWebsite(website, progressCallback) {
     try {
+      console.log("Starting website generation for:", website._id);
       // Update progress
       if (progressCallback) {
         progressCallback(5, 'Starting website generation');
       }
-      
+
       // Prepare website data for prompt creation
       const websiteData = this._prepareWebsiteData(website);
-      
+
       // Initialize result object
       const result = {
         header: null,
         footer: null,
         pages: []
       };
-      
+
       // 1. Generate header
       if (progressCallback) {
         progressCallback(10, 'Generating header');
       }
-      
+
       result.header = await this._generateWithRetry(
         async () => {
           const headerPrompt = promptBuilder.buildHeaderPrompt(websiteData);
           const response = await ollamaService.generateText(
-            headerPrompt, 
+            headerPrompt,
             generationConfig.generation.jsonParams
           );
+          const headc = contentProcessor.processJsonContent(response)
+          console.log(headc)
           return contentProcessor.processJsonContent(response);
         },
         generationConfig.generation.retry.attempts
       );
-      
+
       // 2. Generate footer
       if (progressCallback) {
         progressCallback(20, 'Generating footer');
       }
-      
+
       result.footer = await this._generateWithRetry(
         async () => {
           const footerPrompt = promptBuilder.buildFooterPrompt(websiteData);
           const response = await ollamaService.generateText(
-            footerPrompt, 
+            footerPrompt,
             generationConfig.generation.jsonParams
           );
+          const footc = contentProcessor.processJsonContent(response)
+          console.log(footc)
           return contentProcessor.processJsonContent(response);
         },
         generationConfig.generation.retry.attempts
       );
-      
+
       // Use fallback templates if generation failed
       if (!result.header || !result.header.content) {
         console.warn('Header generation failed. Using fallback template.');
         result.header = this._createFallbackHeader(websiteData);
       }
-      
+
       if (!result.footer || !result.footer.content) {
         console.warn('Footer generation failed. Using fallback template.');
         result.footer = this._createFallbackFooter(websiteData);
       }
-      
+
       // 3. Generate pages
       const pageCount = websiteData.pages.length;
       for (let i = 0; i < pageCount; i++) {
         const pageName = websiteData.pages[i];
-        
+
         // Calculate progress percentage for this page
         const startProgress = 20 + (i * (70 / pageCount));
         const endProgress = 20 + ((i + 1) * (70 / pageCount));
-        
+
         if (progressCallback) {
           progressCallback(startProgress, `Generating ${pageName} page`);
         }
-        
+
         // Generate page content
         const pageContent = await this._generatePage(pageName, websiteData);
-        
+
         result.pages.push({
           name: pageName,
           slug: pageName.toLowerCase() === 'home' ? '/' : pageName.toLowerCase().replace(/\s+/g, '-'),
           content: pageContent
         });
-        
+
         if (progressCallback) {
           progressCallback(endProgress, `Completed ${pageName} page`);
         }
       }
-      
+
       // 4. Save to database
       if (progressCallback) {
         progressCallback(90, 'Saving website content');
       }
-      
+
       await this._saveToDatabase(website, result);
-      
+
       // Complete generation
       if (progressCallback) {
         progressCallback(100, 'Website generation complete');
       }
-      
+
       return result;
     } catch (error) {
+      console.error('Detailed error in generateWebsite:', error);
       console.error('Error generating website:', error);
       throw error;
     }
   }
-  
+
   /**
    * Generate a specific page with sections
    * @param {string} pageName - Name of the page to generate
@@ -134,19 +140,23 @@ class GenerationService {
     try {
       // Get the page prompt
       const pagePrompt = promptBuilder.buildPagePrompt(pageName, websiteData);
-      
+
+      console.log(pagePrompt)
+
       // Generate page content
       const pageContent = await this._generateWithRetry(
         async () => {
           const response = await ollamaService.generateText(
-            pagePrompt, 
+            pagePrompt,
             generationConfig.generation.jsonParams
           );
           return contentProcessor.processJsonContent(response);
         },
         generationConfig.generation.retry.attempts
       );
-      
+
+      console.log(pageContent)
+
       // Check if we have valid sections
       if (pageContent && pageContent.sections && Array.isArray(pageContent.sections)) {
         return pageContent.sections.map(section => ({
@@ -155,7 +165,7 @@ class GenerationService {
           css: section.css || ''
         }));
       }
-      
+
       // If generation failed, use fallback sections
       console.warn(`Page generation failed for ${pageName}. Using fallback sections.`);
       return this._createFallbackSections(pageName, websiteData);
@@ -164,7 +174,7 @@ class GenerationService {
       return this._createFallbackSections(pageName, websiteData);
     }
   }
-  
+
   /**
    * Save generated content to the database
    * @param {Object} websiteDoc - Website document from database
@@ -179,21 +189,32 @@ class GenerationService {
       websiteDoc.footer = result.footer;
       websiteDoc.status = 'completed';
       websiteDoc.generatedAt = new Date();
-      
+
       await websiteDoc.save();
-      
-      // 2. Create pages
+
+      // 2. Create or update pages
       for (const pageData of result.pages) {
-        // Create page document
-        const page = new Page({
+        // Check if the page already exists
+        let page = await Page.findOne({
           website: websiteDoc._id,
-          name: pageData.name,
-          slug: pageData.slug,
-          seoTitle: pageData.name === 'Home' ? websiteDoc.websiteTitle : `${pageData.name} - ${websiteDoc.businessName}`,
-          seoDescription: websiteDoc.businessDescription,
-          sections: []
+          slug: pageData.slug
         });
-        
+
+        if (!page) {
+          // Create new page if it doesn't exist
+          page = new Page({
+            website: websiteDoc._id,
+            name: pageData.name,
+            slug: pageData.slug,
+            seoTitle: pageData.name === 'Home' ? websiteDoc.websiteTitle : `${pageData.name} - ${websiteDoc.businessName}`,
+            seoDescription: websiteDoc.businessDescription,
+            sections: []
+          });
+        } else {
+          // Clear existing sections if page exists
+          page.sections = [];
+        }
+
         // Add sections to page
         for (const sectionData of pageData.content) {
           page.sections.push({
@@ -202,15 +223,16 @@ class GenerationService {
             css: sectionData.css
           });
         }
-        
+
         await page.save();
       }
     } catch (error) {
       console.error('Error saving website content to database:', error);
+      console.error('Detailed error in generateWebsite:', error);
       throw error;
     }
   }
-  
+
   /**
    * Prepare website data for use in prompts
    * @param {Object} website - Website document from database
@@ -220,7 +242,7 @@ class GenerationService {
   _prepareWebsiteData(website) {
     // Extract default pages based on the website's structure
     const defaultPages = ['Home', 'About', 'Services', 'Contact'];
-    
+
     return {
       businessName: website.businessName,
       businessCategory: website.businessCategory,
@@ -234,7 +256,7 @@ class GenerationService {
       fontFamily: website.fontFamily,
       fontStyle: website.fontStyle,
       structure: website.structure,
-      pages: Array.isArray(website.pages) && website.pages.length > 0 
+      pages: Array.isArray(website.pages) && website.pages.length > 0
         ? website.pages.map(p => typeof p === 'string' ? p : 'Page')
         : defaultPages,
       address: website.address,
@@ -247,7 +269,7 @@ class GenerationService {
       hasImageSlider: website.hasImageSlider
     };
   }
-  
+
   /**
    * Create fallback header for when generation fails
    * @param {Object} websiteData - Prepared website data
@@ -256,10 +278,10 @@ class GenerationService {
    */
   _createFallbackHeader(websiteData) {
     let headerContent = generationConfig.templates.fallbackHTML.header;
-    
+
     // Replace placeholders with actual data
     headerContent = headerContent.replace(/{{businessName}}/g, websiteData.businessName);
-    
+
     // Add navigation links based on pages
     if (Array.isArray(websiteData.pages) && websiteData.pages.length > 0) {
       let navLinks = '';
@@ -268,11 +290,11 @@ class GenerationService {
         const href = page.toLowerCase() === 'home' ? '/' : `/${page.toLowerCase().replace(/\s+/g, '-')}`;
         navLinks += `<li class="nav-item"><a class="nav-link${isActive ? ' active' : ''}" href="${href}">${page}</a></li>`;
       });
-      
-      headerContent = headerContent.replace(/<ul class="navbar-nav ms-auto">[\s\S]*?<\/ul>/g, 
+
+      headerContent = headerContent.replace(/<ul class="navbar-nav ms-auto">[\s\S]*?<\/ul>/g,
         `<ul class="navbar-nav ms-auto">${navLinks}</ul>`);
     }
-    
+
     // Create basic CSS
     const headerCss = `
       header.navbar {
@@ -289,13 +311,13 @@ class GenerationService {
         color: white !important;
       }
     `;
-    
+
     return {
       content: headerContent,
       css: headerCss
     };
   }
-  
+
   /**
    * Create fallback footer for when generation fails
    * @param {Object} websiteData - Prepared website data
@@ -304,52 +326,52 @@ class GenerationService {
    */
   _createFallbackFooter(websiteData) {
     let footerContent = generationConfig.templates.fallbackHTML.footer;
-    
+
     // Replace placeholders with actual data
     footerContent = footerContent.replace(/{{businessName}}/g, websiteData.businessName);
     footerContent = footerContent.replace(/{{businessDescription}}/g, websiteData.businessDescription);
-    
+
     // Add contact information if available
-    const addressHtml = websiteData.address 
+    const addressHtml = websiteData.address
       ? websiteData.address
       : 'Address not provided';
-    const emailHtml = websiteData.email 
+    const emailHtml = websiteData.email
       ? `<a href="mailto:${websiteData.email}" class="text-white">${websiteData.email}</a>`
       : 'Email not provided';
-    const phoneHtml = websiteData.phone 
+    const phoneHtml = websiteData.phone
       ? `<a href="tel:${websiteData.phone}" class="text-white">${websiteData.phone}</a>`
       : 'Phone not provided';
-    
+
     footerContent = footerContent.replace(/{{address}}/g, addressHtml);
     footerContent = footerContent.replace(/{{email}}/g, emailHtml);
     footerContent = footerContent.replace(/{{phone}}/g, phoneHtml);
-    
+
     // Add social links if available
     if (websiteData.socialLinks) {
       let socialLinksHtml = '';
-      
+
       if (websiteData.socialLinks.facebook) {
         socialLinksHtml += `<a href="https://facebook.com/${websiteData.socialLinks.facebook}" class="text-white me-2" target="_blank"><i class="fab fa-facebook"></i></a>`;
       }
-      
+
       if (websiteData.socialLinks.twitter) {
         socialLinksHtml += `<a href="https://twitter.com/${websiteData.socialLinks.twitter}" class="text-white me-2" target="_blank"><i class="fab fa-twitter"></i></a>`;
       }
-      
+
       if (websiteData.socialLinks.instagram) {
         socialLinksHtml += `<a href="https://instagram.com/${websiteData.socialLinks.instagram}" class="text-white me-2" target="_blank"><i class="fab fa-instagram"></i></a>`;
       }
-      
+
       if (websiteData.socialLinks.linkedin) {
         socialLinksHtml += `<a href="https://linkedin.com/company/${websiteData.socialLinks.linkedin}" class="text-white me-2" target="_blank"><i class="fab fa-linkedin"></i></a>`;
       }
-      
+
       if (socialLinksHtml) {
-        footerContent = footerContent.replace(/<div class="social-links">[\s\S]*?<\/div>/g, 
+        footerContent = footerContent.replace(/<div class="social-links">[\s\S]*?<\/div>/g,
           `<div class="social-links">${socialLinksHtml}</div>`);
       }
     }
-    
+
     // Create basic CSS
     const footerCss = `
       footer {
@@ -369,13 +391,13 @@ class GenerationService {
         text-decoration: underline;
       }
     `;
-    
+
     return {
       content: footerContent,
       css: footerCss
     };
   }
-  
+
   /**
    * Create fallback sections for a page when generation fails
    * @param {string} pageName - Name of the page
@@ -386,36 +408,36 @@ class GenerationService {
   _createFallbackSections(pageName, websiteData) {
     const pageNameLower = pageName.toLowerCase();
     let pageSections = [];
-    
+
     // Get appropriate section structure based on page type
-    const pageType = 
+    const pageType =
       pageNameLower === 'home' ? 'home' :
-      pageNameLower.includes('about') ? 'about' :
-      pageNameLower.includes('service') ? 'services' :
-      pageNameLower.includes('contact') ? 'contact' :
-      pageNameLower.includes('blog') ? 'blog' :
-      'default';
-    
-    const sectionTemplates = generationConfig.templates.pageStructures[pageType] || 
+        pageNameLower.includes('about') ? 'about' :
+          pageNameLower.includes('service') ? 'services' :
+            pageNameLower.includes('contact') ? 'contact' :
+              pageNameLower.includes('blog') ? 'blog' :
+                'default';
+
+    const sectionTemplates = generationConfig.templates.pageStructures[pageType] ||
       generationConfig.templates.pageStructures.default;
-    
+
     // Create a section for each template
     sectionTemplates.forEach(template => {
       const sectionId = `section-${template.name}-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
-      
+
       // Create a basic section with placeholder content
       const section = {
         sectionReference: sectionId,
         content: this._createBasicSectionContent(template.title, template.name, websiteData, pageNameLower),
         css: this._createBasicSectionCss(sectionId, template.name, websiteData)
       };
-      
+
       pageSections.push(section);
     });
-    
+
     return pageSections;
   }
-  
+
   /**
    * Create basic section content for fallback
    * @param {string} title - Section title
@@ -427,7 +449,7 @@ class GenerationService {
    */
   _createBasicSectionContent(title, type, websiteData, pageName) {
     const { businessName, businessDescription } = websiteData;
-    
+
     if (type === 'hero') {
       return `
         <section id="section-hero" class="py-5 bg-light">
@@ -449,7 +471,7 @@ class GenerationService {
         </section>
       `;
     }
-    
+
     if (type === 'intro' || type === 'overview') {
       return `
         <section id="section-intro" class="py-5">
@@ -501,7 +523,7 @@ class GenerationService {
         </section>
       `;
     }
-    
+
     if (type === 'features' || type === 'services' || type === 'details') {
       return `
         <section id="section-features" class="py-5 bg-light">
@@ -545,7 +567,7 @@ class GenerationService {
         </section>
       `;
     }
-    
+
     if (type === 'testimonials') {
       return `
         <section id="section-testimonials" class="py-5">
@@ -622,7 +644,7 @@ class GenerationService {
         </section>
       `;
     }
-    
+
     if (type === 'form' && pageName.includes('contact')) {
       return `
         <section id="section-contact-form" class="py-5">
@@ -675,7 +697,7 @@ class GenerationService {
         </section>
       `;
     }
-    
+
     if (type === 'map' && websiteData.hasGoogleMap) {
       return `
         <section id="section-map" class="py-5 bg-light">
@@ -689,16 +711,16 @@ class GenerationService {
             <div class="row">
               <div class="col-12">
                 <div class="map-container">
-                  ${websiteData.googleMapUrl ? 
-                    `<iframe src="${websiteData.googleMapUrl}" width="100%" height="450" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>` :
-                    `<div class="map-placeholder bg-secondary text-white d-flex align-items-center justify-content-center" style="height: 450px;">
+                  ${websiteData.googleMapUrl ?
+          `<iframe src="${websiteData.googleMapUrl}" width="100%" height="450" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>` :
+          `<div class="map-placeholder bg-secondary text-white d-flex align-items-center justify-content-center" style="height: 450px;">
                       <div class="text-center">
                         <i class="fas fa-map-marker-alt fa-3x mb-3"></i>
                         <h3>Map Placeholder</h3>
                         <p>A Google Map would be displayed here</p>
                       </div>
                     </div>`
-                  }
+        }
                 </div>
               </div>
             </div>
@@ -706,7 +728,7 @@ class GenerationService {
         </section>
       `;
     }
-    
+
     if (type === 'cta') {
       return `
         <section id="section-cta" class="py-5 bg-primary text-white">
@@ -725,7 +747,7 @@ class GenerationService {
         </section>
       `;
     }
-    
+
     // Default section content for any other section type
     return `
       <section id="section-${type}" class="py-5">
@@ -755,7 +777,7 @@ class GenerationService {
       </section>
     `;
   }
-  
+
   /**
    * Create basic section CSS for fallback
    * @param {string} sectionId - Section ID
@@ -766,7 +788,7 @@ class GenerationService {
    */
   _createBasicSectionCss(sectionId, type, websiteData) {
     const { primaryColor, secondaryColor } = websiteData;
-    
+
     return `
       #${sectionId} {
         padding: 60px 0;
@@ -805,7 +827,7 @@ class GenerationService {
       }` : ''}
     `;
   }
-  
+
   /**
    * Darken a hex color by a percentage
    * @param {string} color - Hex color to darken
@@ -816,22 +838,22 @@ class GenerationService {
   _darkenColor(color, percent) {
     // Remove the # if it exists
     color = color.replace('#', '');
-    
+
     // Convert to RGB
     const r = parseInt(color.substring(0, 2), 16);
     const g = parseInt(color.substring(2, 4), 16);
     const b = parseInt(color.substring(4, 6), 16);
-    
+
     // Darken
     const darkenAmount = percent / 100;
     const dr = Math.floor(r * (1 - darkenAmount));
     const dg = Math.floor(g * (1 - darkenAmount));
     const db = Math.floor(b * (1 - darkenAmount));
-    
+
     // Convert back to hex
     return `#${dr.toString(16).padStart(2, '0')}${dg.toString(16).padStart(2, '0')}${db.toString(16).padStart(2, '0')}`;
   }
-  
+
   /**
    * Execute a generator function with retries
    * @param {Function} generatorFn - The function to execute
@@ -839,36 +861,110 @@ class GenerationService {
    * @returns {Promise<any>} Function result or null
    * @private
    */
+  // Update the _generateWithRetry method
   async _generateWithRetry(generatorFn, maxRetries) {
     let attempts = 0;
     let lastError = null;
-    
+
     while (attempts < maxRetries) {
       try {
-        return await generatorFn();
+        const result = await generatorFn();
+        // If we get a result (even a fallback one), return it
+        if (result) return result;
       } catch (error) {
         lastError = error;
         attempts++;
-        
+
+        // Log the retry attempt
+        console.log(`Generation attempt ${attempts} failed. Retrying in ${this._getRetryDelay(attempts)}ms...`);
+
         // If this is the last attempt, break
         if (attempts >= maxRetries) {
           break;
         }
-        
+
         // Wait before retrying (with exponential backoff)
-        const delay = Math.min(
-          generationConfig.generation.retry.initialDelay * Math.pow(2, attempts - 1),
-          generationConfig.generation.retry.maxDelay
-        );
-        
-        console.log(`Generation attempt ${attempts} failed. Retrying in ${delay}ms...`);
-        await new Promise(resolve => setTimeout(resolve, delay));
+        await this._wait(this._getRetryDelay(attempts));
       }
     }
-    
+
     console.error(`All ${maxRetries} generation attempts failed:`, lastError);
-    return null;
+
+    // Instead of returning null, return a fallback result
+    return this._createFallbackResult();
   }
+
+  // Add helper methods for retry mechanism
+  _getRetryDelay(attempt) {
+    const initialDelay = 1000;
+    const maxDelay = 10000;
+    return Math.min(initialDelay * Math.pow(2, attempt - 1), maxDelay);
+  }
+
+  _wait(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  _createFallbackResult() {
+    // Return a minimal valid structure
+    return {
+      content: "Fallback content due to generation failure",
+      css: "/* Fallback CSS */"
+    };
+  }
+
+  // Add this method to the GenerationService class in services/generationService.js
+
+  /**
+ * Generate a specific page with sections
+ * @param {string} pageName - Name of the page to generate
+ * @param {Object} websiteData - Prepared website data
+ * @returns {Promise<Array>} Array of page sections
+ * @private
+ */
+async _generatePage(pageName, websiteData) {
+  try {
+    // Get the page prompt
+    const pagePrompt = promptBuilder.buildPagePrompt(pageName, websiteData);
+    
+    // Generate page content
+    const pageContent = await this._generateWithRetry(
+      async () => {
+        const response = await ollamaService.generateText(
+          pagePrompt, 
+          {
+            ...generationConfig.generation.jsonParams,
+            format: "json"  // Add a format hint
+          }
+        );
+        return contentProcessor.processJsonContent(response);
+      },
+      generationConfig.generation.retry.attempts
+    );
+    
+    // Check if we have valid sections
+    if (pageContent && pageContent.sections && Array.isArray(pageContent.sections)) {
+      // Make sure each section has all required properties
+      return pageContent.sections.map(section => {
+        // Ensure we have a valid section reference
+        const sectionRef = section.sectionReference || `section-${pageName.toLowerCase()}-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+        
+        return {
+          sectionReference: sectionRef,
+          content: section.content || `<div class="container"><h2>${pageName} Content</h2><p>Content for ${pageName}</p></div>`,
+          css: section.css || ''
+        };
+      });
+    }
+    
+    // If generation failed, use fallback sections
+    console.warn(`Page generation failed for ${pageName}. Using fallback sections.`);
+    return this._createFallbackSections(pageName, websiteData);
+  } catch (error) {
+    console.error(`Error generating page ${pageName}:`, error);
+    return this._createFallbackSections(pageName, websiteData);
+  }
+}
 }
 
 module.exports = new GenerationService();

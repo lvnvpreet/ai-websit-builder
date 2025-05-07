@@ -191,9 +191,14 @@ exports.saveWebsite = async (req, res) => {
   try {
     const wizardData = req.session.wizardData;
 
+    console.log("wizardData from session:", wizardData ? "Found" : "Missing");
+
     if (!wizardData) {
+      console.log("No wizard data found in session");
       return res.status(400).json({ success: false, message: 'No website data found' });
     }
+
+    console.log("Creating website document");
 
     // Create new website document from wizard data
     const website = new Website({
@@ -221,15 +226,24 @@ exports.saveWebsite = async (req, res) => {
       status: 'pending'
     });
 
+    if (!wizardData) {
+      console.log("No wizard data found in session");
+      return res.status(400).json({ success: false, message: 'No website data found' });
+    }
+
     await website.save();
+
+    console.log("Website saved, ID:", website._id);
 
     // Clear wizard data from session
     delete req.session.wizardData;
 
+    console.log("Redirecting to:", `/generate/${website._id}`);
+
     // Redirect to generation page
     res.redirect(`/generate/${website._id}`);
   } catch (err) {
-    console.error(err);
+    console.error("Error in saveWebsite:", err);
     res.status(500).json({ success: false, message: 'Server error' });
   }
 };

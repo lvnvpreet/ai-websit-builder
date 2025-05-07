@@ -5,22 +5,42 @@ const ollamaService = require('../services/ollamaService');
 
 // Render generation page
 exports.getGenerationPage = async (req, res) => {
+
+  console.log("getGenerationPage called, id:", req.params.id);
+
   try {
+    
     const { id } = req.params;
     
     // Check if we're coming from the wizard (id won't be in params)
     if (!id && req.session.wizardData) {
-      // Redirect to wizard summary
+      console.log("No ID but wizard data found, redirecting to summary");
       return res.redirect('/wizard/summary');
     }
     
     // Find the website
+    console.log("Finding website with ID:", id);
+
     const website = await Website.findOne({ _id: id, user: req.user._id });
     
     if (!website) {
+      console.log("Website not found");
       return res.status(404).send('Website not found');
     }
     
+    console.log("Website found, checking Ollama");
+
+    // Check if Ollama is running
+    const isServerRunning = await ollamaService.isServerRunning();
+    console.log("Ollama server running:", isServerRunning);
+    
+    console.log("Rendering generation progress page");
+
+    res.render('generation/progress', {
+      website,
+      isServerRunning
+    });
+
     // Rest of your code...
   } catch (error) {
     console.error('Error loading generation page:', error);
@@ -29,6 +49,7 @@ exports.getGenerationPage = async (req, res) => {
 };
 
 // Start generation process
+// Update the startGeneration method
 exports.startGeneration = async (req, res) => {
   try {
     const { id } = req.params;
@@ -45,11 +66,19 @@ exports.startGeneration = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Generation already in progress' });
     }
     
+    // Check if Ollama is running before starting
+    const isOllamaRunning = await ollamaService.isServerRunning();
+    if (!isOllamaRunning) {
+      return res.status(503).json({ 
+        success: false, 
+        message: 'Ollama server is not running or not accessible' 
+      });
+    }
+    
     // Update status to generating
     website.status = 'generating';
     await website.save();
     
-    // Start async generation process
     // Store starting time for tracking
     req.session[`generation_start_${website._id}`] = Date.now();
     

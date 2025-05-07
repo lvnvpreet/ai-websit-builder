@@ -35,31 +35,69 @@ class OllamaService {
    * Check if the Ollama server is accessible
    * @returns {Promise<boolean>} True if server is running
    */
-  async isServerRunning() {
+  /**
+ * Check if the Ollama server is accessible and the model is available
+ * @param {string} serverUrl - Optional custom server URL
+ * @returns {Promise<boolean>} True if server is running
+ */
+  async isServerRunning(serverUrl = null) {
     try {
-      // Store baseUrl in a local variable to avoid "this" context issues
-      const baseUrl = this.baseUrl || 'http://175.111.130.242:11434';
-      
+      // Use provided serverUrl or default to the instance's baseUrl
+      const url = serverUrl || this.baseUrl;
+
       // Remove any trailing slash
-      const cleanUrl = baseUrl.replace(/\/$/, '');
+      const cleanUrl = url.replace(/\/$/, '');
       const apiUrl = `${cleanUrl}/api/tags`;
-      
+
       console.log(`Checking Ollama server at: ${apiUrl}`);
-      
+
       const response = await axios.get(apiUrl, {
-        timeout: 5000  // Fixed: removed the 'a' from a5000
+        timeout: 10000  // 10 second timeout for checking server status
       });
-      
-      console.log('Ollama server response status:', response.status);
-      return response.status === 200;
+
+      if (response.status === 200) {
+        console.log('Ollama server is running');
+
+        // Check if the model exists
+        const models = response.data.models || [];
+        const modelExists = models.some(model => model.name === this.model);
+
+        if (!modelExists) {
+          console.warn(`Model "${this.model}" not found on the Ollama server`);
+        }
+
+        return true;
+      }
+
+      return false;
     } catch (error) {
       console.error('Error checking Ollama server:', error.message);
-      if (error.response) {
-        console.error('Server response:', error.response.status, error.response.data);
-      } else if (error.request) {
-        console.error('No response received. Network error or server down.');
-      }
       return false;
+    }
+  }
+
+  /**
+   * Get available models from the Ollama server
+   * @param {string} serverUrl - Optional custom server URL
+   * @returns {Promise<Array>} List of available models
+   */
+  async getOllamaModels(serverUrl = null) {
+    try {
+      // Use provided serverUrl or default to the instance's baseUrl
+      const url = serverUrl || this.baseUrl;
+
+      // Remove any trailing slash
+      const cleanUrl = url.replace(/\/$/, '');
+      const apiUrl = `${cleanUrl}/api/tags`;
+
+      const response = await axios.get(apiUrl, {
+        timeout: 10000
+      });
+
+      return (response.data.models || []).map(model => model.name);
+    } catch (error) {
+      console.error('Error fetching Ollama models:', error.message);
+      return [];
     }
   }
   /**
@@ -87,26 +125,39 @@ class OllamaService {
   async generateText(prompt, params = {}) {
     try {
       console.log(`Generating text with model: ${this.model}`);
-      console.log(`Prompt: ${prompt.substring(0, 100)}...`);
+
+      // If asking for JSON, modify the prompt to make it more reliable
+      let modifiedPrompt = prompt;
+      if (prompt.includes("JSON") || prompt.includes("json") || params.format === "json") {
+        modifiedPrompt = `${prompt.trim()}\n\nIMPORTANT: Your response must be valid JSON only. Do not include any other text, markdown formatting, or code blocks. Make sure to properly escape all quotes and special characters in strings.`;
+      }
 
       const requestParams = {
         ...this.defaultParams,
         ...params
       };
 
+      // For JSON requests, use safer parameters
+      if (prompt.includes("JSON") || prompt.includes("json") || params.format === "json") {
+        requestParams.temperature = Math.min(requestParams.temperature || 0.7, 0.2);
+        requestParams.top_p = Math.min(requestParams.top_p || 0.9, 0.8);
+      }
+
       const response = await axios.post(`${this.baseUrl}/api/generate`, {
         model: this.model,
-        prompt: prompt,
+        prompt: modifiedPrompt,
         stream: false,
         ...requestParams
       }, {
-        timeout: 60000, // 1 minute timeout
+        timeout: 180000, // 3 minutes
       });
 
       return response.data.response;
     } catch (error) {
       console.error('Error generating text with Ollama:', error.message);
-      throw new Error(`Ollama generation failed: ${error.message}`);
+
+      // Return a simple string that our processor can handle
+      return '{"content": "Generation failed due to API error", "css": "/* Fallback CSS */"}';
     }
   }
 
@@ -171,6 +222,43 @@ class OllamaService {
     fixed = fixed.replace(/,\s*([\]}])/g, '$1');
 
     return fixed;
+  }
+
+  // Add this method to the OllamaService class in services/ollamaService.js
+
+  /**
+   * Generate JSON response with better error handling
+   * @param {string} prompt - The prompt to send
+   * @param {Object} params - Additional parameters
+   * @returns {Promise<Object>} Generated JSON object
+   */
+  async generateJson(prompt, params = {}) {
+    try {
+      // Add explicit JSON instructions to the prompt
+      const jsonPrompt = `${prompt}\n\nYour response must be a valid JSON object with proper formatting. Do not include any text outside of the JSON object. Do not add markdown formatting or code blocks.`;
+
+      // Set more appropriate parameters for JSON generation
+      const jsonParams = {
+        ...params,
+        temperature: Math.min(params.temperature || 0.2, 0.2), // Lower temperature for more deterministic output
+        top_p: Math.min(params.top_p || 0.8, 0.8),            // More focused sampling
+      };
+
+      // Generate the response
+      const response = await this.generateText(jsonPrompt, jsonParams);
+
+      // Process the response using ContentProcessor
+      const contentProcessor = require('./contentProcessor');
+      return contentProcessor.processJsonContent(response);
+    } catch (error) {
+      console.error('Error generating JSON with Ollama:', error.message);
+
+      // Return a valid fallback object
+      return {
+        content: "Fallback content due to generation error",
+        css: "/* Fallback CSS */"
+      };
+    }
   }
 
   /**

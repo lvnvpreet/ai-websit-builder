@@ -29,102 +29,69 @@ class ContentProcessor {
       const cleanedContent = this._removeThinkTags(rawContent);
       console.log("After removing think tags, first 100 chars:", cleanedContent?.substring(0, 100));
       
-      // Check for empty JSON object
-      if (cleanedContent.trim() === '{}' || cleanedContent.trim().match(/^\{\s*\}$/)) {
-        console.log("Empty JSON object detected, using specialized fallback");
-        return this._createFallbackObject(contentType, pageName);
-      }
+      // Quick check for JSON validity
+      const looksLikeJSON = cleanedContent.trim().startsWith('{') && cleanedContent.trim().includes('"');
       
-      // Try direct JSON parsing first with enhanced error handling
-      try {
-        const parsedResult = this._attemptJsonParse(cleanedContent, contentType, pageName);
-        if (parsedResult) {
-          return parsedResult;
-        }
-      } catch (jsonError) {
-        console.log("Direct JSON parsing failed:", jsonError.message);
-      }
-      
-      // Fallback to regex extraction if direct parsing fails
-      console.log("Direct JSON parsing failed, falling back to regex extraction");
-      
-      // For header/footer generation, extract content and CSS
-      if (contentType !== 'page') {
-        const contentMatch = cleanedContent.match(/"content"\s*:\s*"((?:\\"|[^"])*?)"/);
-        const cssMatch = cleanedContent.match(/"css"\s*:\s*"((?:\\"|[^"])*?)"/);
-        
-        if (contentMatch || cssMatch) {
-          console.log("Found content or CSS match using regex");
-          return {
-            content: contentMatch ? this._unescapeString(contentMatch[1]) : "<div>Fallback content</div>",
-            css: cssMatch ? this._unescapeString(cssMatch[1]) : "/* Fallback CSS */"
-          };
-        }
-      }
-      
-      // For page generation, look for sections array
-      const sectionsMatch = cleanedContent.match(/"sections"\s*:\s*\[([\s\S]*?)\]/);
-      if (sectionsMatch) {
-        console.log("Found sections match using regex");
-        // Try to extract individual sections using regex
-        const sectionsData = sectionsMatch[1];
-        const sections = [];
-        
-        // Find all section objects
-        const sectionRegex = /\{([\s\S]*?)\}/g;
-        let sectionMatch;
-        let sectionCount = 0;
-        
-        while ((sectionMatch = sectionRegex.exec(sectionsData)) !== null && sectionCount < 20) {
-          const sectionContent = `{${sectionMatch[1]}}`;
+      if (looksLikeJSON) {
+        // For page content specifically - handle the pattern seen in logs where we have a sections array
+        if (contentType === 'page' || cleanedContent.includes('"sections"')) {
+          console.log(`Attempting to process ${pageName} page content with sections`);
           
-          try {
-            // Try to parse each section as JSON
-            const sectionJson = JSON.parse(sectionContent);
-            
-            // Extract or create required properties
-            const sectionRef = sectionJson.sectionReference || 
-              `section-${pageName.toLowerCase()}-${sectionCount}-${Date.now()}`;
-              
-            sections.push({
-              sectionReference: sectionRef,
-              content: sectionJson.content || "<div>Section content</div>",
-              css: sectionJson.css || "/* Section CSS */"
-            });
-            
-          } catch (sectionParseError) {
-            // If JSON parsing fails, try regex extraction
-            const sectionRefMatch = sectionContent.match(/"sectionReference"\s*:\s*"((?:\\"|[^"])*?)"/);
-            const contentMatch = sectionContent.match(/"content"\s*:\s*"((?:\\"|[^"])*?)"/);
-            const cssMatch = sectionContent.match(/"css"\s*:\s*"((?:\\"|[^"])*?)"/);
-            
-            const sectionRef = sectionRefMatch ? 
-              this._unescapeString(sectionRefMatch[1]) : 
-              `section-${pageName.toLowerCase()}-${sectionCount}-${Date.now()}`;
-              
-            sections.push({
-              sectionReference: sectionRef,
-              content: contentMatch ? this._unescapeString(contentMatch[1]) : "<div>Section content</div>",
-              css: cssMatch ? this._unescapeString(cssMatch[1]) : "/* Section CSS */"
-            });
+          // Try to find the complete JSON object
+          const result = this._extractAndParsePageJSON(cleanedContent, pageName);
+          if (result) {
+            console.log(`Successfully extracted ${result.sections?.length || 0} sections for ${pageName}`);
+            return result;
           }
-          
-          sectionCount++;
         }
         
-        // If we couldn't extract any sections, add fallback sections based on page type
-        if (sections.length === 0) {
-          console.log(`No sections extracted for ${pageName} page, using fallback sections`);
-          return this._createFallbackObject('page', pageName);
-        } else {
-          console.log(`Successfully extracted ${sections.length} sections for ${pageName} page`);
+        // For header/footer or fallback - try direct parsing with brace matching
+        try {
+          const startBrace = cleanedContent.indexOf('{');
+          if (startBrace >= 0) {
+            // Find the matching end brace using a proper brace counter
+            const endBrace = this._findMatchingCloseBrace(cleanedContent, startBrace);
+            if (endBrace > startBrace) {
+              const jsonStr = cleanedContent.substring(startBrace, endBrace + 1);
+              console.log(`Extracted JSON object (${jsonStr.length} chars)`);
+              
+              // Try to parse the JSON
+              try {
+                const parsed = JSON.parse(jsonStr);
+                console.log("Successfully parsed JSON object");
+                return this._validateAndFixObject(parsed, contentType, pageName);
+              } catch (parseErr) {
+                console.error("Error parsing JSON:", parseErr.message);
+              }
+            }
+          }
+        } catch (braceErr) {
+          console.error("Brace matching error:", braceErr.message);
         }
-        
-        return { sections };
       }
       
-      // If all extraction attempts fail, return a fallback specific to the page/component type
-      console.log("All extraction methods failed, using specialized fallback for", contentType, pageName);
+      // If we got here, try regex-based extraction as a last resort
+      console.log("Trying regex-based extraction as last resort");
+      
+      // For header/footer, extract content and CSS properties
+      if (contentType !== 'page') {
+        const componentResult = this._extractComponentProperties(cleanedContent);
+        if (componentResult) {
+          console.log("Successfully extracted component properties");
+          return componentResult;
+        }
+      } 
+      // For pages, try to extract sections array
+      else {
+        const pageResult = this._extractPageSections(cleanedContent, pageName);
+        if (pageResult && pageResult.sections && pageResult.sections.length > 0) {
+          console.log(`Extracted ${pageResult.sections.length} sections using regex`);
+          return pageResult;
+        }
+      }
+      
+      // All extraction methods failed, use fallback
+      console.log(`All extraction methods failed for ${contentType} ${pageName}, using fallback`);
       return this._createFallbackObject(contentType, pageName);
     } catch (error) {
       console.error('Error processing content:', error);
@@ -133,48 +100,300 @@ class ContentProcessor {
   }
   
   /**
-   * Attempts to parse JSON with multiple strategies
-   * @param {string} content - JSON string to parse
-   * @param {string} contentType - Type of content
-   * @param {string} pageName - Name of page if contentType is 'page'
-   * @returns {Object|null} Parsed JSON or null
+   * Extract and parse complete JSON for a page with sections
+   * @param {string} content - Cleaned content
+   * @param {string} pageName - Name of the page
+   * @returns {Object|null} - Parsed page object or null
    */
-  _attemptJsonParse(content, contentType, pageName) {
-    // Try direct parsing first
+  _extractAndParsePageJSON(content, pageName) {
     try {
-      const parsedJson = JSON.parse(content);
-      // Validate and fix the parsed JSON
-      return this._validateAndFixObject(parsedJson, contentType, pageName);
-    } catch (directError) {
-      // Direct parsing failed, try to fix common issues
-    }
-    
-    // Try extracting JSON from between braces
-    try {
-      const startIdx = content.indexOf('{');
-      const endIdx = content.lastIndexOf('}');
+      // Approach 1: Try direct parsing of the whole content
+      try {
+        // Find valid JSON object start and end
+        const startIdx = content.indexOf('{');
+        if (startIdx >= 0) {
+          // Find matching closing brace
+          const endIdx = this._findMatchingCloseBrace(content, startIdx);
+          if (endIdx > startIdx) {
+            const jsonStr = content.substring(startIdx, endIdx + 1);
+            const result = JSON.parse(jsonStr);
+            if (result && result.sections && Array.isArray(result.sections)) {
+              return this._validateAndFixObject(result, 'page', pageName);
+            }
+          }
+        }
+      } catch (directParseErr) {
+        console.log("Direct parsing of page JSON failed:", directParseErr.message);
+      }
       
-      if (startIdx >= 0 && endIdx > startIdx) {
-        const jsonString = content.substring(startIdx, endIdx + 1);
-        const parsedJson = JSON.parse(jsonString);
-        return this._validateAndFixObject(parsedJson, contentType, pageName);
+      // Approach 2: Extract sections array and reconstruct JSON
+      const sectionsMatch = content.match(/"sections"\s*:\s*\[([^[\]]*(?:\[(?:[^[\]]*(?:\[[^[\]]*\])*[^[\]]*)\])*[^[\]]*)\]/s);
+      if (sectionsMatch && sectionsMatch[1]) {
+        const sectionsArrayContent = sectionsMatch[1];
+        
+        // Try to manually build valid sections
+        const sections = this._extractSectionsFromArray(sectionsArrayContent, pageName);
+        
+        if (sections && sections.length > 0) {
+          return { sections };
+        }
       }
-    } catch (subsetError) {
-      // Subset parsing failed
+      
+      // Approach 3: Try block by block extraction
+      const sectionBlocks = this._extractSectionBlocks(content);
+      if (sectionBlocks && sectionBlocks.length > 0) {
+        const sections = sectionBlocks.map((block, index) => {
+          try {
+            // Try to parse the block as JSON
+            const parsed = JSON.parse(block);
+            return {
+              sectionReference: parsed.sectionReference || `section-${pageName.toLowerCase()}-${index}-${Date.now()}`,
+              content: parsed.content || `<div>Section ${index + 1}</div>`,
+              css: parsed.css || ''
+            };
+          } catch (blockErr) {
+            // Extract properties using regex if parsing fails
+            const refMatch = block.match(/"sectionReference"\s*:\s*"([^"]*)"/);
+            const contentMatch = block.match(/"content"\s*:\s*"((?:\\"|[^"])*?)"/);
+            const cssMatch = block.match(/"css"\s*:\s*"((?:\\"|[^"])*?)"/);
+            
+            return {
+              sectionReference: refMatch ? this._unescapeString(refMatch[1]) : `section-${pageName.toLowerCase()}-${index}-${Date.now()}`,
+              content: contentMatch ? this._unescapeString(contentMatch[1]) : `<div>Section ${index + 1}</div>`,
+              css: cssMatch ? this._unescapeString(cssMatch[1]) : ''
+            };
+          }
+        });
+        
+        return { sections };
+      }
+      
+      return null;
+    } catch (error) {
+      console.error("Error extracting page JSON:", error);
+      return null;
+    }
+  }
+  
+  /**
+   * Extract section blocks from content
+   * @param {string} content - Content containing section objects
+   * @returns {Array} - Array of section JSON strings
+   */
+  _extractSectionBlocks(content) {
+    const blocks = [];
+    let inObject = false;
+    let objectStart = -1;
+    let braceCount = 0;
+    
+    // Scan for section objects - looking for patterns like: { "sectionReference": ...
+    for (let i = 0; i < content.length; i++) {
+      // Start of potential object
+      if (content[i] === '{') {
+        if (!inObject) {
+          // Check if it looks like a section object
+          const nextChars = content.substring(i, i + 30);
+          if (nextChars.includes('"sectionReference"') || 
+              nextChars.includes('"content"') || 
+              nextChars.includes('"css"')) {
+            inObject = true;
+            objectStart = i;
+            braceCount = 1;
+          } else {
+            braceCount++;
+          }
+        } else {
+          braceCount++;
+        }
+      }
+      // End of object
+      else if (content[i] === '}' && inObject) {
+        braceCount--;
+        if (braceCount === 0) {
+          // Extract the complete object
+          const objectStr = content.substring(objectStart, i + 1);
+          blocks.push(objectStr);
+          inObject = false;
+        }
+      }
     }
     
-    // Try extracting JSON from markdown code blocks
-    try {
-      const codeBlockMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/);
-      if (codeBlockMatch && codeBlockMatch[1]) {
-        const codeJson = JSON.parse(codeBlockMatch[1].trim());
-        return this._validateAndFixObject(codeJson, contentType, pageName);
+    return blocks;
+  }
+  
+  /**
+   * Extract sections from a sections array content
+   * @param {string} arrayContent - Content of the sections array
+   * @param {string} pageName - Name of the page
+   * @returns {Array} - Array of section objects
+   */
+  _extractSectionsFromArray(arrayContent, pageName) {
+    const sections = [];
+    let currentSection = '';
+    let braceLevel = 0;
+    let inSection = false;
+    
+    // Process character by character
+    for (let i = 0; i < arrayContent.length; i++) {
+      const char = arrayContent[i];
+      
+      if (char === '{') {
+        braceLevel++;
+        if (braceLevel === 1) {
+          inSection = true;
+          currentSection = '{';
+        } else if (inSection) {
+          currentSection += char;
+        }
+      } 
+      else if (char === '}') {
+        if (inSection) {
+          currentSection += char;
+        }
+        braceLevel--;
+        
+        if (braceLevel === 0 && inSection) {
+          // Found a complete section object
+          try {
+            const sectionObj = JSON.parse(currentSection);
+            sections.push({
+              sectionReference: sectionObj.sectionReference || `section-${pageName.toLowerCase()}-${sections.length}-${Date.now()}`,
+              content: sectionObj.content || `<div>Section content</div>`,
+              css: sectionObj.css || ''
+            });
+          } catch (err) {
+            // If JSON parsing fails, try regex extraction
+            console.error("Error parsing section:", err.message);
+            const refMatch = currentSection.match(/"sectionReference"\s*:\s*"([^"]*)"/);
+            const contentMatch = currentSection.match(/"content"\s*:\s*"((?:\\"|[^"])*?)"/);
+            const cssMatch = currentSection.match(/"css"\s*:\s*"((?:\\"|[^"])*?)"/);
+            
+            if (contentMatch || refMatch) {
+              sections.push({
+                sectionReference: refMatch ? this._unescapeString(refMatch[1]) : `section-${pageName.toLowerCase()}-${sections.length}-${Date.now()}`,
+                content: contentMatch ? this._unescapeString(contentMatch[1]) : `<div>Section content</div>`,
+                css: cssMatch ? this._unescapeString(cssMatch[1]) : ''
+              });
+            }
+          }
+          
+          inSection = false;
+          currentSection = '';
+        }
       }
-    } catch (codeBlockError) {
-      // Code block parsing failed
+      else if (inSection) {
+        currentSection += char;
+      }
+    }
+    
+    return sections;
+  }
+  
+  /**
+   * Extract component (header/footer) properties using regex
+   * @param {string} content - Content to extract from
+   * @returns {Object|null} - Extracted component properties or null
+   */
+  _extractComponentProperties(content) {
+    // Extract content and CSS using regex
+    const contentMatch = content.match(/"content"\s*:\s*"((?:\\"|[^"])*?)"/);
+    const cssMatch = content.match(/"css"\s*:\s*"((?:\\"|[^"])*?)"/);
+    
+    if (contentMatch || cssMatch) {
+      return {
+        content: contentMatch ? this._unescapeString(contentMatch[1]) : "<div>Fallback content</div>",
+        css: cssMatch ? this._unescapeString(cssMatch[1]) : "/* Fallback CSS */"
+      };
     }
     
     return null;
+  }
+  
+  /**
+   * Extract page sections using regex
+   * @param {string} content - Content to extract from
+   * @param {string} pageName - Name of the page
+   * @returns {Object|null} - Page object with sections array or null
+   */
+  _extractPageSections(content, pageName) {
+    // Try to find anything that looks like a section
+    const sectionMatches = Array.from(content.matchAll(/\{[^{]*?"sectionReference"[^}]*?\}/g));
+    const sections = [];
+    
+    for (const match of sectionMatches) {
+      const sectionStr = match[0];
+      
+      try {
+        // Try to parse the section as JSON
+        const sectionObj = JSON.parse(sectionStr);
+        sections.push({
+          sectionReference: sectionObj.sectionReference || `section-${pageName.toLowerCase()}-${sections.length}-${Date.now()}`,
+          content: sectionObj.content || `<div>Section content</div>`,
+          css: sectionObj.css || ''
+        });
+      } catch (err) {
+        // If JSON parsing fails, try regex extraction
+        const refMatch = sectionStr.match(/"sectionReference"\s*:\s*"([^"]*)"/);
+        const contentMatch = sectionStr.match(/"content"\s*:\s*"((?:\\"|[^"])*?)"/);
+        const cssMatch = sectionStr.match(/"css"\s*:\s*"((?:\\"|[^"])*?)"/);
+        
+        if (contentMatch || refMatch) {
+          sections.push({
+            sectionReference: refMatch ? this._unescapeString(refMatch[1]) : `section-${pageName.toLowerCase()}-${sections.length}-${Date.now()}`,
+            content: contentMatch ? this._unescapeString(contentMatch[1]) : `<div>Section content</div>`,
+            css: cssMatch ? this._unescapeString(cssMatch[1]) : ''
+          });
+        }
+      }
+    }
+    
+    if (sections.length > 0) {
+      return { sections };
+    }
+    
+    return null;
+  }
+  
+  /**
+   * Find the matching closing brace for a JSON object
+   * @param {string} content - Content with JSON
+   * @param {number} startIdx - Index of opening brace
+   * @returns {number} - Index of closing brace or -1
+   */
+  _findMatchingCloseBrace(content, startIdx) {
+    let braceCount = 0;
+    let inString = false;
+    let escaped = false;
+    
+    for (let i = startIdx; i < content.length; i++) {
+      const char = content[i];
+      
+      // Handle string content (skip processing braces inside strings)
+      if (char === '"' && !escaped) {
+        inString = !inString;
+      } 
+      // Track escape character
+      else if (char === '\\' && inString) {
+        escaped = !escaped;
+        continue;
+      } else {
+        escaped = false;
+      }
+      
+      // Only process braces when not in a string
+      if (!inString) {
+        if (char === '{') {
+          braceCount++;
+        } else if (char === '}') {
+          braceCount--;
+          if (braceCount === 0) {
+            return i; // Found matching closing brace
+          }
+        }
+      }
+    }
+    
+    return -1; // No matching brace found
   }
   
   /**
@@ -193,12 +412,24 @@ class ContentProcessor {
         return this._createFallbackObject('page', pageName);
       }
       
-      // Validate each section
+      // Validate each section and fix any issues
       json.sections = json.sections.map((section, index) => {
+        // Handle missing or invalid content
+        let content = section.content;
+        if (!content || typeof content !== 'string') {
+          content = `<div class="container"><h2>${pageName} Section ${index + 1}</h2><p>Content for ${pageName}</p></div>`;
+        }
+        
+        // Handle missing or invalid CSS
+        let css = section.css;
+        if (!css || typeof css !== 'string') {
+          css = `/* CSS for ${pageName} section ${index + 1} */`;
+        }
+        
         return {
           sectionReference: section.sectionReference || `section-${pageName.toLowerCase()}-${index}-${Date.now()}`,
-          content: section.content || `<div class="container"><h2>${pageName} Section</h2><p>Content for ${pageName}</p></div>`,
-          css: section.css || `/* CSS for ${pageName} section ${index} */`
+          content: content,
+          css: css
         };
       });
       
@@ -230,25 +461,15 @@ class ContentProcessor {
     cleaned = cleaned.replace(/<think[^>]*>/g, '');
     cleaned = cleaned.replace(/<\/think>/g, '');
     
-    // If after removing think tags, the result starts with non-JSON content
-    // Look for the first opening curly brace
-    const jsonStartIdx = cleaned.indexOf('{');
-    const jsonArrayStartIdx = cleaned.indexOf('[');
+    // Remove markdown code blocks that might wrap JSON
+    cleaned = cleaned.replace(/```(?:json)?\s*([\s\S]*?)```/g, '$1');
     
-    // If we have both { and [, take the first one
-    if (jsonStartIdx >= 0 && jsonArrayStartIdx >= 0) {
-      const firstJsonDelimiter = Math.min(jsonStartIdx, jsonArrayStartIdx);
-      if (firstJsonDelimiter > 0) {
-        cleaned = cleaned.substring(firstJsonDelimiter);
-      }
-    } 
-    // If we only have {
-    else if (jsonStartIdx > 0) {
+    // If after removing think tags, the result starts with non-JSON content
+    // Look for the first valid JSON start character
+    const jsonStartIdx = cleaned.indexOf('{');
+    
+    if (jsonStartIdx > 0) {
       cleaned = cleaned.substring(jsonStartIdx);
-    } 
-    // If we only have [
-    else if (jsonArrayStartIdx > 0) {
-      cleaned = cleaned.substring(jsonArrayStartIdx);
     }
     
     return cleaned.trim();
@@ -263,14 +484,24 @@ class ContentProcessor {
     if (!str) return '';
     
     try {
-      // Handle common escape sequences
-      return str
-        .replace(/\\"/g, '"')
-        .replace(/\\n/g, '\n')
-        .replace(/\\t/g, '\t')
-        .replace(/\\r/g, '\r')
-        .replace(/\\\\/g, '\\')
-        .replace(/\\'/g, "'");
+      // For deeply nested escaping (which might happen with JSON in JSON)
+      let unescaped = str;
+      
+      // Multiple passes to handle nested escaping
+      for (let i = 0; i < 3; i++) {
+        // If there are no more escaped sequences, we're done
+        if (!unescaped.includes('\\')) break;
+        
+        unescaped = unescaped
+          .replace(/\\"/g, '"')
+          .replace(/\\n/g, '\n')
+          .replace(/\\t/g, '\t')
+          .replace(/\\r/g, '\r')
+          .replace(/\\\\/g, '\\')
+          .replace(/\\'/g, "'");
+      }
+      
+      return unescaped;
     } catch (e) {
       console.error('Error unescaping string:', e);
       return str;

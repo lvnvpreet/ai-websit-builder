@@ -122,6 +122,8 @@ class OllamaService {
    * @param {Object} params - Additional parameters
    * @returns {Promise<string>} Generated text
    */
+
+  // When generating text:
   async generateText(prompt, params = {}) {
     try {
       console.log(`Generating text with model: ${this.model}`);
@@ -129,7 +131,7 @@ class OllamaService {
       // If asking for JSON, modify the prompt to make it more reliable
       let modifiedPrompt = prompt;
       if (prompt.includes("JSON") || prompt.includes("json") || params.format === "json") {
-        modifiedPrompt = `${prompt.trim()}\n\nIMPORTANT: Your response must be valid JSON only. Do not include any other text, markdown formatting, or code blocks. Make sure to properly escape all quotes and special characters in strings.`;
+        modifiedPrompt = `${prompt.trim()}\n\nIMPORTANT: Your response must be valid JSON only. Do not include any other text, markdown formatting, or code blocks. Make sure to properly escape all quotes and special characters in strings. Use double quotes for all keys and string values.`;
       }
 
       const requestParams = {
@@ -141,6 +143,7 @@ class OllamaService {
       if (prompt.includes("JSON") || prompt.includes("json") || params.format === "json") {
         requestParams.temperature = Math.min(requestParams.temperature || 0.7, 0.2);
         requestParams.top_p = Math.min(requestParams.top_p || 0.9, 0.8);
+        requestParams.max_tokens = Math.max(requestParams.max_tokens || 4096, 8192); // Ensure enough tokens
       }
 
       const response = await axios.post(`${this.baseUrl}/api/generate`, {
@@ -155,8 +158,6 @@ class OllamaService {
       return response.data.response;
     } catch (error) {
       console.error('Error generating text with Ollama:', error.message);
-
-      // Return a simple string that our processor can handle
       return '{"content": "Generation failed due to API error", "css": "/* Fallback CSS */"}';
     }
   }

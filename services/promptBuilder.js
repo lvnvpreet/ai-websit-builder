@@ -2,24 +2,24 @@
  * Service for building prompts for the Ollama generation pipeline
  */
 class PromptBuilder {
-    /**
-     * Create a prompt for generating a website header
-     * @param {Object} websiteData - Website configuration data
-     * @returns {String} Formatted prompt
-     */
-    buildHeaderPrompt(websiteData) {
-      const { 
-        businessName, 
-        businessCategory, 
-        websiteTitle,
-        websiteTagline,
-        primaryColor,
-        secondaryColor,
-        fontFamily,
-        pages
-      } = websiteData;
-      
-      return `
+  /**
+   * Create a prompt for generating a website header
+   * @param {Object} websiteData - Website configuration data
+   * @returns {String} Formatted prompt
+   */
+  buildHeaderPrompt(websiteData) {
+    const {
+      businessName,
+      businessCategory,
+      websiteTitle,
+      websiteTagline,
+      primaryColor,
+      secondaryColor,
+      fontFamily,
+      pages
+    } = websiteData;
+
+    return `
         You are a professional web developer creating a header for a website.
         
         WEBSITE DETAILS:
@@ -54,46 +54,46 @@ class PromptBuilder {
         6. Ensure the design matches the brand colors
         7. DO NOT add any explanation text outside the JSON object
       `;
-    }
-    
-    /**
-     * Create a prompt for generating a website footer
-     * @param {Object} websiteData - Website configuration data
-     * @returns {String} Formatted prompt
-     */
-    buildFooterPrompt(websiteData) {
-      const { 
-        businessName, 
-        businessDescription,
-        primaryColor,
-        secondaryColor,
-        fontFamily,
-        pages,
-        address,
-        email,
-        phone,
-        socialLinks
-      } = websiteData;
-      
-      // Build social media links section if available
-      let socialMediaSection = '';
-      if (socialLinks && Object.values(socialLinks).some(link => link)) {
-        socialMediaSection = 'SOCIAL MEDIA LINKS:';
-        if (socialLinks.facebook) {
-          socialMediaSection += `\n- Facebook: facebook.com/${socialLinks.facebook}`;
-        }
-        if (socialLinks.instagram) {
-          socialMediaSection += `\n- Instagram: instagram.com/${socialLinks.instagram}`;
-        }
-        if (socialLinks.twitter) {
-          socialMediaSection += `\n- Twitter: twitter.com/${socialLinks.twitter}`;
-        }
-        if (socialLinks.linkedin) {
-          socialMediaSection += `\n- LinkedIn: linkedin.com/company/${socialLinks.linkedin}`;
-        }
+  }
+
+  /**
+   * Create a prompt for generating a website footer
+   * @param {Object} websiteData - Website configuration data
+   * @returns {String} Formatted prompt
+   */
+  buildFooterPrompt(websiteData) {
+    const {
+      businessName,
+      businessDescription,
+      primaryColor,
+      secondaryColor,
+      fontFamily,
+      pages,
+      address,
+      email,
+      phone,
+      socialLinks
+    } = websiteData;
+
+    // Build social media links section if available
+    let socialMediaSection = '';
+    if (socialLinks && Object.values(socialLinks).some(link => link)) {
+      socialMediaSection = 'SOCIAL MEDIA LINKS:';
+      if (socialLinks.facebook) {
+        socialMediaSection += `\n- Facebook: facebook.com/${socialLinks.facebook}`;
       }
-      
-      return `
+      if (socialLinks.instagram) {
+        socialMediaSection += `\n- Instagram: instagram.com/${socialLinks.instagram}`;
+      }
+      if (socialLinks.twitter) {
+        socialMediaSection += `\n- Twitter: twitter.com/${socialLinks.twitter}`;
+      }
+      if (socialLinks.linkedin) {
+        socialMediaSection += `\n- LinkedIn: linkedin.com/company/${socialLinks.linkedin}`;
+      }
+    }
+
+    return `
         You are a professional web developer creating a footer for a website.
         
         WEBSITE DETAILS:
@@ -130,91 +130,109 @@ class PromptBuilder {
         6. Include social media icons if social links are provided
         7. DO NOT add any explanation text outside the JSON object
       `;
+  }
+
+  /**
+ * Create a prompt for generating a website page
+ * @param {String} pageName - The name of the page (e.g., "Home", "About")
+ * @param {Object} websiteData - Website configuration data
+ * @returns {String} Formatted prompt
+ */
+  buildPagePrompt(pageName, websiteData) {
+    const {
+      businessName,
+      businessCategory,
+      businessDescription,
+      websiteTitle,
+      websiteTagline,
+      websitePurpose,
+      primaryColor,
+      secondaryColor,
+      fontFamily,
+      hasNewsletter,
+      hasGoogleMap,
+      googleMapUrl,
+      hasImageSlider
+    } = websiteData;
+
+    // Add page-specific section descriptions
+    let sectionDescriptions = this._getSectionDescriptionsForPage(pageName, {
+      hasNewsletter,
+      hasGoogleMap,
+      googleMapUrl,
+      hasImageSlider
+    });
+
+    return `
+    You are a professional web developer creating a ${pageName} page for a website.
+    
+    WEBSITE DETAILS:
+    Business Name: ${businessName}
+    Business Category: ${businessCategory}
+    Business Description: ${businessDescription}
+    Website Title: ${websiteTitle}
+    Website Tagline: ${websiteTagline}
+    Website Purpose: ${websitePurpose}
+    
+    DESIGN REQUIREMENTS:
+    - Create a responsive, modern page design
+    - Use Bootstrap 5 for the base structure
+    - Primary Color: ${primaryColor}
+    - Secondary Color: ${secondaryColor}
+    - Font Family: ${fontFamily}
+    
+    PAGE STRUCTURE:
+    Create the following sections for the ${pageName} page:
+    ${sectionDescriptions}
+    
+    OUTPUT FORMAT:
+    Return ONLY a valid JSON object with a "sections" array. Each section in the array must have:
+    - "sectionReference": A unique ID for the section (e.g., "section-hero-123456")
+    - "content": The HTML content for the section
+    - "css": The CSS styling specific to this section
+    
+    SIMPLIFIED JSON STRUCTURE:
+    To avoid formatting issues, please follow this exact structure for your response:
+    {
+      "sections": [
+        {
+          "sectionReference": "section-hero",
+          "content": "<div class=\"hero\">Simple HTML content here</div>",
+          "css": ".hero { color: blue; }"
+        },
+        {
+          "sectionReference": "section-intro",
+          "content": "<div class=\"intro\">More simple HTML</div>",
+          "css": ".intro { padding: 2rem; }"
+        }
+      ]
     }
     
-    /**
-     * Create a prompt for generating a website page
-     * @param {String} pageName - The name of the page (e.g., "Home", "About")
-     * @param {Object} websiteData - Website configuration data
-     * @returns {String} Formatted prompt
-     */
-    buildPagePrompt(pageName, websiteData) {
-      const { 
-        businessName, 
-        businessCategory, 
-        businessDescription,
-        websiteTitle,
-        websiteTagline,
-        websitePurpose,
-        primaryColor,
-        secondaryColor,
-        fontFamily,
-        hasNewsletter,
-        hasGoogleMap,
-        googleMapUrl,
-        hasImageSlider
-      } = websiteData;
-      
-      // Add page-specific section descriptions
-      let sectionDescriptions = this._getSectionDescriptionsForPage(pageName, {
-        hasNewsletter,
-        hasGoogleMap,
-        googleMapUrl,
-        hasImageSlider
-      });
-      
-      return `
-        You are a professional web developer creating a ${pageName} page for a website.
-        
-        WEBSITE DETAILS:
-        Business Name: ${businessName}
-        Business Category: ${businessCategory}
-        Business Description: ${businessDescription}
-        Website Title: ${websiteTitle}
-        Website Tagline: ${websiteTagline}
-        Website Purpose: ${websitePurpose}
-        
-        DESIGN REQUIREMENTS:
-        - Create a responsive, modern page design
-        - Use Bootstrap 5 for the base structure
-        - Primary Color: ${primaryColor}
-        - Secondary Color: ${secondaryColor}
-        - Font Family: ${fontFamily}
-        
-        PAGE STRUCTURE:
-        Create the following sections for the ${pageName} page:
-        ${sectionDescriptions}
-        
-        OUTPUT FORMAT:
-        Return ONLY a JSON object with a "sections" array. Each section in the array must have:
-        - "sectionReference": A unique ID for the section (e.g., "section-hero-123456")
-        - "content": The HTML content for the section
-        - "css": The CSS styling specific to this section
-        
-        IMPORTANT GUIDELINES:
-        1. Use semantic HTML5 elements
-        2. Ensure all sections are fully responsive
-        3. Follow accessibility best practices
-        4. Include all necessary Bootstrap classes
-        5. Make CSS selectors specific to each section (use the sectionReference)
-        6. Create realistic, appealing placeholder content based on the business description
-        7. Use appropriate heading levels (h1, h2, etc.) for good SEO
-        8. DO NOT add any explanation text outside the JSON object
-      `;
-    }
+    CONTENT GUIDELINES:
+    1. Use semantic HTML5 elements
+    2. Ensure all sections are fully responsive
+    3. Follow accessibility best practices
+    4. Include all necessary Bootstrap classes
+    5. Make CSS selectors specific to each section (use the sectionReference)
+    6. Create realistic, appealing placeholder content based on the business description
+    7. Use appropriate heading levels (h1, h2, etc.) for good SEO
     
-    /**
-     * Create section descriptions based on the page type
-     * @param {String} pageName - The name of the page
-     * @param {Object} features - Special features to include
-     * @returns {String} Section descriptions
-     * @private
-     */
-    _getSectionDescriptionsForPage(pageName, features) {
-      const pageNameLower = pageName.toLowerCase();
-      
-      if (pageNameLower === 'home' || pageNameLower === 'homepage') {
-        let sections = `
+    REMEMBER: Return ONLY the JSON object with no explanations or markdown formatting before or after.
+  `;
+  }
+
+  /**
+   * Create section descriptions based on the page type
+   * @param {String} pageName - The name of the page
+   * @param {Object} features - Special features to include
+   * @returns {String} Section descriptions
+   * @private
+   */
+  _getSectionDescriptionsForPage(pageName, features) {
+    const pageNameLower = pageName.toLowerCase();
+
+    if (pageNameLower === 'home' || pageNameLower === 'homepage') {
+      let sections = `
           1. Hero Section - Create an eye-catching hero area with:
             - Headline that captures the main value proposition
             - Subheading with supporting message
@@ -234,38 +252,38 @@ class PromptBuilder {
             - 2-3 customer testimonials in cards or a carousel
             - Customer names and optional photos
         `;
-        
-        if (features.hasImageSlider) {
-          sections += `
+
+      if (features.hasImageSlider) {
+        sections += `
           5. Image Slider - Showcase imagery with:
             - Responsive image slider/carousel
             - 3-5 placeholder images with captions
             - Navigation controls
           `;
-        }
-        
-        if (features.hasNewsletter) {
-          sections += `
+      }
+
+      if (features.hasNewsletter) {
+        sections += `
           6. Newsletter Section - Email capture with:
             - Brief benefit statement
             - Email input field
             - Submit button
             - Privacy note
           `;
-        }
-        
-        sections += `
+      }
+
+      sections += `
           7. Call to Action Section - Final conversion point with:
             - Compelling heading
             - Brief supporting text
             - Prominent call-to-action button
         `;
-        
-        return sections;
-      }
-      
-      if (pageNameLower === 'about' || pageNameLower === 'about us') {
-        return `
+
+      return sections;
+    }
+
+    if (pageNameLower === 'about' || pageNameLower === 'about us') {
+      return `
           1. Page Header Section - Introduction with:
             - Page title (About Us)
             - Brief overview statement
@@ -290,10 +308,10 @@ class PromptBuilder {
             - Transition statement
             - Call-to-action button
         `;
-      }
-      
-      if (pageNameLower === 'services' || pageNameLower === 'products') {
-        return `
+    }
+
+    if (pageNameLower === 'services' || pageNameLower === 'products') {
+      return `
           1. Page Header Section - Introduction with:
             - Page title (Services/Products)
             - Brief overview statement
@@ -328,10 +346,10 @@ class PromptBuilder {
             - Brief supporting text
             - Prominent call-to-action button
         `;
-      }
-      
-      if (pageNameLower === 'contact' || pageNameLower === 'contact us') {
-        let sections = `
+    }
+
+    if (pageNameLower === 'contact' || pageNameLower === 'contact us') {
+      let sections = `
           1. Page Header Section - Introduction with:
             - Page title (Contact Us)
             - Brief invitation to get in touch
@@ -349,21 +367,21 @@ class PromptBuilder {
             - Email address
             - Business hours
         `;
-        
-        if (features.hasGoogleMap) {
-          sections += `
+
+      if (features.hasGoogleMap) {
+        sections += `
           4. Map Section - Location visualization with:
             - ${features.googleMapUrl ? 'Embedded Google Map from URL: ' + features.googleMapUrl : 'Placeholder for Google Map'}
             - Location marker
             - Optional directions link
           `;
-        }
-        
-        return sections;
       }
-      
-      // Default page structure for other page types
-      return `
+
+      return sections;
+    }
+
+    // Default page structure for other page types
+    return `
         1. Page Header Section - Introduction with:
           - Page title (${pageName})
           - Brief introduction
@@ -382,7 +400,7 @@ class PromptBuilder {
           - Transition statement
           - Relevant call-to-action button
       `;
-    }
   }
-  
-  module.exports = new PromptBuilder();
+}
+
+module.exports = new PromptBuilder();

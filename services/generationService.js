@@ -137,43 +137,81 @@ class GenerationService {
    * @returns {Promise<Array>} Array of page sections
    * @private
    */
+  // In services/generationService.js
+  // In services/generationService.js
   async _generatePage(pageName, websiteData) {
     try {
+      console.log(`Generating ${pageName} page content`);
+
       // Get the page prompt
       const pagePrompt = promptBuilder.buildPagePrompt(pageName, websiteData);
 
-      // Generate page content
+      // Set improved parameters for generation
+      const generationParams = {
+        ...generationConfig.generation.jsonParams,
+        temperature: 0.1,  // Very low temperature for better JSON consistency
+        top_p: 0.7,  // More focused sampling
+        max_tokens: 8192   // Ensure enough tokens for full response
+      };
+
+      // Generate page content with better error handling
       const pageContent = await this._generateWithRetry(
         async () => {
-          const response = await ollamaService.generateText(
-            pagePrompt,
-            {
-              ...generationConfig.generation.jsonParams,
-              format: "json"  // Add a format hint
+          console.log(`Generating ${pageName} page attempt`);
+          // Generate with the enhanced prompt
+          const response = await ollamaService.generateText(pagePrompt, generationParams);
+
+          // Process the response
+          const processed = contentProcessor.processJsonContent(response);
+
+          // Explicitly validate the result
+          if (processed && processed.sections && Array.isArray(processed.sections)) {
+            // Check if sections have required properties
+            const validSections = processed.sections.filter(section => {
+              return section && typeof section.sectionReference === 'string' &&
+                typeof section.content === 'string';
+            });
+
+            if (validSections.length > 0) {
+              console.log(`Successfully generated ${validSections.length} valid sections for ${pageName}`);
+              return { sections: validSections };
             }
-          );
-          return contentProcessor.processJsonContent(response, 'page', pageName);
+          }
+
+          console.log(`Invalid page content structure for ${pageName}`);
+          return null; // Will trigger retry
         },
         generationConfig.generation.retry.attempts
       );
 
-      // Check if we have valid sections
-      if (pageContent && pageContent.sections && Array.isArray(pageContent.sections)) {
-        // Make sure each section has all required properties
-        return pageContent.sections.map(section => {
-          // Ensure we have a valid section reference
+      // Final validation and preparation of page content
+      if (pageContent && pageContent.sections && Array.isArray(pageContent.sections) && pageContent.sections.length > 0) {
+        return pageContent.sections.map((section, index) => {
+          // Generate a fallback reference if needed
           const sectionRef = section.sectionReference ||
-            `section-${pageName.toLowerCase()}-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+            `section-${pageName.toLowerCase().replace(/\s+/g, '-')}-${index}-${Date.now()}`;
+
+          // Handle missing or invalid content
+          let content = section.content;
+          if (!content || typeof content !== 'string') {
+            content = `<div class="container py-5"><h2>${pageName} Section ${index + 1}</h2><p>Content for ${pageName}</p></div>`;
+          }
+
+          // Handle missing or invalid CSS
+          let css = section.css;
+          if (!css || typeof css !== 'string') {
+            css = `#${sectionRef} { padding: 3rem 0; }`;
+          }
 
           return {
             sectionReference: sectionRef,
-            content: section.content || `<div class="container"><h2>${pageName} Content</h2><p>Content for ${pageName}</p></div>`,
-            css: section.css || ''
+            content: content,
+            css: css
           };
         });
       }
 
-      // If generation failed, use fallback sections
+      // If generation still failed, use fallback sections
       console.warn(`Page generation failed for ${pageName}. Using fallback sections.`);
       return this._createFallbackSections(pageName, websiteData);
     } catch (error) {

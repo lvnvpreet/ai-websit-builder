@@ -1,0 +1,146 @@
+<%- include('../partials/_header', { user: true }) %>
+
+<div class="container mt-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><%= website.businessName %></h1>
+    
+    <div class="btn-group">
+      <% if (website.status === 'completed') { %>
+        <a href="/websites/<%= website._id %>/preview" class="btn btn-primary"><i class="fas fa-eye"></i> Preview</a>
+        <a href="/export/<%= website._id %>" class="btn btn-success"><i class="fas fa-download"></i> Export</a>
+      <% } else if (website.status === 'generating') { %>
+        <a href="/generate/<%= website._id %>" class="btn btn-warning"><i class="fas fa-cog fa-spin"></i> View Progress</a>
+      <% } else if (website.status === 'failed') { %>
+        <a href="/generate/<%= website._id %>/start" class="btn btn-danger"><i class="fas fa-redo"></i> Retry Generation</a>
+      <% } else { %>
+        <a href="/generate/<%= website._id %>" class="btn btn-secondary"><i class="fas fa-magic"></i> Generate</a>
+      <% } %>
+      <button class="btn btn-outline-danger delete-website" data-id="<%= website._id %>"><i class="fas fa-trash-alt"></i> Delete</button>
+    </div>
+  </div>
+  
+  <div class="card mb-4">
+    <div class="card-header">
+      <h5 class="card-title mb-0">Website Information</h5>
+    </div>
+    <div class="card-body">
+      <div class="row">
+        <div class="col-md-6">
+          <p><strong>Business Name:</strong> <%= website.businessName %></p>
+          <p><strong>Business Category:</strong> <%= website.businessCategory %></p>
+          <p><strong>Created At:</strong> <%= new Date(website.createdAt).toLocaleString() %></p>
+        </div>
+        <div class="col-md-6">
+          <p><strong>Website Title:</strong> <%= website.websiteTitle %></p>
+          <p><strong>Website Type:</strong> <%= website.websiteType %></p>
+          <p><strong>Status:</strong> 
+            <% if (website.status === 'completed') { %>
+              <span class="badge bg-success">Completed</span>
+            <% } else if (website.status === 'generating') { %>
+              <span class="badge bg-warning">Generating</span>
+            <% } else if (website.status === 'failed') { %>
+              <span class="badge bg-danger">Failed</span>
+            <% } else { %>
+              <span class="badge bg-secondary">Pending</span>
+            <% } %>
+          </p>
+        </div>
+      </div>
+      
+      <div class="mt-3">
+        <h6>Business Description:</h6>
+        <p><%= website.businessDescription %></p>
+      </div>
+    </div>
+  </div>
+  
+  <% if (pages && pages.length > 0) { %>
+    <div class="card">
+      <div class="card-header">
+        <h5 class="card-title mb-0">Website Pages</h5>
+      </div>
+      <div class="card-body">
+        <div class="list-group">
+          <% pages.forEach(page => { %>
+            <div class="list-group-item list-group-item-action">
+              <div class="d-flex w-100 justify-content-between">
+                <h5 class="mb-1"><%= page.name %></h5>
+                <% if (website.status === 'completed') { %>
+                  <a href="/preview/<%= website._id %>/page/<%= page._id %>" class="btn btn-sm btn-outline-primary">Preview</a>
+                <% } %>
+              </div>
+              <p class="mb-1">
+                <small class="text-muted">Slug: <%= page.slug %></small>
+                <% if (page.sections && page.sections.length > 0) { %>
+                  <span class="badge bg-info ms-2"><%= page.sections.length %> Sections</span>
+                <% } %>
+              </p>
+            </div>
+          <% }); %>
+        </div>
+      </div>
+    </div>
+  <% } %>
+</div>
+
+<!-- Delete Website Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Confirm Deletion</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p>Are you sure you want to delete this website? This action cannot be undone.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-danger" id="confirmDelete">Delete</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/_footer') %>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Delete website functionality
+    const deleteButtons = document.querySelectorAll('.delete-website');
+    const confirmDeleteBtn = document.getElementById('confirmDelete');
+    let websiteToDelete = null;
+    
+    deleteButtons.forEach(button => {
+      button.addEventListener('click', function() {
+        websiteToDelete = this.getAttribute('data-id');
+        const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+        deleteModal.show();
+      });
+    });
+    
+    confirmDeleteBtn.addEventListener('click', async function() {
+      if (!websiteToDelete) return;
+      
+      try {
+        const response = await fetch(`/websites/${websiteToDelete}`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          window.location.href = '/websites';
+        } else {
+          alert('Error deleting website: ' + data.message);
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        alert('Error deleting website. Please try again.');
+      }
+    });
+  });
+</script>

@@ -18,6 +18,7 @@ const wizardRoutes = require('./routes/wizardRoutes');
 const generationRoutes = require('./routes/generationRoutes');
 const previewRoutes = require('./routes/previewRoutes');
 const exportRoutes = require('./routes/exportRoutes');
+const websiteRoutes = require('./routes/websiteRoutes');
 
 // Import models
 const User = require('./models/User');
@@ -155,8 +156,12 @@ app.use('/wizard', wizardRoutes);
 // Generation Routes
 app.use(generationRoutes);
 
+// All website
+app.use('/websites', websiteRoutes);
+
 // Preview Routes
-app.use(previewRoutes);
+app.use('/', previewRoutes);
+
 
 // Export Routes
 app.use(exportRoutes);

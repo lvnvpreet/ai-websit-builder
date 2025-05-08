@@ -3,6 +3,7 @@ const Page = require('../models/Page');
 const generationService = require('../services/generationService');
 const ollamaService = require('../services/ollamaService');
 
+const activeGenerations = new Set();
 // Render generation page
 exports.getGenerationPage = async (req, res) => {
 
@@ -54,21 +55,33 @@ exports.startGeneration = async (req, res) => {
   try {
     const { id } = req.params;
     
+    // Check if generation is already in progress for this website
+    if (activeGenerations.has(id)) {
+      console.log(`Generation already in progress for website ${id}, returning existing process status`);
+      return res.json({ success: true, message: 'Generation already in progress' });
+    }
+    
+    // Add to active generations set
+    activeGenerations.add(id);
+    
     // Find the website
     const website = await Website.findOne({ _id: id, user: req.user._id });
     
     if (!website) {
+      activeGenerations.delete(id); // Remove from active set
       return res.status(404).json({ success: false, message: 'Website not found' });
     }
     
-    // Check if generation is already in progress
+    // Check if generation is already in progress in the database
     if (website.status === 'generating') {
+      activeGenerations.delete(id); // Remove from active set
       return res.status(400).json({ success: false, message: 'Generation already in progress' });
     }
     
     // Check if Ollama is running before starting
     const isOllamaRunning = await ollamaService.isServerRunning();
     if (!isOllamaRunning) {
+      activeGenerations.delete(id); // Remove from active set
       return res.status(503).json({ 
         success: false, 
         message: 'Ollama server is not running or not accessible' 
@@ -117,10 +130,18 @@ exports.startGeneration = async (req, res) => {
         // Record failure in the database
         website.status = 'failed';
         await website.save();
+      })
+      .finally(() => {
+        // Remove from active generations set
+        activeGenerations.delete(id);
       });
     
     res.json({ success: true, message: 'Generation started' });
   } catch (error) {
+    // Clean up in case of error
+    if (req.params.id) {
+      activeGenerations.delete(req.params.id);
+    }
     console.error('Error starting generation:', error);
     res.status(500).json({ success: false, message: 'Error starting generation' });
   }

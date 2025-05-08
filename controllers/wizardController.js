@@ -215,6 +215,7 @@ exports.saveWebsite = async (req, res) => {
       fontFamily: wizardData.fontFamily,
       fontStyle: wizardData.fontStyle,
       structure: wizardData.structure,
+      pages: wizardData.pages, // Add this line to save the selected pages
       address: wizardData.address,
       email: wizardData.email,
       phone: wizardData.phone,

@@ -8,23 +8,23 @@ module.exports = {
       defaultParams: {
         temperature: 0.7,
         top_p: 0.9,
-        max_tokens: 4096,
+        max_tokens: 8192,
         stop: []
       },
       
       // Custom parameters for specific generation tasks
       jsonParams: {
-        temperature: 0.2,  // Lower temperature for more consistent JSON outputs
-        top_p: 0.8,
-        max_tokens: 8192
+        temperature: 0.7,  // Increased from 0.2 to allow more creative content
+        top_p: 0.9,
+        max_tokens: 12000  // Increased to allow for more extensive content
       },
       
       // Timeouts in milliseconds
       timeouts: {
-        default: 60000,     // 1 minute
-        header: 60000,      // 1 minute
-        page: 120000,       // 2 minutes
-        complex: 180000     // 3 minutes
+        default: 120000,     // 2 minutes (increased from 1 minute)
+        header: 120000,      // 2 minutes (increased from 1 minute)
+        page: 180000,        // 3 minutes (increased from 2 minutes)
+        complex: 240000      // 4 minutes (increased from 3 minutes)
       },
       
       // Retry configuration

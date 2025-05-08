@@ -57,6 +57,12 @@ exports.previewPage = async (req, res) => {
         error: { status: 404 }
       });
     }
+
+    console.log('Preview - Header exists:', !!website.header);
+    console.log('Preview - Header has content:', !!(website.header && website.header.content));
+    console.log('Preview - Footer exists:', !!website.footer);
+    console.log('Preview - Footer has content:', !!(website.footer && website.footer.content));
+    
     
     // Find the page by ID or slug
     let page;

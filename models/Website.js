@@ -57,15 +57,30 @@ const WebsiteSchema = new mongoose.Schema({
     type: String,
     default: 'Multipage'
   },
+  // Pages
+  pages: {
+    type: [String],
+    default: ['Home', 'About', 'Services', 'Contact']
+  },
   // Footer information
   address: String,
   email: String,
   phone: String,
+  address: String,
   socialLinks: {
     facebook: String,
     instagram: String,
     twitter: String,
     linkedin: String
+  },
+  // Header and footer content
+  header: {
+    content: String,
+    css: String
+  },
+  footer: {
+    content: String,
+    css: String
   },
   // Additional features
   hasNewsletter: {

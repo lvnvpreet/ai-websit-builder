@@ -230,8 +230,14 @@ class GenerationService {
   async _saveToDatabase(websiteDoc, result) {
     try {
       // 1. Update website with header and footer
-      websiteDoc.header = result.header;
-      websiteDoc.footer = result.footer;
+      websiteDoc.header = {
+        content: result.header.content || '',
+        css: result.header.css || ''
+      };
+      websiteDoc.footer = {
+        content: result.footer.content || '',
+        css: result.footer.css || ''
+      };
       websiteDoc.status = 'completed';
       websiteDoc.generatedAt = new Date();
 
@@ -302,7 +308,7 @@ class GenerationService {
       fontStyle: website.fontStyle,
       structure: website.structure,
       pages: Array.isArray(website.pages) && website.pages.length > 0
-        ? website.pages.map(p => typeof p === 'string' ? p : 'Page')
+        ? website.pages
         : defaultPages,
       address: website.address,
       email: website.email,
@@ -323,10 +329,10 @@ class GenerationService {
    */
   _createFallbackHeader(websiteData) {
     let headerContent = generationConfig.templates.fallbackHTML.header;
-
+  
     // Replace placeholders with actual data
     headerContent = headerContent.replace(/{{businessName}}/g, websiteData.businessName);
-
+  
     // Add navigation links based on pages
     if (Array.isArray(websiteData.pages) && websiteData.pages.length > 0) {
       let navLinks = '';
@@ -335,28 +341,102 @@ class GenerationService {
         const href = page.toLowerCase() === 'home' ? '/' : `/${page.toLowerCase().replace(/\s+/g, '-')}`;
         navLinks += `<li class="nav-item"><a class="nav-link${isActive ? ' active' : ''}" href="${href}">${page}</a></li>`;
       });
-
+  
       headerContent = headerContent.replace(/<ul class="navbar-nav ms-auto">[\s\S]*?<\/ul>/g,
         `<ul class="navbar-nav ms-auto">${navLinks}</ul>`);
     }
-
-    // Create basic CSS
+  
+    // Create enhanced CSS
     const headerCss = `
+      /* Header Styles */
       header.navbar {
-        background-color: ${websiteData.primaryColor} !important;
+        background-color: ${websiteData.primaryColor};
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        padding: 15px 0;
+        transition: all 0.3s ease;
       }
+      
       header .navbar-brand {
         color: white;
-        font-weight: bold;
+        font-weight: 700;
+        font-size: 1.5rem;
+        letter-spacing: -0.5px;
+        transition: all 0.3s ease;
       }
+      
+      header .navbar-brand:hover {
+        transform: translateY(-2px);
+      }
+      
       header .nav-link {
         color: rgba(255, 255, 255, 0.85) !important;
+        font-weight: 500;
+        padding: 8px 16px !important;
+        transition: all 0.3s ease;
+        position: relative;
       }
-      header .nav-link.active, header .nav-link:hover {
+      
+      header .nav-link:after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        width: 0;
+        height: 2px;
+        background-color: white;
+        transition: all 0.3s ease;
+        transform: translateX(-50%);
+      }
+      
+      header .nav-link:hover:after,
+      header .nav-link.active:after {
+        width: 80%;
+      }
+      
+      header .nav-link.active,
+      header .nav-link:hover {
         color: white !important;
       }
+      
+      header .navbar-toggler {
+        border-color: rgba(255, 255, 255, 0.1);
+        padding: 5px 10px;
+      }
+      
+      header .navbar-toggler:focus {
+        box-shadow: none;
+        outline: none;
+      }
+      
+      header .navbar-toggler-icon {
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%28255, 255, 255, 0.85%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+      }
+      
+      @media (max-width: 991px) {
+        header .navbar-collapse {
+          background-color: ${websiteData.primaryColor};
+          padding: 15px;
+          border-radius: 8px;
+          margin-top: 10px;
+          box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+        }
+        
+        header .nav-link {
+          padding: 10px !important;
+          border-radius: 4px;
+        }
+        
+        header .nav-link:hover,
+        header .nav-link.active {
+          background-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        header .nav-link:after {
+          display: none;
+        }
+      }
     `;
-
+  
     return {
       content: headerContent,
       css: headerCss
@@ -371,11 +451,11 @@ class GenerationService {
    */
   _createFallbackFooter(websiteData) {
     let footerContent = generationConfig.templates.fallbackHTML.footer;
-
+  
     // Replace placeholders with actual data
     footerContent = footerContent.replace(/{{businessName}}/g, websiteData.businessName);
     footerContent = footerContent.replace(/{{businessDescription}}/g, websiteData.businessDescription);
-
+  
     // Add contact information if available
     const addressHtml = websiteData.address
       ? websiteData.address
@@ -386,57 +466,139 @@ class GenerationService {
     const phoneHtml = websiteData.phone
       ? `<a href="tel:${websiteData.phone}" class="text-white">${websiteData.phone}</a>`
       : 'Phone not provided';
-
+  
     footerContent = footerContent.replace(/{{address}}/g, addressHtml);
     footerContent = footerContent.replace(/{{email}}/g, emailHtml);
     footerContent = footerContent.replace(/{{phone}}/g, phoneHtml);
-
+  
     // Add social links if available
     if (websiteData.socialLinks) {
       let socialLinksHtml = '';
-
+  
       if (websiteData.socialLinks.facebook) {
-        socialLinksHtml += `<a href="https://facebook.com/${websiteData.socialLinks.facebook}" class="text-white me-2" target="_blank"><i class="fab fa-facebook"></i></a>`;
+        socialLinksHtml += `<a href="https://facebook.com/${websiteData.socialLinks.facebook}" class="social-link" target="_blank"><i class="fab fa-facebook-f"></i></a>`;
       }
-
+  
       if (websiteData.socialLinks.twitter) {
-        socialLinksHtml += `<a href="https://twitter.com/${websiteData.socialLinks.twitter}" class="text-white me-2" target="_blank"><i class="fab fa-twitter"></i></a>`;
+        socialLinksHtml += `<a href="https://twitter.com/${websiteData.socialLinks.twitter}" class="social-link" target="_blank"><i class="fab fa-twitter"></i></a>`;
       }
-
+  
       if (websiteData.socialLinks.instagram) {
-        socialLinksHtml += `<a href="https://instagram.com/${websiteData.socialLinks.instagram}" class="text-white me-2" target="_blank"><i class="fab fa-instagram"></i></a>`;
+        socialLinksHtml += `<a href="https://instagram.com/${websiteData.socialLinks.instagram}" class="social-link" target="_blank"><i class="fab fa-instagram"></i></a>`;
       }
-
+  
       if (websiteData.socialLinks.linkedin) {
-        socialLinksHtml += `<a href="https://linkedin.com/company/${websiteData.socialLinks.linkedin}" class="text-white me-2" target="_blank"><i class="fab fa-linkedin"></i></a>`;
+        socialLinksHtml += `<a href="https://linkedin.com/company/${websiteData.socialLinks.linkedin}" class="social-link" target="_blank"><i class="fab fa-linkedin-in"></i></a>`;
       }
-
+  
       if (socialLinksHtml) {
         footerContent = footerContent.replace(/<div class="social-links">[\s\S]*?<\/div>/g,
           `<div class="social-links">${socialLinksHtml}</div>`);
       }
     }
-
-    // Create basic CSS
+  
+    // Create enhanced CSS
     const footerCss = `
+      /* Footer Styles */
       footer {
-        background-color: #343a40 !important;
+        background-color: #343a40;
+        color: white;
+        padding: 80px 0 40px;
+        position: relative;
+        overflow: hidden;
       }
+      
+      footer:before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 5px;
+        background: linear-gradient(to right, ${websiteData.primaryColor}, ${websiteData.secondaryColor});
+      }
+      
       footer h5 {
-        color: ${websiteData.secondaryColor};
-        font-weight: bold;
-        margin-bottom: 1rem;
+        color: white;
+        font-weight: 700;
+        margin-bottom: 25px;
+        position: relative;
+        display: inline-block;
+        font-size: 1.25rem;
       }
+      
+      footer h5:after {
+        content: '';
+        position: absolute;
+        bottom: -10px;
+        left: 0;
+        width: 40px;
+        height: 2px;
+        background-color: ${websiteData.primaryColor};
+      }
+      
+      footer p {
+        color: rgba(255, 255, 255, 0.7);
+        line-height: 1.8;
+        margin-bottom: 20px;
+      }
+      
       footer a {
+        color: rgba(255, 255, 255, 0.7);
         text-decoration: none;
-        transition: opacity 0.3s;
+        transition: all 0.3s ease;
       }
+      
       footer a:hover {
-        opacity: 0.8;
-        text-decoration: underline;
+        color: white;
+        text-decoration: none;
+      }
+      
+      footer .social-links {
+        margin-top: 20px;
+      }
+      
+      footer .social-link {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background-color: rgba(255, 255, 255, 0.1);
+        color: white;
+        margin-right: 10px;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+      }
+      
+      footer .social-link:hover {
+        background-color: ${websiteData.primaryColor};
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+      }
+      
+      footer .small {
+        font-size: 0.9rem;
+        color: rgba(255, 255, 255, 0.6);
+      }
+      
+      footer .mb-0 {
+        margin-bottom: 0;
+      }
+      
+      @media (max-width: 767px) {
+        footer {
+          padding: 60px 0 30px;
+        }
+        
+        footer .text-md-end {
+          text-align: left !important;
+          margin-top: 30px;
+        }
       }
     `;
-
+  
     return {
       content: footerContent,
       css: footerCss
@@ -832,72 +994,435 @@ class GenerationService {
    * @private
    */
   _createBasicSectionCss(sectionId, type, websiteData) {
-    const { primaryColor, secondaryColor } = websiteData;
-
-    return `
+    const { primaryColor, secondaryColor, fontFamily } = websiteData;
+    
+    // Basic shared CSS for all sections
+    let commonCss = `
       #${sectionId} {
-        padding: 60px 0;
+        padding: 80px 0;
+        position: relative;
+        overflow: hidden;
       }
+      
       #${sectionId} .section-title {
         color: ${type === 'cta' ? 'white' : '#333'};
-        margin-bottom: 20px;
-        font-weight: 700;
-      }
-      #${sectionId} .lead {
         margin-bottom: 30px;
+        font-weight: 700;
+        font-size: 2.5rem;
+        position: relative;
+        display: inline-block;
       }
+      
+      #${sectionId} .section-title:after {
+        content: '';
+        position: absolute;
+        bottom: -10px;
+        left: 0;
+        width: 60px;
+        height: 3px;
+        background-color: ${primaryColor};
+      }
+      
+      #${sectionId} .lead {
+        font-size: 1.25rem;
+        line-height: 1.7;
+        margin-bottom: 40px;
+        color: ${type === 'cta' ? 'rgba(255,255,255,0.9)' : '#666'};
+      }
+      
+      #${sectionId} p {
+        line-height: 1.7;
+        margin-bottom: 20px;
+      }
+      
       #${sectionId} .btn-primary {
         background-color: ${primaryColor};
         border-color: ${primaryColor};
+        padding: 12px 30px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
       }
+      
       #${sectionId} .btn-primary:hover {
         background-color: ${this._darkenColor(primaryColor, 10)};
         border-color: ${this._darkenColor(primaryColor, 10)};
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0,0,0,0.15);
       }
+      
       #${sectionId} .text-primary {
         color: ${primaryColor} !important;
       }
-      ${type === 'cta' ? `
-      #${sectionId} {
-        background-color: ${primaryColor};
-        color: white;
-      }` : ''}
-      ${type === 'testimonials' ? `
-      #${sectionId} .card {
+      
+      #${sectionId} img {
+        border-radius: 8px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
         transition: all 0.3s ease;
       }
+      
+      #${sectionId} img:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+      }
+      
+      #${sectionId} .card {
+        border: none;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+        transition: all 0.3s ease;
+        height: 100%;
+      }
+      
       #${sectionId} .card:hover {
         transform: translateY(-5px);
-        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
-      }` : ''}
+        box-shadow: 0 15px 40px rgba(0,0,0,0.12);
+      }
+      
+      #${sectionId} .card-body {
+        padding: 30px;
+      }
+      
+      #${sectionId} .card-title {
+        font-weight: 700;
+        margin-bottom: 15px;
+        color: #333;
+      }
+      
+      #${sectionId} ul li {
+        margin-bottom: 10px;
+        position: relative;
+        padding-left: 25px;
+      }
+      
+      #${sectionId} ul li:before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 8px;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background-color: ${primaryColor};
+      }
+      
+      @media (max-width: 991px) {
+        #${sectionId} {
+          padding: 60px 0;
+        }
+        
+        #${sectionId} .section-title {
+          font-size: 2rem;
+        }
+      }
+      
+      @media (max-width: 767px) {
+        #${sectionId} {
+          padding: 50px 0;
+        }
+        
+        #${sectionId} .section-title {
+          font-size: 1.75rem;
+        }
+      }
+    `;
+    
+    // Add section-specific CSS
+    if (type === 'hero') {
+      return commonCss + `
+        #${sectionId} {
+          padding: 120px 0;
+          background-color: ${this._lightenColor(primaryColor, 90)};
+          position: relative;
+        }
+        
+        #${sectionId}:before {
+          content: '';
+          position: absolute;
+          top: 0;
+          right: 0;
+          width: 40%;
+          height: 100%;
+          background-color: ${this._lightenColor(primaryColor, 85)};
+          clip-path: polygon(25% 0%, 100% 0%, 100% 100%, 0% 100%);
+          z-index: 0;
+        }
+        
+        #${sectionId} .container {
+          position: relative;
+          z-index: 1;
+        }
+        
+        #${sectionId} h1 {
+          font-size: 3.5rem;
+          font-weight: 800;
+          line-height: 1.2;
+          margin-bottom: 25px;
+          color: #333;
+        }
+        
+        #${sectionId} .btn {
+          margin-top: 15px;
+          padding: 15px 35px;
+          font-weight: 600;
+          letter-spacing: 0.5px;
+          text-transform: uppercase;
+          box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+        
+        #${sectionId} .btn-primary {
+          background-color: ${primaryColor};
+          border-color: ${primaryColor};
+          transition: all 0.3s ease;
+        }
+        
+        #${sectionId} .btn-primary:hover {
+          background-color: ${this._darkenColor(primaryColor, 10)};
+          border-color: ${this._darkenColor(primaryColor, 10)};
+          transform: translateY(-3px);
+          box-shadow: 0 12px 30px rgba(0,0,0,0.2);
+        }
+        
+        #${sectionId} .btn-outline-secondary {
+          color: #555;
+          border-color: #ddd;
+          background-color: white;
+          transition: all 0.3s ease;
+        }
+        
+        #${sectionId} .btn-outline-secondary:hover {
+          background-color: #f8f9fa;
+          border-color: #ccc;
+          transform: translateY(-3px);
+          box-shadow: 0 12px 30px rgba(0,0,0,0.1);
+        }
+        
+        @media (max-width: 991px) {
+          #${sectionId} h1 {
+            font-size: 2.8rem;
+          }
+          
+          #${sectionId}:before {
+            width: 25%;
+          }
+        }
+        
+        @media (max-width: 767px) {
+          #${sectionId} {
+            padding: 80px 0;
+          }
+          
+          #${sectionId} h1 {
+            font-size: 2.2rem;
+          }
+          
+          #${sectionId}:before {
+            display: none;
+          }
+        }
+      `;
+    }
+    
+    if (type === 'cta') {
+      return commonCss + `
+        #${sectionId} {
+          padding: 100px 0;
+          background: linear-gradient(135deg, ${primaryColor} 0%, ${this._darkenColor(primaryColor, 20)} 100%);
+          color: white;
+          position: relative;
+          overflow: hidden;
+        }
+        
+        #${sectionId}:before {
+          content: '';
+          position: absolute;
+          top: -50px;
+          right: -50px;
+          width: 300px;
+          height: 300px;
+          border-radius: 50%;
+          background-color: rgba(255, 255, 255, 0.05);
+        }
+        
+        #${sectionId}:after {
+          content: '';
+          position: absolute;
+          bottom: -50px;
+          left: -50px;
+          width: 200px;
+          height: 200px;
+          border-radius: 50%;
+          background-color: rgba(255, 255, 255, 0.05);
+        }
+        
+        #${sectionId} .section-title {
+          color: white;
+        }
+        
+        #${sectionId} .section-title:after {
+          background-color: white;
+        }
+        
+        #${sectionId} .btn-light {
+          background-color: white;
+          color: ${primaryColor};
+          font-weight: 600;
+          padding: 15px 35px;
+          border-radius: 30px;
+          box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+          transition: all 0.3s ease;
+        }
+        
+        #${sectionId} .btn-light:hover {
+          transform: translateY(-3px);
+          box-shadow: 0 15px 35px rgba(0,0,0,0.25);
+        }
+        
+        #${sectionId} .btn-outline-light {
+          color: white;
+          border-color: rgba(255,255,255,0.5);
+          padding: 15px 35px;
+          border-radius: 30px;
+          transition: all 0.3s ease;
+        }
+        
+        #${sectionId} .btn-outline-light:hover {
+          background-color: rgba(255,255,255,0.1);
+          border-color: white;
+          transform: translateY(-3px);
+        }
+      `;
+    }
+    
+    if (type === 'testimonials') {
+      return commonCss + `
+        #${sectionId} {
+          background-color: #f9fafb;
+          position: relative;
+          overflow: hidden;
+        }
+        
+        #${sectionId}:before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='${primaryColor}' fill-opacity='0.05' fill-rule='evenodd'/%3E%3C/svg%3E");
+          opacity: 0.6;
+        }
+        
+        #${sectionId} .container {
+          position: relative;
+          z-index: 1;
+        }
+        
+        #${sectionId} .card {
+          background-color: white;
+          border-radius: 15px;
+          overflow: hidden;
+          box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+          transition: all 0.3s ease;
+        }
+        
+        #${sectionId} .card:hover {
+          transform: translateY(-10px);
+          box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+        }
+        
+        #${sectionId} .card-body {
+          padding: 40px 30px;
+          position: relative;
+        }
+        
+        #${sectionId} .card-body:before {
+          content: '"';
+          position: absolute;
+          top: 20px;
+          left: 20px;
+          font-size: 80px;
+          color: ${this._lightenColor(primaryColor, 80)};
+          font-family: Georgia, serif;
+          line-height: 1;
+          z-index: 0;
+        }
+        
+        #${sectionId} .card-text {
+          position: relative;
+          z-index: 1;
+          font-style: italic;
+          line-height: 1.8;
+        }
+        
+        #${sectionId} .text-warning {
+          color: #ffaa00 !important;
+        }
+        
+        #${sectionId} .text-center h5 {
+          margin-top: 20px;
+          font-weight: 700;
+        }
+        
+        #${sectionId} .text-muted {
+          font-size: 0.9rem;
+        }
     `;
   }
+}
 
-  /**
-   * Darken a hex color by a percentage
-   * @param {string} color - Hex color to darken
-   * @param {number} percent - Percentage to darken by
-   * @returns {string} Darkened color
-   * @private
-   */
-  _darkenColor(color, percent) {
-    // Remove the # if it exists
-    color = color.replace('#', '');
+/**
+ * Lighten a hex color by a percentage
+ * @param {string} color - Hex color to lighten
+ * @param {number} percent - Percentage to lighten by
+ * @returns {string} Lightened color
+ * @private
+ */
+_lightenColor(color, percent) {
+  // Remove the # if it exists
+  color = color.replace('#', '');
 
-    // Convert to RGB
-    const r = parseInt(color.substring(0, 2), 16);
-    const g = parseInt(color.substring(2, 4), 16);
-    const b = parseInt(color.substring(4, 6), 16);
+  // Convert to RGB
+  const r = parseInt(color.substring(0, 2), 16);
+  const g = parseInt(color.substring(2, 4), 16);
+  const b = parseInt(color.substring(4, 6), 16);
 
-    // Darken
-    const darkenAmount = percent / 100;
-    const dr = Math.floor(r * (1 - darkenAmount));
-    const dg = Math.floor(g * (1 - darkenAmount));
-    const db = Math.floor(b * (1 - darkenAmount));
+  // Lighten
+  const lightenAmount = percent / 100;
+  const lr = Math.min(255, Math.floor(r + (255 - r) * lightenAmount));
+  const lg = Math.min(255, Math.floor(g + (255 - g) * lightenAmount));
+  const lb = Math.min(255, Math.floor(b + (255 - b) * lightenAmount));
 
-    // Convert back to hex
-    return `#${dr.toString(16).padStart(2, '0')}${dg.toString(16).padStart(2, '0')}${db.toString(16).padStart(2, '0')}`;
-  }
+  // Convert back to hex
+  return `#${lr.toString(16).padStart(2, '0')}${lg.toString(16).padStart(2, '0')}${lb.toString(16).padStart(2, '0')}`;
+}
+
+/**
+ * Darken a hex color by a percentage
+ * @param {string} color - Hex color to darken
+ * @param {number} percent - Percentage to darken by
+ * @returns {string} Darkened color
+ * @private
+ */
+_darkenColor(color, percent) {
+  // Remove the # if it exists
+  color = color.replace('#', '');
+
+  // Convert to RGB
+  const r = parseInt(color.substring(0, 2), 16);
+  const g = parseInt(color.substring(2, 4), 16);
+  const b = parseInt(color.substring(4, 6), 16);
+
+  // Darken
+  const darkenAmount = percent / 100;
+  const dr = Math.floor(r * (1 - darkenAmount));
+  const dg = Math.floor(g * (1 - darkenAmount));
+  const db = Math.floor(b * (1 - darkenAmount));
+
+  // Convert back to hex
+  return `#${dr.toString(16).padStart(2, '0')}${dg.toString(16).padStart(2, '0')}${db.toString(16).padStart(2, '0')}`;
+}
 
   /**
    * Execute a generator function with retries

@@ -173,7 +173,15 @@ class OllamaService {
       // Add JSON instructions to the prompt
       const jsonPrompt = `${prompt}\n\nYour response must be a valid JSON object with proper formatting. Do not include any text outside of the JSON object. Do not add markdown formatting.`;
 
-      const response = await this.generateText(jsonPrompt, params);
+      // Set more appropriate parameters for JSON generation
+      const jsonParams = {
+        ...params,
+        temperature: Math.min(params.temperature || 0.7, 0.7), // Increased from 0.2
+        top_p: Math.min(params.top_p || 0.9, 0.9),            // Increased from 0.8
+        max_tokens: 12000,                                     // Increased for more detailed content
+      };
+
+      const response = await this.generateText(jsonPrompt, jsonParams);
 
       // Extract JSON from response
       let jsonStr = response.trim();

@@ -170,48 +170,49 @@ class OllamaService {
    */
   async generateJson(prompt, params = {}) {
     try {
-      // Add JSON instructions to the prompt
-      const jsonPrompt = `${prompt}\n\nYour response must be a valid JSON object with proper formatting. Do not include any text outside of the JSON object. Do not add markdown formatting.`;
+      // Enhance the JSON instructions with explicit formatting guidance
+      const jsonPrompt = `${prompt}
+  
+        IMPORTANT FORMATTING INSTRUCTIONS:
+        1. Your response must be a valid JSON object ONLY
+        2. Do not include anything outside the JSON object
+        3. Do not include any markdown formatting or code blocks
+        4. Use double quotes for all property names and string values
+        5. Properly escape any quotes or special characters in strings
+        6. Do not use comments or explanations in the JSON
+        7. Format your response like this example:
+        {
+          "property1": "value1",
+          "property2": "value2",
+          "array": [
+            {
+              "item1": "value"
+            }
+          ]
+        }`;
 
       // Set more appropriate parameters for JSON generation
       const jsonParams = {
         ...params,
-        temperature: Math.min(params.temperature || 0.7, 0.7), // Increased from 0.2
-        top_p: Math.min(params.top_p || 0.9, 0.9),            // Increased from 0.8
-        max_tokens: 12000,                                     // Increased for more detailed content
+        temperature: 0.1,  // Reduce temperature for more consistent formatting
+        top_p: 0.7,       // Lower top_p for more deterministic output
+        max_tokens: 12000  // Keep high token limit for detailed content
       };
 
+      // Generate the response
       const response = await this.generateText(jsonPrompt, jsonParams);
 
-      // Extract JSON from response
-      let jsonStr = response.trim();
-
-      // If the response starts with ```json or ``` or has backticks, extract the JSON content
-      const jsonRegex = /```(?:json)?\s*([\s\S]+?)```/;
-      const match = jsonStr.match(jsonRegex);
-      if (match && match[1]) {
-        jsonStr = match[1].trim();
-      }
-
-      // Parse JSON
-      try {
-        return JSON.parse(jsonStr);
-      } catch (parseError) {
-        console.error('Failed to parse JSON response:', parseError.message);
-        console.log('Raw response:', jsonStr);
-
-        // Attempt to fix common JSON parsing issues
-        jsonStr = this.fixJsonString(jsonStr);
-
-        try {
-          return JSON.parse(jsonStr);
-        } catch (finalError) {
-          throw new Error(`Failed to parse JSON response: ${finalError.message}`);
-        }
-      }
+      // Process the response using ContentProcessor
+      const contentProcessor = require('./contentProcessor');
+      return contentProcessor.processJsonContent(response);
     } catch (error) {
       console.error('Error generating JSON with Ollama:', error.message);
-      throw new Error(`Ollama JSON generation failed: ${error.message}`);
+
+      // Return a valid fallback object
+      return {
+        content: "Fallback content due to generation error",
+        css: "/* Fallback CSS */"
+      };
     }
   }
 

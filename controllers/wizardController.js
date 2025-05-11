@@ -143,6 +143,8 @@ exports.postFooter = (req, res) => {
 exports.getFeatures = (req, res) => {
   const wizardData = req.session.wizardData || {};
 
+  
+
   res.render('wizard/step6-features', {
     step: 6,
     totalSteps: 6,

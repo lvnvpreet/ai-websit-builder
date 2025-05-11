@@ -1,3 +1,5 @@
+// services/promptBuilder.js
+
 /**
  * Service for building prompts for the Ollama generation pipeline
  */
@@ -11,132 +13,85 @@ class PromptBuilder {
     const {
       businessName,
       businessCategory,
+      businessDescription,
       websiteTitle,
       websiteTagline,
       primaryColor,
       secondaryColor,
       fontFamily,
+      structure,
       pages
     } = websiteData;
 
-    return `
-    You are a professional web developer creating a modern, responsive website header with complete functionality.
-    
-    WEBSITE DETAILS:
-    Business Name: ${businessName}
-    Business Category: ${businessCategory}
-    Website Title: ${websiteTitle}
-    Website Tagline: ${websiteTagline}
-    
-    DESIGN & COLOR SCHEME:
-    - Primary Color: ${primaryColor}
-    - Secondary Color: ${secondaryColor}
-    - Font Family: ${fontFamily}
-    - Business Category: ${businessCategory}
-    
-    HEADER LAYOUT OPTIONS (choose most appropriate):
-    1. Multi-level header (utility bar + main header)
-    2. Single-row header with centered logo
-    3. Split navigation layout
-    4. Full-width header with prominent CTA
-    
-    REQUIRED ELEMENTS:
-    - Logo/Business name with linking to homepage
-    - Primary navigation menu for pages: ${pages.join(', ')}
-    - Search functionality (expandable or inline)
-    - User actions area (account/login, contact, CTA button)
-    - Mobile hamburger menu with slide-out functionality
-    - Sticky/fixed header behavior on scroll
-    
-    MODERN FEATURES TO IMPLEMENT:
-    1. Smooth scroll behavior and scroll-to-top functionality
-    2. Sticky header with logo shrinking on scroll
-    3. Dropdown/mega menu for complex navigation
-    4. Search bar with expand/collapse animation
-    5. Mobile touch-friendly interactions
-    6. Loading states and progressive enhancement
-    7. Dark/light mode compatibility
-    
-    RESPONSIVE REQUIREMENTS:
-    - Mobile (<768px): Full hamburger menu, stacked layout
-    - Tablet (768px-1024px): Condensed navigation, partial hamburger
-    - Desktop (>1024px): Full horizontal layout
-    - Touch-friendly button sizes (minimum 44px)
-    - Thumb-zone optimization for mobile
-    
-    ACCESSIBILITY FEATURES:
-    - ARIA labels for all interactive elements
-    - Keyboard navigation support
-    - Skip to main content link
-    - Focus indicators and states
-    - Screen reader announcements
-    - Semantic HTML structure
-    
-    STYLING REQUIREMENTS:
-    1. CSS Variables for easy theming
-    2. Subtle shadows and elevation effects
-    3. Smooth transitions and micro-interactions
-    4. Hover/focus states for all interactive elements
-    5. Typography hierarchy with appropriate sizes
-    6. Consistent spacing using 8px/16px grid system
-    7. Professional depth with gradients/shadows
-    8. Brand-appropriate styling for ${businessCategory}
-    
-    JAVASCRIPT FUNCTIONALITY:
-    1. Mobile menu toggle with smooth animations
-    2. Sticky header with scroll detection
-    3. Search bar expand/collapse functionality
-    4. Dropdown menu interactions
-    5. Smooth scroll to anchors
-    6. Click outside to close menus
-    7. Scroll progress indicator (optional)
-    
-    OUTPUT REQUIREMENTS:
-    Return ONLY a JSON object with these keys:
-    {
-      "html": "Complete HTML structure with semantic markup and ARIA attributes",
-      "css": "Complete CSS with variables, responsive design, and all interactions",
-      "javascript": "Complete JavaScript for all interactive features",
-      "integration": "Brief integration instructions and customization notes"
-    }
-    
-    TECHNICAL SPECIFICATIONS:
-    - Use Bootstrap 5 as the responsive framework base
-    - Include custom CSS for advanced features
-    - Use vanilla JavaScript for functionality
-    - Ensure cross-browser compatibility
-    - Optimize for performance with efficient selectors
-    - Include fallbacks for older browsers
-    
-    CSS GUIDELINES:
-    1. Root variables for theming:
-       --primary-color, --secondary-color, --font-family
-    2. Responsive breakpoints:
-       @media (max-width: 767px), @media (768px-1023px), @media (min-width: 1024px)
-    3. Animation timing functions:
-       transition: all 0.3s ease-in-out
-    4. Z-index management:
-       Use consistent z-index values for layering
-    5. Container max-width:
-       Use appropriate max-width with responsive padding
-    
-    BUSINESS-SPECIFIC ENHANCEMENTS:
-    - Add trust indicators for ${businessCategory}
-    - Include contact information prominently
-    - Add social proof elements if applicable
-    - Include industry-specific icons or badges
-    - Optimize CTA placement for conversions
-    
-    PERFORMANCE CONSIDERATIONS:
-    - Lazy load dropdown menus
-    - Optimize images/icons used
-    - Minimize repaints and reflows
-    - Use CSS transforms for animations
-    - Implement critical CSS inline
-    
-    Create a header that perfectly represents ${businessName} as a professional ${businessCategory} business, ensuring excellent user experience across all devices while maintaining brand consistency and accessibility standards.
-  `;
+    const isMultipage = structure === 'Multipage';
+    const navigationInstructions = isMultipage 
+      ? `Use filenames with .html extensions (e.g., "about.html", "services.html"). Homepage should be "/" or "index.html"` 
+      : `Use anchor links with # (e.g., "#about", "#services", "#contact"). Homepage should be "#home"`;
+
+    return `You are a professional web developer creating a responsive header navigation for a website.
+
+WEBSITE DETAILS:
+- Business Name: ${businessName}
+- Business Category: ${businessCategory}
+- Business Description: ${businessDescription}
+- Website Title: ${websiteTitle}
+- Tagline: ${websiteTagline}
+- Website Structure: ${structure}
+
+DESIGN PREFERENCES:
+- Primary Color: ${primaryColor}
+- Secondary Color: ${secondaryColor}
+- Font Family: ${fontFamily}
+
+NAVIGATION REQUIREMENTS:
+- Website Type: ${structure}
+- Navigation Type: ${navigationInstructions}
+- Available Pages: ${pages.join(', ')}
+
+CRITICAL INSTRUCTIONS:
+1. Generate ONLY the header HTML and CSS
+2. DO NOT include full HTML document structure
+3. DO NOT include <!DOCTYPE>, <html>, <head>, or <body> tags
+4. Return ONLY a valid JSON object with the exact format shown below
+
+REQUIRED OUTPUT FORMAT:
+{
+  "content": "Complete header HTML starting with <header> and ending with </header>",
+  "css": "Complete CSS styles for the header"
 }
+
+HEADER REQUIREMENTS:
+- Use Bootstrap 5 navbar structure
+- Include responsive design with mobile hamburger menu
+- Brand/logo with title "${websiteTitle}"
+- Tagline "${websiteTagline}" displayed near logo (optional)
+- Navigation menu with all provided pages
+- Sticky header behavior on scroll
+- Search functionality (hidden by default)
+- Professional appearance matching ${businessCategory}
+
+TAGLINE INTEGRATION:
+- Include the tagline "${websiteTagline}" in a subtle way
+- Options: below logo, next to logo on desktop, or in meta description
+- Should not overwhelm the main navigation
+
+CSS REQUIREMENTS:
+- Use ${fontFamily} as the primary font family
+- Background: ${primaryColor} for navbar background
+- Text color: White or contrast color for visibility
+- Use ${secondaryColor} for hover states and accents
+- Include CSS variables for easy theming:
+  --header-bg: ${primaryColor};
+  --header-text: #ffffff;
+  --header-accent: ${secondaryColor};
+
+BUSINESS CONTEXT:
+- Tailor the header design for ${businessCategory}
+- Include subtle branding elements that reflect: ${businessDescription}
+- Navigation should support ${structure === 'Multipage' ? 'multi-page navigation' : 'single-page smooth scrolling'}
+
+Generate the complete header now.`;
+  }
 
   /**
    * Create a prompt for generating a website footer
@@ -147,9 +102,13 @@ class PromptBuilder {
     const {
       businessName,
       businessDescription,
+      businessCategory,
+      websiteTitle,
+      websiteTagline,
       primaryColor,
       secondaryColor,
       fontFamily,
+      structure,
       pages,
       address,
       email,
@@ -157,80 +116,78 @@ class PromptBuilder {
       socialLinks
     } = websiteData;
 
-    // Build social media links section if available
-    let socialMediaSection = '';
-    if (socialLinks && Object.values(socialLinks).some(link => link)) {
-      socialMediaSection = 'SOCIAL MEDIA LINKS:';
-      if (socialLinks.facebook) {
-        socialMediaSection += `\n- Facebook: facebook.com/${socialLinks.facebook}`;
-      }
-      if (socialLinks.instagram) {
-        socialMediaSection += `\n- Instagram: instagram.com/${socialLinks.instagram}`;
-      }
-      if (socialLinks.twitter) {
-        socialMediaSection += `\n- Twitter: twitter.com/${socialLinks.twitter}`;
-      }
-      if (socialLinks.linkedin) {
-        socialMediaSection += `\n- LinkedIn: linkedin.com/company/${socialLinks.linkedin}`;
-      }
-    }
+    const isMultipage = structure === 'Multipage';
 
-    return `
-      You are a professional web developer creating a footer for a website.
-      
-      WEBSITE DETAILS:
-      Business Name: ${businessName}
-      Business Description: ${businessDescription}
-      
-      CONTACT INFORMATION:
-      ${address ? `Address: ${address}` : ''}
-      ${email ? `Email: ${email}` : ''}
-      ${phone ? `Phone: ${phone}` : ''}
-      
-      ${socialMediaSection}
-      
-      DESIGN REQUIREMENTS:
-      - Create a professional and visually appealing footer with multiple columns
-      - Use Bootstrap 5 for the base structure
-      - Primary Color: ${primaryColor}
-      - Secondary Color: ${secondaryColor}
-      - Font Family: ${fontFamily}
-      - Include copyright information with current year
-      - Include quick links to main pages: ${pages.join(', ')}
-      
-      STYLING REQUIREMENTS:
-      - Use a visually distinct background that complements the color scheme
-      - Add appropriate spacing between sections and elements
-      - Use proper contrast for text readability
-      - Add subtle visual flourishes like dividers, icons, or background patterns
-      - Create a cohesive, professional appearance that matches the header style
-      - Include appropriate hover effects for links and interactive elements
-      
-      OUTPUT FORMAT:
-      Return ONLY a JSON object with these keys:
-      - "content": The HTML code for the footer
-      - "css": Custom CSS styles for the footer
-      
-      IMPORTANT CSS GUIDELINES:
-      1. Use CSS variables for colors and reusable values
-      2. Add responsive breakpoints to ensure the footer looks good on all devices
-      3. Include proper hover/focus states for links and buttons
-      4. Use appropriate spacing with consistent margins and padding
-      5. Create visual hierarchy with font sizing and weights
-      6. Use modern CSS techniques like flexbox and grid appropriately
-      7. Add subtle animations or transitions for interactive elements
-      8. Include appropriate shadows, borders, or effects for depth and dimension
-      9. Use proper selectors to avoid conflicts with other page styles
-      10. Ensure social media icons are styled consistently and attractively
-    `;
+    return `You are a professional web developer creating a footer for a ${structure} website.
+
+WEBSITE DETAILS:
+- Business Name: ${businessName}
+- Business Category: ${businessCategory}
+- Business Description: ${businessDescription}
+- Website Title: ${websiteTitle}
+- Tagline: ${websiteTagline}
+- Website Structure: ${structure}
+
+DESIGN REQUIREMENTS:
+- Primary Color: ${primaryColor}
+- Secondary Color: ${secondaryColor} 
+- Font Family: ${fontFamily}
+
+CONTACT INFORMATION:
+${address ? `- Address: ${address}` : ''}
+${email ? `- Email: ${email}` : ''}
+${phone ? `- Phone: ${phone}` : ''}
+
+SOCIAL MEDIA LINKS:
+${Object.entries(socialLinks || {}).map(([platform, username]) => 
+  username ? `- ${platform}: ${platform}.com/${username}` : ''
+).filter(Boolean).join('\n')}
+
+NAVIGATION LINKS:
+- Type: ${isMultipage ? 'File-based (.html extensions)' : 'Anchor-based (# links)'}
+- Pages: ${pages.join(', ')}
+
+REQUIRED OUTPUT FORMAT:
+{
+  "content": "Complete footer HTML starting with <footer> and ending with </footer>",
+  "css": "Complete CSS styles for the footer"
+}
+
+FOOTER REQUIREMENTS:
+- Multi-column layout (3-4 columns)
+- Company information section with:
+  * Business name: ${businessName}
+  * Tagline: ${websiteTagline}
+  * Brief description: ${businessDescription}
+- Quick links navigation for all pages: ${pages.join(', ')}
+- Contact information display
+- Social media links
+- Copyright notice with current year
+- Newsletter signup form (optional)
+- Back to top button
+
+CSS SPECIFICATIONS:
+- Use ${fontFamily} as font family
+- Dark background (${primaryColor} darkened or #2c3e50)
+- Light text color for contrast
+- ${secondaryColor} for links and hover states
+- Responsive grid layout
+- Column stacking on mobile
+
+BUSINESS INTEGRATION:
+- Include business category context: ${businessCategory}
+- Integrate tagline meaningfully
+- Reflect professional tone for ${businessDescription}
+
+Generate the complete footer now.`;
   }
 
   /**
- * Create a prompt for generating a website page
- * @param {String} pageName - The name of the page (e.g., "Home", "About")
- * @param {Object} websiteData - Website configuration data
- * @returns {String} Formatted prompt
- */
+   * Create a prompt for generating a website page
+   * @param {String} pageName - The name of the page (e.g., "Home", "About")
+   * @param {Object} websiteData - Website configuration data
+   * @returns {String} Formatted prompt
+   */
   buildPagePrompt(pageName, websiteData) {
     const {
       businessName,
@@ -242,343 +199,725 @@ class PromptBuilder {
       primaryColor,
       secondaryColor,
       fontFamily,
+      structure,
+      pages,
       hasNewsletter,
       hasGoogleMap,
       googleMapUrl,
       hasImageSlider
     } = websiteData;
 
-    // Add page-specific section descriptions
-    let sectionDescriptions = this._getSectionDescriptionsForPage(pageName, {
-      hasNewsletter,
-      hasGoogleMap,
-      googleMapUrl,
-      hasImageSlider
-    });
+    const isMultipage = structure === 'Multipage';
+    const navigationInstructions = isMultipage 
+      ? `Use filenames with .html extensions (e.g., "about.html", "services.html")` 
+      : `Use anchor links with # (e.g., "#about", "#services")`;
 
-    return `
-      You are a professional web developer creating a ${pageName} page for a website.
-      
-      WEBSITE DETAILS:
-      Business Name: ${businessName}
-      Business Category: ${businessCategory}
-      Business Description: ${businessDescription}
-      Website Title: ${websiteTitle}
-      Website Tagline: ${websiteTagline}
-      Website Purpose: ${websitePurpose}
-      
-      DESIGN REQUIREMENTS:
-      - Create a responsive, modern page design
-      - Use Bootstrap 5 for the base structure
-      - Primary Color: ${primaryColor}
-      - Secondary Color: ${secondaryColor}
-      - Font Family: ${fontFamily}
-      
-      PAGE STRUCTURE:
-      Create the following sections for the ${pageName} page with EXTENSIVE and DETAILED content:
-      ${sectionDescriptions}
+    return `You are a professional web developer creating a ${pageName} page for a ${structure} website.
 
-      CONTENT REQUIREMENTS:
-      - Generate proper, realistic, and extensive content for each section
-      - Include at least 3-4 paragraphs of text for text-heavy sections
-      - Provide 4-6 detailed items/points for list-based sections
-      - Include appropriate headings, subheadings, and call-to-action elements
-      - Match the tone to the business category (professional, friendly, technical, etc.)
-      - AVOID placeholder-looking or generic content; make it specific to the business description
-      
-      OUTPUT FORMAT:
-      Return ONLY a JSON object with a "sections" array. Each section in the array must have:
-      - "sectionReference": A unique ID for the section (e.g., "section-hero-123456")
-      - "content": The HTML content for the section
-      - "css": The CSS styling specific to this section
-      
-      IMPORTANT HTML GUIDELINES:
-      1. Use semantic HTML5 elements
-      2. Ensure all sections are fully responsive
-      3. Follow accessibility best practices
-      4. Include all necessary Bootstrap classes
-      5. Create realistic, appealing content based on the business description
-      6. Use appropriate heading levels (h1, h2, etc.) for good SEO
-      7. DO NOT add any explanation text outside the JSON object
+WEBSITE DETAILS:
+- Business: ${businessName} (${businessCategory})
+- Description: ${businessDescription}
+- Title: ${websiteTitle}
+- Tagline: ${websiteTagline}
+- Website Type: ${structure}
+- Purpose: ${websitePurpose}
 
-      IMPORTANT CSS GUIDELINES:
-      1. Create professional and polished designs with attention to detail
-      2. Use CSS variables (custom properties) for consistent colors and values
-      3. Add responsive design breakpoints for mobile, tablet, and desktop
-      4. Include interactive hover and focus states for links and buttons
-      5. Use appropriate spacing with consistent margins and padding
-      6. Create visual hierarchy with font sizes, weights, and line heights
-      7. Add subtle animations, transitions, or transform effects
-      8. Use box-shadows, text-shadows, or borders to create depth
-      9. Include appropriate letter-spacing and text-transform for headings
-      10. Use modern CSS layout techniques like flexbox and grid
-      11. Add background effects, gradients, or patterns where appropriate
-      12. Ensure high contrast for readability but maintain a cohesive color scheme
-      13. Match the design to the business category (${businessCategory})
-    `;
+DESIGN REQUIREMENTS:
+- Primary Color: ${primaryColor}
+- Secondary Color: ${secondaryColor}
+- Font Family: ${fontFamily}
+
+NAVIGATION REQUIREMENTS:
+- Website Structure: ${structure}
+- Navigation Type: ${navigationInstructions}
+- Available Pages: ${pages.join(', ')}
+
+CONTENT CONTEXT:
+- Integrate business description: ${businessDescription}
+- Reflect website purpose: ${websitePurpose}
+- Include tagline where appropriate: ${websiteTagline}
+- Target audience based on ${businessCategory}
+
+CRITICAL INSTRUCTIONS:
+1. Return ONLY a JSON object with a "sections" array
+2. Each section must have complete HTML, CSS, and JavaScript
+3. All navigation links must follow the correct pattern
+4. All CSS must be scoped to prevent conflicts
+5. All interactive elements must have JavaScript
+
+OUTPUT FORMAT:
+{
+  "sections": [
+    {
+      "sectionReference": "unique-section-id",
+      "content": "Complete HTML for this section",
+      "css": "Complete CSS scoped to this section with unique selectors",
+      "javascript": "Complete JavaScript for interactive features (optional)"
+    }
+  ]
+}
+
+PAGE SECTIONS FOR ${pageName}:
+${this._getPageSections(pageName, { hasNewsletter, hasGoogleMap, googleMapUrl, hasImageSlider })}
+
+DESIGN INTEGRATION:
+- Use ${fontFamily} consistently throughout
+- Primary color (${primaryColor}) for headings, CTAs, and brand elements
+- Secondary color (${secondaryColor}) for accents, links, and hover states
+- Maintain consistency with overall website title: ${websiteTitle}
+
+BUSINESS-SPECIFIC CONTENT:
+- Tailor content for ${businessCategory}
+- Integrate tagline "${websiteTagline}" naturally
+- Reference business description context
+- Align with website purpose: ${websitePurpose}
+
+Generate the ${pageName} page with all required sections now.`;
   }
 
   /**
-   * Create section descriptions based on the page type
-   * @param {String} pageName - The name of the page
+   * Create a prompt for generating a specific section
+   * @param {String} sectionType - Type of section (hero, services, contact, etc.)
+   * @param {Object} context - Section context and requirements
+   * @param {Object} websiteData - Website configuration data
+   * @returns {String} Formatted prompt
+   */
+  buildSectionPrompt(sectionType, context, websiteData) {
+    const {
+      businessName,
+      businessCategory,
+      businessDescription,
+      websiteTitle,
+      websiteTagline,
+      websitePurpose,
+      structure,
+      primaryColor,
+      secondaryColor,
+      fontFamily,
+      pages
+    } = websiteData;
+
+    const isMultipage = structure === 'Multipage';
+    const sectionId = `section-${sectionType.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}`;
+    
+    return `Create a ${sectionType} section for a ${structure} website.
+
+BUSINESS CONTEXT:
+- Company: ${businessName}
+- Category: ${businessCategory}
+- Description: ${businessDescription}
+- Title: ${websiteTitle}
+- Tagline: ${websiteTagline}
+- Purpose: ${websitePurpose}
+
+DESIGN VARIABLES:
+- Primary Color: ${primaryColor}
+- Secondary Color: ${secondaryColor}
+- Font Family: ${fontFamily}
+
+NAVIGATION CONTEXT:
+- Website Structure: ${structure}
+- Available Pages: ${pages.join(', ')}
+- Navigation Style: ${isMultipage ? 'File-based (.html)' : 'Anchor-based (#)'}
+
+SECTION REQUIREMENTS:
+- Type: ${sectionType}
+- Section ID: ${sectionId}
+- Context: ${context.description || ''}
+
+RETURN FORMAT:
+{
+  "sectionReference": "${sectionId}",
+  "content": "Complete HTML with semantic structure",
+  "css": "Complete CSS with section-specific scope",
+  "javascript": "Complete JavaScript for all interactive features"
+}
+
+CONTENT INTEGRATION:
+- Use business tagline "${websiteTagline}" where appropriate
+- Reference business description for context
+- Align with website purpose: ${websitePurpose}
+- Include links to other pages: ${pages.join(', ')}
+
+STYLING REQUIREMENTS:
+- Font Family: ${fontFamily}
+- Primary Color (${primaryColor}) for main elements
+- Secondary Color (${secondaryColor}) for accents and interactions
+- Consistent with ${businessCategory} industry standards
+
+SPECIFIC INSTRUCTIONS FOR ${sectionType}:
+${this._getSectionSpecificInstructions(sectionType, context, websiteData)}
+
+Generate the complete section now.`;
+  }
+
+  /**
+   * Get page sections based on page type
+   * @param {String} pageName - Name of the page
    * @param {Object} features - Special features to include
    * @returns {String} Section descriptions
    * @private
    */
-  _getSectionDescriptionsForPage(pageName, features) {
+  _getPageSections(pageName, features) {
     const pageNameLower = pageName.toLowerCase();
+    
+    switch (pageNameLower) {
+      case 'home':
+      case 'homepage':
+        return this._getHomeSections(features);
+      case 'about':
+      case 'about us':
+        return this._getAboutSections(features);
+      case 'services':
+      case 'products':
+        return this._getServicesSections(features);
+      case 'contact':
+      case 'contact us':
+        return this._getContactSections(features);
+      case 'blog':
+        return this._getBlogSections(features);
+      default:
+        return this._getGenericSections(pageName, features);
+    }
+  }
 
-    if (pageNameLower === 'home' || pageNameLower === 'homepage') {
-      let sections = `
-        1. Hero Section - Create an eye-catching hero area with:
-          - Strong headline capturing the main value proposition (25-50 characters)
-          - Supporting subheading with more detail (50-100 characters)
-          - Primary call-to-action button with compelling text
-          - Background image or color that creates strong visual impact
-          - Optional overlay text or graphics
-          
-        2. Introduction Section - Comprehensive business overview with:
-          - At least 2-3 paragraphs explaining what makes the business unique
-          - Mission statement or core philosophy
-          - Supporting image, icon, or graphic element
-          - Secondary call-to-action or link to more information
-          
-        3. Services/Features Section - Detailed highlights of offerings with:
-          - 4-6 key services or features in a visually appealing grid or card layout
-          - Distinctive icons or images for each service
-          - 2-3 paragraphs describing each service/feature and its benefits
-          - Optional "Learn More" links for each service
-          
-        4. Testimonials Section - Build trust with:
-          - 3-4 detailed customer testimonials in cards or a carousel
-          - Include full names, titles, and companies for more authenticity
-          - Star ratings or other trust indicators where appropriate
-          - Include specific benefits mentioned in testimonials
-      `;
+  /**
+   * Get home page sections
+   * @param {Object} features - Special features
+   * @returns {String} Section descriptions
+   * @private
+   */
+  _getHomeSections(features) {
+    let sections = `
+1. Hero Section
+   - Eye-catching headline and subheadline
+   - Primary CTA button
+   - Hero image/video background
+   - CSS: Full viewport height, overlay effects, responsive typography
+   - JS: Scroll animations, parallax effects, video controls
 
-      if (features.hasImageSlider) {
-        sections += `
-        5. Image Slider - Showcase imagery with:
-          - Responsive image slider/carousel
-          - 3-5 placeholder images with detailed captions
-          - Navigation controls
-          - Call-to-action or information overlay on each slide
-          - Descriptions that tell a story about the business
-        `;
-      }
+2. Introduction Section
+   - Business overview (2-3 paragraphs)
+   - Key value propositions
+   - Supporting imagery
+   - CSS: Two-column layout, responsive spacing
+   - JS: Intersection observer for scroll animations
 
-      if (features.hasNewsletter) {
-        sections += `
-        6. Newsletter Section - Email capture with:
-          - Compelling benefit statement (why should someone subscribe?)
-          - Email input field with validation
-          - Submit button with clear action text
-          - Privacy note or GDPR compliance text
-          - Brief explanation of newsletter content and frequency
-        `;
-      }
+3. Services/Features Section
+   - Service cards with icons (4-6 items)
+   - Detailed descriptions
+   - Read more links/modals
+   - CSS: Grid/flex layout, hover effects, card animations
+   - JS: Card interactions, modal popups, tab functionality
 
+4. Testimonials Section
+   - Customer reviews (3-4 testimonials)
+   - Star ratings, customer photos
+   - Company/title information
+   - CSS: Carousel styling, card design
+   - JS: Testimonial slider, autoplay functionality`;
+
+    if (features.hasImageSlider) {
       sections += `
-        7. Call to Action Section - Final conversion point with:
-          - Bold, compelling heading (20-40 characters)
-          - Supporting text explaining the value proposition (60-100 characters)
-          - Prominent call-to-action button with action-oriented text
-          - Visual elements to draw attention
-          - Optional trust indicators or guarantees
-      `;
 
-      return sections;
+5. Image Slider Section
+   - Product/service showcase (5-7 images)
+   - Navigation controls, pagination
+   - Caption/description overlay
+   - CSS: Full-width slider, responsive images
+   - JS: Swiper.js integration, touch support, autoplay`;
     }
 
-    if (pageNameLower === 'about' || pageNameLower === 'about us') {
-      return `
-        1. Page Header Section - Introduction with:
-          - Bold page title (About Us)
-          - Compelling overview statement (100-150 characters)
-          - Optional breadcrumb navigation
-          - Visual element that represents the company's identity
-          
-        2. Our Story Section - Company history with:
-          - Founding story with specific details (dates, names, locations)
-          - 3-4 paragraphs about the company journey
-          - Company timeline or milestone highlights (at least 5-7 milestones)
-          - Supporting imagery that illustrates company growth
-          - Quotes from founders or key team members
-          
-        3. Team Section - Team presentation with:
-          - Team introduction (why our team is exceptional)
-          - 4-6 team member profiles with placeholder images
-          - Detailed bios for each team member (150-200 words each)
-          - Roles, responsibilities, and expertise areas
-          - Professional achievements and qualifications
-          
-        4. Values Section - Company values with:
-          - Introduction to company philosophy
-          - 4-6 core values as cards or list items
-          - Icons representing each value
-          - 2-3 paragraphs explaining each value in practice
-          - Examples of how values guide business decisions
-          
-        5. Call to Action Section - Next steps with:
-          - Transition statement connecting values to action
-          - Call-to-action button with clear purpose
-          - Supporting text explaining what happens next
-          - Visual elements reinforcing the action
-      `;
+    if (features.hasNewsletter) {
+      sections += `
+
+6. Newsletter Section
+   - Email capture form
+   - Privacy notice, value proposition
+   - Success/error states
+   - CSS: Form styling, input focus states, validation styles
+   - JS: Real-time validation, AJAX submission, success animations`;
     }
 
-    if (pageNameLower === 'services' || pageNameLower === 'products') {
-      return `
-        1. Page Header Section - Introduction with:
-          - Page title (Services/Products) with impact
-          - Comprehensive overview statement (100-150 characters)
-          - Optional breadcrumb navigation
-          - Visual distinction between service categories
-          
-        2. Services Overview Section - High-level overview with:
-          - Introduction to service offerings (2-3 paragraphs)
-          - Visual representation of service categories
-          - Benefits/outcomes of working with the business
-          - Brief explanation of service methodology or approach
-          
-        3. Service Details Section - Detailed information with:
-          - 5-7 individual service descriptions
-          - Icons or images for each service
-          - 2-3 paragraphs describing each service in detail
-          - Specific benefits or features lists (5-7 points per service)
-          - Potential outcomes or results for each service
-          
-        4. Process Section - How services work with:
-          - Step-by-step process (4-6 steps)
-          - Visual process flow with icons or graphics
-          - Detailed description for each step (100-150 words each)
-          - Estimated timelines where applicable
-          - Client responsibilities and expectations
-          
-        5. Pricing Section (if applicable) - Pricing options with:
-          - 3-4 pricing tiers or packages
-          - Detailed features included in each tier (8-10 points)
-          - Price points and call-to-action buttons
-          - Highlighted recommended option
-          - Comparison of features across tiers
-          
-        6. FAQ Section - Common questions with:
-          - 6-8 frequently asked questions
-          - Comprehensive answers (100-150 words each)
-          - Expandable/collapsible format
-          - Additional resources or links where relevant
-          
-        7. Call to Action Section - Final conversion point with:
-          - Compelling heading that drives action
-          - Supporting text highlighting key benefits
-          - Prominent call-to-action button
-          - Trust indicators (guarantees, testimonials)
-          - Optional contact information or timeframes
-      `;
-    }
+    sections += `
 
-    if (pageNameLower === 'contact' || pageNameLower === 'contact us') {
-      let sections = `
-        1. Page Header Section - Introduction with:
-          - Bold page title (Contact Us)
-          - Warm invitation to get in touch (80-120 characters)
-          - Brief explanation of response time expectations
-          - Optional breadcrumb navigation
-          
-        2. Contact Form Section - Input form with:
-          - Name, email, phone fields with proper validation
-          - Subject dropdown with 5-7 relevant options
-          - Detailed message area with placeholder text
-          - File upload if relevant for business context
-          - Clear submit button with action text
-          - GDPR/privacy statement
-          
-        3. Contact Information Section - Business details with:
-          - Physical address with optional directions link ${features.hasGoogleMap ? '(linked to map below)' : ''}
-          - Phone number(s) with specified departments if applicable
-          - Email address(es) with specified departments if applicable
-          - Business hours with timezone
-          - Response time expectations
-          - Social media contact options if relevant
-      `;
+7. Call-to-Action Section
+   - Final conversion push
+   - Contact information
+   - Multiple CTAs (call, email, form)
+   - CSS: Full-width background, centered content
+   - JS: Scroll-triggered animations, modal forms`;
 
-      if (features.hasGoogleMap) {
-        sections += `
-        4. Map Section - Location visualization with:
-          - ${features.googleMapUrl ? 'Embedded Google Map from URL: ' + features.googleMapUrl : 'Placeholder for Google Map'}
-          - Location marker with popup information
-          - Directions link or button
-          - Nearby landmarks or parking information
-          - Address details repeated for clarity
-          - Accessibility information if applicable
-        `;
-      }
+    return sections;
+  }
 
-      return sections;
-    }
-
-    if (pageNameLower === 'blog') {
-      return `
-        1. Blog Header Section - Introduction with:
-          - Engaging page title
-          - Blog description (150-200 characters)
-          - Search functionality or topic filters
-          - Newsletter signup if applicable
-          
-        2. Featured Posts Section - Highlighted content with:
-          - 3-4 featured posts in card format
-          - Featured image for each post
-          - Post title, date, and author
-          - Category or tag information
-          - Brief excerpt (100-150 characters)
-          - Read more link or button
-          
-        3. Recent Posts Section - Latest content with:
-          - 5-7 recent posts in list or grid format
-          - Thumbnail image for each post
-          - Post title, date, author, and read time
-          - Brief excerpt or summary
-          - Engagement metrics (views, comments)
-          - Category or tag indicators
-          
-        4. Categories Section - Content organization with:
-          - Primary blog categories (5-8 categories)
-          - Post count for each category
-          - Brief category descriptions
-          - Visual indicators or icons
-          - Links to category archives
-      `;
-    }
-
-    // Generic page sections for other page types
+  /**
+   * Get about page sections
+   * @param {Object} features - Special features
+   * @returns {String} Section descriptions
+   * @private
+   */
+  _getAboutSections(features) {
     return `
-      1. Page Header Section - Introduction with:
-        - Bold page title (${pageName})
-        - Comprehensive introduction (150-200 characters)
-        - Visual element that reinforces page purpose
-        - Optional breadcrumb navigation
-        
-      2. Main Content Section - Primary content with:
-        - 4-5 paragraphs of detailed information about ${pageName}
-        - Supporting visuals, icons, or graphics
-        - Organized content with clear headings and subheadings
-        - Bullet points or numbered lists where appropriate
-        - Quotes or highlighted text for emphasis
-        
-      3. Secondary Content Section - Additional information with:
-        - Related content (2-3 paragraphs)
-        - Supporting elements (images, tables, charts)
-        - Cross-references to other relevant pages
-        - Downloads or resources if applicable
-        - Visual separation from main content
-        
-      4. Call to Action Section - Next steps with:
-        - Clear transition statement
-        - Compelling call-to-action button
-        - Supporting text explaining the action benefit
-        - Visual elements drawing attention to the CTA
-        - Alternative contact or information options
-    `;
+1. Page Header Section
+   - Page title with subtitle
+   - Brief company introduction
+   - Background image/video
+   - CSS: Hero-style header, overlay effects
+   - JS: Scroll animations
+
+2. Company Story Section
+   - Founding story with timeline
+   - Mission and vision statements
+   - Historical images/milestones
+   - CSS: Timeline layout, image galleries
+   - JS: Timeline animations, image lightbox
+
+3. Team Section
+   - Team member profiles (4-8 people)
+   - Photos, titles, descriptions
+   - Social media links
+   - CSS: Grid layout, hover effects
+   - JS: Team member modals, social links
+
+4. Values/Mission Section
+   - Core values (4-6 items)
+   - Icons and descriptions
+   - Impact statements
+   - CSS: Card layout, icon animations
+   - JS: Scroll-triggered animations
+
+5. Achievements Section
+   - Awards, certifications
+   - Key statistics/metrics
+   - Client logos (if applicable)
+   - CSS: Statistics counters, logo grid
+   - JS: Counter animations, logo carousel`;
+  }
+
+  /**
+   * Get services page sections
+   * @param {Object} features - Special features
+   * @returns {String} Section descriptions
+   * @private
+   */
+  _getServicesSections(features) {
+    return `
+1. Services Header Section
+   - Page title and overview
+   - Service categories navigation
+   - CSS: Sticky navigation, active states
+   - JS: Smooth scroll to sections
+
+2. Service Overview Section
+   - Service categories (3-4 main services)
+   - Brief descriptions
+   - Visual icons/images
+   - CSS: Grid layout, hover effects
+   - JS: Service detail modals
+
+3. Detailed Service Sections
+   - Individual service pages/sections
+   - Pricing information (if applicable)
+   - Process breakdown
+   - CSS: Tabbed layout, accordion design
+   - JS: Tab functionality, accordion toggles
+
+4. Process Section
+   - Step-by-step workflow (4-6 steps)
+   - Visual process flow
+   - Estimated timelines
+   - CSS: Process flow design, animated numbers
+   - JS: Step animations, progress indicators
+
+5. Portfolio/Examples Section
+   - Before/after examples
+   - Case studies
+   - Project gallery
+   - CSS: Gallery grid, filter buttons
+   - JS: Filtering functionality, lightbox
+
+6. FAQ Section
+   - Common questions (8-10 items)
+   - Expandable answers
+   - Search functionality
+   - CSS: Accordion styling, search bar
+   - JS: Accordion functionality, search filtering`;
+  }
+
+  /**
+   * Get contact page sections
+   * @param {Object} features - Special features
+   * @returns {String} Section descriptions
+   * @private
+   */
+  _getContactSections(features) {
+    let sections = `
+1. Contact Header Section
+   - Page title and subtitle
+   - Contact form introduction
+   - CSS: Header styling, call-to-action
+   - JS: None required
+
+2. Contact Form Section
+   - Name, email, phone, subject, message
+   - Form validation
+   - Success/error states
+   - CSS: Form layout, validation styles, button states
+   - JS: Real-time validation, AJAX submission, form reset
+
+3. Contact Information Section
+   - Address, phone, email, hours
+   - Social media links
+   - Office locations (if multiple)
+   - CSS: Info cards, icon styling
+   - JS: Click-to-call, click-to-email`;
+
+    if (features.hasGoogleMap) {
+      sections += `
+
+4. Map Section
+   - Google Maps embed
+   - Custom markers
+   - Directions button
+   - CSS: Responsive map container, controls
+   - JS: Google Maps API, marker customization, directions`;
+    }
+
+    sections += `
+
+5. Quick Contact Section
+   - Alternative contact methods
+   - Live chat integration (optional)
+   - Response time expectations
+   - CSS: Quick contact cards, chat widget
+   - JS: Chat widget initialization, contact tracking`;
+
+    return sections;
+  }
+
+  /**
+   * Get blog page sections
+   * @param {Object} features - Special features
+   * @returns {String} Section descriptions
+   * @private
+   */
+  _getBlogSections(features) {
+    return `
+1. Blog Header Section
+   - Page title and navigation
+   - Search bar
+   - Category filters
+   - CSS: Header layout, search bar styling
+   - JS: Search functionality, filter controls
+
+2. Featured Posts Section
+   - 2-3 highlighted posts
+   - Large images, excerpts
+   - Read more buttons
+   - CSS: Hero card design, responsive layout
+   - JS: Featured post carousel
+
+3. Recent Posts Section
+   - Blog post grid (6-9 posts)
+   - Thumbnails, titles, dates
+   - Pagination
+   - CSS: Grid layout, card design
+   - JS: Pagination, infinite scroll
+
+4. Categories Sidebar
+   - Post categories
+   - Tag cloud
+   - Archive links
+   - CSS: Sidebar design, tag styling
+   - JS: Category filtering, tag interactions
+
+5. Newsletter Signup
+   - Subscribe form
+   - RSS feed link
+   - Email preferences
+   - CSS: Form styling, preference toggles
+   - JS: Form validation, subscription handling`;
+  }
+
+  /**
+   * Get generic page sections
+   * @param {String} pageName - Name of the page
+   * @param {Object} features - Special features
+   * @returns {String} Section descriptions
+   * @private
+   */
+  _getGenericSections(pageName, features) {
+    return `
+1. Page Header Section
+   - Page title: ${pageName}
+   - Brief introduction
+   - Navigation breadcrumbs
+   - CSS: Header styling, breadcrumb design
+   - JS: None required
+
+2. Main Content Section
+   - Primary content (4-5 paragraphs)
+   - Supporting visuals
+   - Call-to-action
+   - CSS: Content layout, typography
+   - JS: Scroll animations
+
+3. Secondary Content Section
+   - Additional information
+   - Related content
+   - Links to other pages
+   - CSS: Two-column layout, related content cards
+   - JS: Content interactions
+
+4. Call-to-Action Section
+   - Final conversion point
+   - Contact information
+   - Next steps
+   - CSS: Full-width CTA, button styling
+   - JS: Scroll-triggered animations`;
+  }
+
+  /**
+   * Get section-specific instructions
+   * @param {String} sectionType - Type of section
+   * @param {Object} context - Section context
+   * @param {Object} websiteData - Website data
+   * @returns {String} Section-specific instructions
+   * @private
+   */
+  _getSectionSpecificInstructions(sectionType, context, websiteData) {
+    const isMultipage = websiteData.structure === 'Multipage';
+    const { websiteTitle, websiteTagline, primaryColor, secondaryColor, fontFamily } = websiteData;
+    
+    switch (sectionType.toLowerCase()) {
+      case 'hero':
+        return `
+HERO SECTION REQUIREMENTS:
+- Full viewport height (100vh or min-height)
+- Background image/video with overlay
+- Centered content with compelling headline
+- Include business tagline: "${websiteTagline}"
+- Primary CTA button with color: ${primaryColor}
+- Scroll indicator at bottom
+
+CSS SPECIFICS:
+- Font family: ${fontFamily}
+- Primary color: ${primaryColor}
+- Secondary color: ${secondaryColor}
+- Text shadow for readability
+- Responsive font sizes (clamp())
+- Button animations on hover
+
+JAVASCRIPT:
+- Parallax scrolling effect
+- Scroll-to-next animation
+- Video autoplay/pause controls (if video background)
+- Smooth scroll to ${isMultipage ? 'contact.html' : '#contact'}`;
+
+      case 'contact':
+      case 'contact-form':
+        return `
+CONTACT FORM REQUIREMENTS:
+- Form style using font family: ${fontFamily}
+- Primary button color: ${primaryColor}
+- Focus states using: ${secondaryColor}
+- Fields: name, email, phone, subject, message
+- Real-time validation with error messages
+- AJAX submission without page reload
+- Success/error state display
+- Form reset after successful submission
+
+CSS SPECIFICS:
+- Custom form styling with ${fontFamily}
+- Focus states for inputs using ${secondaryColor}
+- Error/success message styling
+- Loading state for submit button
+- Button hover effects with ${primaryColor}`;
+
+      case 'services':
+      case 'features':
+        return `
+SERVICES SECTION REQUIREMENTS:
+- Typography using: ${fontFamily}
+- Card backgrounds and headers: ${primaryColor}
+- Hover effects and accents: ${secondaryColor}
+- Service cards in grid layout (3-4 columns)
+- Icons for each service
+- Service title and description
+- Learn more links (${isMultipage ? 'to service detail pages' : 'to modal or expanded view'})
+
+CSS SPECIFICS:
+- Card hover effects with ${secondaryColor}
+- Icon animations
+- Grid responsive adjustments
+- Card equal heights`;
+
+      case 'footer':
+        return `
+FOOTER REQUIREMENTS:
+- Font family: ${fontFamily}
+- Background: ${primaryColor} (darkened)
+- Link colors: ${secondaryColor}
+- 3-4 column layout
+- Company info with tagline: "${websiteTagline}"
+- Navigation links for all pages
+- Contact information
+- Social media links
+- Copyright notice
+- Back-to-top button`;
+
+      default:
+        return `
+GENERAL SECTION REQUIREMENTS:
+- Font family: ${fontFamily}
+- Primary colors: ${primaryColor}
+- Accent colors: ${secondaryColor}
+- Include website title context: "${websiteTitle}"
+- Integrate tagline where appropriate: "${websiteTagline}"
+- Semantic HTML structure
+- Responsive design implementation
+- Interactive elements with proper states`;
+    }
+  }
+
+  /**
+   * Generate navigation links based on website structure
+   * @param {Array} pages - List of page names
+   * @param {String} currentPage - Current active page
+   * @param {Boolean} isMultipage - Whether website is multipage
+   * @returns {String} HTML for navigation links
+   * @private
+   */
+  generateNavigationLinks(pages, currentPage, isMultipage) {
+    return pages.map(page => {
+      const slug = page.toLowerCase().replace(/\s+/g, '-');
+      const href = isMultipage 
+        ? (page === 'Home' ? '/' : `${slug}.html`)
+        : `#${slug}`;
+      
+      const isActive = currentPage === page;
+      
+      return `<li class="nav-item">
+      <a class="nav-link ${isActive ? 'active' : ''}" href="${href}">
+        ${page}
+      </a>
+    </li>`;
+    }).join('\n          ');
+  }
+
+  /**
+   * Generate CSS template with proper scoping
+   * @param {String} sectionId - Section ID for scoping
+   * @param {Object} styles - Style definitions
+   * @param {Object} designVars - Design variables (colors, fonts)
+   * @returns {String} Scoped CSS
+   * @private
+   */
+  generateScopedCSS(sectionId, styles, designVars = {}) {
+    const { primaryColor, secondaryColor, fontFamily } = designVars;
+    
+    return `
+/* Section: ${sectionId} */
+#${sectionId} {
+  font-family: ${fontFamily || "'Open Sans', sans-serif"};
+  ${styles.base || ''}
+}
+
+#${sectionId} h1,
+#${sectionId} h2,
+#${sectionId} h3 {
+  color: ${primaryColor || '#333'};
+  ${styles.headings || ''}
+}
+
+#${sectionId} .btn {
+  background-color: ${primaryColor || '#007bff'};
+  color: white;
+  ${styles.buttons || ''}
+}
+
+#${sectionId} .btn:hover {
+  background-color: ${secondaryColor || '#6c757d'};
+  ${styles.buttonHover || ''}
+}
+
+#${sectionId} a {
+  color: ${primaryColor || '#007bff'};
+  ${styles.links || ''}
+}
+
+#${sectionId} a:hover {
+  color: ${secondaryColor || '#6c757d'};
+  ${styles.linkHover || ''}
+}
+
+/* Responsive Styles */
+@media (max-width: 768px) {
+  #${sectionId} {
+    ${styles.mobile || ''}
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  #${sectionId} {
+    ${styles.tablet || ''}
+  }
+}
+
+@media (min-width: 1025px) {
+  #${sectionId} {
+    ${styles.desktop || ''}
+  }
+}`;
+  }
+
+  /**
+   * Generate JavaScript template for sections
+   * @param {String} sectionId - Section ID
+   * @param {Object} functionality - Functionality definitions
+   * @returns {String} Section JavaScript
+   * @private
+   */
+  generateSectionJavaScript(sectionId, functionality) {
+    const className = sectionId.replace(/[^a-zA-Z0-9]/g, '');
+    
+    return `
+// Section: ${sectionId}
+(function() {
+  'use strict';
+  
+  // Initialize when DOM is ready
+  document.addEventListener('DOMContentLoaded', function() {
+    init${className}();
+  });
+  
+  function init${className}() {
+    const section = document.getElementById('${sectionId}');
+    if (!section) {
+      console.warn('Section not found: ${sectionId}');
+      return;
+    }
+    
+    // Initialize functionality
+    ${functionality.initialization || ''}
+    
+    // Add event listeners
+    ${functionality.eventListeners || ''}
+    
+    // Initialize third-party components
+    ${functionality.thirdParty || ''}
+  }
+  
+  // Helper functions
+  ${functionality.helpers || ''}
+  
+  // Public API (if needed)
+  window.${className} = {
+    ${functionality.publicMethods || ''}
+  };
+  
+})();`;
   }
 }
 

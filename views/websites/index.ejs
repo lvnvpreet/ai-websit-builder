@@ -35,15 +35,24 @@
               <i class="fas fa-trash-alt"></i>
             </button>
             
-            <!-- The checkbox for multiple selection (initially hidden) - NOW POSITIONED ON RIGHT -->
+            <!-- The checkbox for multiple selection (initially hidden) -->
             <div class="selection-checkbox position-absolute top-0 end-0 mt-2 me-2" style="display: none;">
               <input type="checkbox" class="website-checkbox form-check-input" data-id="<%= website._id %>">
             </div>
             
             <div class="card-body">
-              <h5 class="card-title"><%= website.businessName %></h5>
-              <p class="card-text text-muted small"><%= website.businessCategory %></p>
-              <p class="card-text"><%= website.businessDescription.substring(0, 100) %>...</p>
+              <h5 class="card-title"><%= website.businessName || 'Unnamed Website' %></h5>
+              <p class="card-text text-muted small"><%= website.businessCategory || 'Uncategorized' %></p>
+              <p class="card-text">
+                <% if (website.businessDescription) { %>
+                  <%= website.businessDescription.substring(0, 100) %>
+                  <% if (website.businessDescription.length > 100) { %>
+                    ...
+                  <% } %>
+                <% } else { %>
+                  No description available.
+                <% } %>
+              </p>
               
               <div class="status-badge mb-3">
                 <% if (website.status === 'completed') { %>
@@ -86,6 +95,7 @@
     </div>
   <% } %>
 </div>
+
 
 <!-- Delete Website Modal -->
 <div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">

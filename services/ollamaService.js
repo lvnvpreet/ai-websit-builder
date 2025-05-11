@@ -180,7 +180,7 @@ class OllamaService {
         4. Use double quotes for all property names and string values
         5. Properly escape any quotes or special characters in strings
         6. Do not use comments or explanations in the JSON
-        7. Format your response like this example:
+        7. Format your response like the following JSON format ONLY:
         {
           "property1": "value1",
           "property2": "value2",

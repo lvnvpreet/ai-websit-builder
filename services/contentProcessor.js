@@ -131,10 +131,10 @@ class ContentProcessor {
           const endIdx = this._findMatchingCloseBrace(content, startIdx);
           if (endIdx > startIdx) {
             const jsonStr = content.substring(startIdx, endIdx + 1);
-            
+
             // Last attempt to fix common issues before parsing
             const fixedJsonStr = this._fixCommonJsonErrors(jsonStr);
-            
+
             try {
               const result = JSON.parse(fixedJsonStr);
               if (result && result.sections && Array.isArray(result.sections)) {
@@ -199,73 +199,89 @@ class ContentProcessor {
   }
 
   // Add this new helper method
-_fixCommonJsonErrors(jsonStr) {
-  // Fix issues with unquoted property names
-  let fixedStr = jsonStr.replace(/([{,]\s*)([a-zA-Z0-9_$]+)(\s*:)/g, '$1"$2"$3');
-  
-  // Fix single quotes instead of double quotes
-  fixedStr = fixedStr.replace(/'/g, '"');
-  
-  // Fix HTML in content property that might break JSON
-  const contentMatches = fixedStr.match(/"content"\s*:\s*"(.*?)"/gs);
-  if (contentMatches) {
-    for (const match of contentMatches) {
-      const cleanMatch = match.replace(/(<([^>]+)>)/gi, function(match) {
-        return match.replace(/"/g, '\\"');
-      });
-      fixedStr = fixedStr.replace(match, cleanMatch);
+  _fixCommonJsonErrors(jsonStr) {
+    // Fix issues with unquoted property names
+    let fixedStr = jsonStr.replace(/("[^"]*")([^,\}\]]*)("[a-zA-Z0-9_$]+")/g, '$1,$3');
+
+    // Fix single quotes instead of double quotes
+    fixedStr = fixedStr.replace(/'/g, '"');
+
+    // Fix HTML in content property that might break JSON
+    const contentMatches = fixedStr.match(/"content"\s*:\s*"(.*?)"/gs);
+    if (contentMatches) {
+      for (const match of contentMatches) {
+        const cleanMatch = match.replace(/(<([^>]+)>)/gi, function (match) {
+          return match.replace(/"/g, '\\"');
+        });
+        fixedStr = fixedStr.replace(match, cleanMatch);
+      }
     }
+
+    // Remove any trailing commas before closing brackets/braces
+    fixedStr = fixedStr.replace(/,(\s*[\]}])/g, '$1');
+
+    return fixedStr;
   }
-  
-  // Remove any trailing commas before closing brackets/braces
-  fixedStr = fixedStr.replace(/,(\s*[\]}])/g, '$1');
-  
-  return fixedStr;
-}
   /**
    * Extract section blocks from content
    * @param {string} content - Content containing section objects
    * @returns {Array} - Array of section JSON strings
    */
   _extractSectionBlocks(content) {
-    const blocks = [];
-    let inObject = false;
-    let objectStart = -1;
-    let braceCount = 0;
+    try {
+      const blocks = [];
+      let inObject = false;
+      let objectStart = -1;
+      let braceCount = 0;
 
-    // Scan for section objects - looking for patterns like: { "sectionReference": ...
-    for (let i = 0; i < content.length; i++) {
-      // Start of potential object
-      if (content[i] === '{') {
-        if (!inObject) {
-          // Check if it looks like a section object
-          const nextChars = content.substring(i, i + 30);
-          if (nextChars.includes('"sectionReference"') ||
-            nextChars.includes('"content"') ||
-            nextChars.includes('"css"')) {
-            inObject = true;
-            objectStart = i;
-            braceCount = 1;
+      // Scan for section objects - looking for patterns like: { "sectionReference": ...
+      for (let i = 0; i < content.length; i++) {
+        // Start of potential object
+        if (content[i] === '{') {
+          if (!inObject) {
+            // Check if it looks like a section object
+            const nextChars = content.substring(i, i + 30);
+            if (nextChars.includes('"sectionReference"') ||
+              nextChars.includes('"content"') ||
+              nextChars.includes('"css"')) {
+              inObject = true;
+              objectStart = i;
+              braceCount = 1;
+            } else {
+              braceCount++;
+            }
           } else {
             braceCount++;
           }
-        } else {
-          braceCount++;
+        }
+        // End of object
+        else if (content[i] === '}' && inObject) {
+          braceCount--;
+          if (braceCount === 0) {
+            // Extract the complete object
+            const objectStr = content.substring(objectStart, i + 1);
+            blocks.push(objectStr);
+            inObject = false;
+          }
         }
       }
-      // End of object
-      else if (content[i] === '}' && inObject) {
-        braceCount--;
-        if (braceCount === 0) {
-          // Extract the complete object
-          const objectStr = content.substring(objectStart, i + 1);
-          blocks.push(objectStr);
-          inObject = false;
-        }
-      }
+
+      return blocks;
+    } catch(error) {
+      console.log("Inner JSON parsing failed:", jsonError.message);
+  
+  // More aggressive repairs on syntax error
+  if (jsonError.message.includes("Expected ',' or '}'")) {
+    // Apply more aggressive fixes to the specific pattern
+    let moreFixedJson = jsonStr.replace(/([^,{])\s*"([^"]+)":/g, '$1,"$2":');
+    try {
+      return JSON.parse(moreFixedJson);
+    } catch (e) {
+      // Still failed, continue to fallbacks
+    }
+  }
     }
 
-    return blocks;
   }
 
   /**

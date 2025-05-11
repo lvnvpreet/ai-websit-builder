@@ -20,7 +20,7 @@ class PromptBuilder {
     } = websiteData;
 
     return `
-    You are a professional web developer creating a header for a website.
+    You are a professional web developer creating a modern, responsive website header with complete functionality.
     
     WEBSITE DETAILS:
     Business Name: ${businessName}
@@ -28,45 +28,115 @@ class PromptBuilder {
     Website Title: ${websiteTitle}
     Website Tagline: ${websiteTagline}
     
-    DESIGN REQUIREMENTS:
-    - Create a modern, professional, and visually appealing header
-    - Use Bootstrap 5 for the responsive structure
+    DESIGN & COLOR SCHEME:
     - Primary Color: ${primaryColor}
     - Secondary Color: ${secondaryColor}
     - Font Family: ${fontFamily}
-    - Include the business name/logo and a navigation menu
-    - Make it mobile-friendly with a hamburger menu on small screens
+    - Business Category: ${businessCategory}
+    
+    HEADER LAYOUT OPTIONS (choose most appropriate):
+    1. Multi-level header (utility bar + main header)
+    2. Single-row header with centered logo
+    3. Split navigation layout
+    4. Full-width header with prominent CTA
+    
+    REQUIRED ELEMENTS:
+    - Logo/Business name with linking to homepage
+    - Primary navigation menu for pages: ${pages.join(', ')}
+    - Search functionality (expandable or inline)
+    - User actions area (account/login, contact, CTA button)
+    - Mobile hamburger menu with slide-out functionality
+    - Sticky/fixed header behavior on scroll
+    
+    MODERN FEATURES TO IMPLEMENT:
+    1. Smooth scroll behavior and scroll-to-top functionality
+    2. Sticky header with logo shrinking on scroll
+    3. Dropdown/mega menu for complex navigation
+    4. Search bar with expand/collapse animation
+    5. Mobile touch-friendly interactions
+    6. Loading states and progressive enhancement
+    7. Dark/light mode compatibility
+    
+    RESPONSIVE REQUIREMENTS:
+    - Mobile (<768px): Full hamburger menu, stacked layout
+    - Tablet (768px-1024px): Condensed navigation, partial hamburger
+    - Desktop (>1024px): Full horizontal layout
+    - Touch-friendly button sizes (minimum 44px)
+    - Thumb-zone optimization for mobile
+    
+    ACCESSIBILITY FEATURES:
+    - ARIA labels for all interactive elements
+    - Keyboard navigation support
+    - Skip to main content link
+    - Focus indicators and states
+    - Screen reader announcements
+    - Semantic HTML structure
     
     STYLING REQUIREMENTS:
-    - Use subtle shadows, depth effects, or gradients for a professional look
-    - Include proper spacing (padding and margins) for better readability
-    - Use proper contrast between text and background colors
-    - Add subtle hover animations for interactive elements
-    - Ensure consistent visual hierarchy with appropriate font sizing
-    - Match the design aesthetic to the business category (${businessCategory})
-    - Include subtle visual touches like micro-interactions or transitions
+    1. CSS Variables for easy theming
+    2. Subtle shadows and elevation effects
+    3. Smooth transitions and micro-interactions
+    4. Hover/focus states for all interactive elements
+    5. Typography hierarchy with appropriate sizes
+    6. Consistent spacing using 8px/16px grid system
+    7. Professional depth with gradients/shadows
+    8. Brand-appropriate styling for ${businessCategory}
     
-    NAVIGATION MENU:
-    Include links to the following pages: ${pages.join(', ')}
+    JAVASCRIPT FUNCTIONALITY:
+    1. Mobile menu toggle with smooth animations
+    2. Sticky header with scroll detection
+    3. Search bar expand/collapse functionality
+    4. Dropdown menu interactions
+    5. Smooth scroll to anchors
+    6. Click outside to close menus
+    7. Scroll progress indicator (optional)
     
-    OUTPUT FORMAT:
+    OUTPUT REQUIREMENTS:
     Return ONLY a JSON object with these keys:
-    - "content": The HTML code for the header 
-    - "css": Custom CSS styles for the header
+    {
+      "html": "Complete HTML structure with semantic markup and ARIA attributes",
+      "css": "Complete CSS with variables, responsive design, and all interactions",
+      "javascript": "Complete JavaScript for all interactive features",
+      "integration": "Brief integration instructions and customization notes"
+    }
     
-    IMPORTANT CSS GUIDELINES:
-    1. Use CSS variables for colors and reusable values
-    2. Include responsive breakpoints for all screen sizes
-    3. Add appropriate hover/focus states for interactive elements
-    4. Add subtle animations for a polished feel (transitions, transforms)
-    5. Include proper spacing with consistent margins and padding
-    6. Use modern CSS techniques like flexbox and grid appropriately
-    7. Ensure proper font sizes, weights, and line heights for readability
-    8. Add appropriate shadows, borders, or effects for depth and professionalism
-    9. Use appropriate text-transform, letter-spacing, and other typography properties
-    10. Include specific selectors to avoid conflicts with other page styles
+    TECHNICAL SPECIFICATIONS:
+    - Use Bootstrap 5 as the responsive framework base
+    - Include custom CSS for advanced features
+    - Use vanilla JavaScript for functionality
+    - Ensure cross-browser compatibility
+    - Optimize for performance with efficient selectors
+    - Include fallbacks for older browsers
+    
+    CSS GUIDELINES:
+    1. Root variables for theming:
+       --primary-color, --secondary-color, --font-family
+    2. Responsive breakpoints:
+       @media (max-width: 767px), @media (768px-1023px), @media (min-width: 1024px)
+    3. Animation timing functions:
+       transition: all 0.3s ease-in-out
+    4. Z-index management:
+       Use consistent z-index values for layering
+    5. Container max-width:
+       Use appropriate max-width with responsive padding
+    
+    BUSINESS-SPECIFIC ENHANCEMENTS:
+    - Add trust indicators for ${businessCategory}
+    - Include contact information prominently
+    - Add social proof elements if applicable
+    - Include industry-specific icons or badges
+    - Optimize CTA placement for conversions
+    
+    PERFORMANCE CONSIDERATIONS:
+    - Lazy load dropdown menus
+    - Optimize images/icons used
+    - Minimize repaints and reflows
+    - Use CSS transforms for animations
+    - Implement critical CSS inline
+    
+    Create a header that perfectly represents ${businessName} as a professional ${businessCategory} business, ensuring excellent user experience across all devices while maintaining brand consistency and accessibility standards.
   `;
-  }
+}
 
   /**
    * Create a prompt for generating a website footer
@@ -207,18 +277,6 @@ class PromptBuilder {
       PAGE STRUCTURE:
       Create the following sections for the ${pageName} page with EXTENSIVE and DETAILED content:
       ${sectionDescriptions}
-      
-      STYLING REQUIREMENTS:
-      - Create visually distinct sections with appropriate padding and margins
-      - Use a consistent and professional design aesthetic throughout
-      - Add subtle animations, transitions, or interactions where appropriate
-      - Incorporate visual hierarchy with typography, spacing, and color
-      - Use shadows, borders, or effects to create depth and dimension
-      - Add hover/focus states for interactive elements
-      - Ensure text is highly readable with proper contrast and spacing
-      - Use modern CSS techniques like flexbox, grid, and custom properties
-      - Match the design to the business category (${businessCategory})
-      - Add subtle background textures, patterns, or gradients where appropriate
 
       CONTENT REQUIREMENTS:
       - Generate proper, realistic, and extensive content for each section
@@ -256,6 +314,7 @@ class PromptBuilder {
       10. Use modern CSS layout techniques like flexbox and grid
       11. Add background effects, gradients, or patterns where appropriate
       12. Ensure high contrast for readability but maintain a cohesive color scheme
+      13. Match the design to the business category (${businessCategory})
     `;
   }
 

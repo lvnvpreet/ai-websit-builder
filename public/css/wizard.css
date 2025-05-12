@@ -101,3 +101,38 @@
   #generateBtn:hover {
     transform: scale(1.05);
   }
+
+
+  /* Color scheme grid */
+.color-scheme-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.color-scheme {
+  display: flex;
+  cursor: pointer;
+  height: 30px;
+  border-radius: 4px;
+  overflow: hidden;
+  transition: transform 0.2s, box-shadow 0.2s;
+  border: 2px solid transparent;
+}
+
+.color-scheme:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 5px 10px rgba(0,0,0,0.1);
+}
+
+.color-scheme.active {
+  border: 2px solid #007bff;
+  transform: translateY(-3px);
+  box-shadow: 0 5px 10px rgba(0,0,0,0.1);
+}
+
+.color-stripe {
+  flex: 1;
+  height: 100%;
+}

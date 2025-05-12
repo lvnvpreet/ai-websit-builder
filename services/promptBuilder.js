@@ -1,5 +1,16 @@
 // services/promptBuilder.js
 
+// Import examples from promptExamples.js
+const {
+  homePageExamples,
+  aboutPageExamples,
+  servicesPageExamples,
+  contactPageExamples,
+  blogPageExamples,
+  portfolioPageExamples,
+  faqPageExamples
+} = require('./promptExamples');
+
 /**
  * Service for building prompts for the Ollama generation pipeline
  */
@@ -196,6 +207,9 @@ RESPOND WITH JSON ONLY!`;
       ? `Use filenames with .html extensions (e.g., "about.html", "services.html")` 
       : `Use anchor links with # (e.g., "#about", "#services")`;
 
+    // Add examples section
+    const examplesSection = this._getPageExamples(pageName, websiteData);
+
     return `You are a professional web developer creating a ${pageName} page for a ${structure} website.
 
 WEBSITE DETAILS:
@@ -215,6 +229,8 @@ NAVIGATION REQUIREMENTS:
 - Website Structure: ${structure}
 - Navigation Type: ${navigationInstructions}
 - Available Pages: ${pages.join(', ')}
+
+${examplesSection}
 
 CONTENT CONTEXT:
 - Integrate business description: ${businessDescription}
@@ -902,6 +918,172 @@ GENERAL SECTION REQUIREMENTS:
   };
   
 })();`;
+  }
+
+  /**
+   * Get examples for a specific page type
+   * @param {String} pageName - Name of the page (e.g., "Home", "About")
+   * @param {Object} websiteData - Website configuration data
+   * @returns {String} Formatted examples for prompt
+   */
+  _getPageExamples(pageName, websiteData) {
+    // Normalize page name for matching
+    const pageNameLower = pageName.toLowerCase();
+    
+    // Select appropriate example set
+    let examples;
+    if (pageNameLower.includes('home')) {
+      examples = homePageExamples;
+    } else if (pageNameLower.includes('about')) {
+      examples = aboutPageExamples;
+    } else if (pageNameLower.includes('service')) {
+      examples = servicesPageExamples;
+    } else if (pageNameLower.includes('contact')) {
+      examples = contactPageExamples;
+    } else if (pageNameLower.includes('blog') || pageNameLower.includes('news')) {
+      examples = blogPageExamples;
+    } else if (pageNameLower.includes('portfolio') || pageNameLower.includes('gallery')) {
+      examples = portfolioPageExamples;
+    } else if (pageNameLower.includes('faq')) {
+      examples = faqPageExamples;
+    } else {
+      // Default to home page examples if no match
+      examples = homePageExamples;
+    }
+    
+    // Get 2-3 relevant sections for this page type
+    const relevantSections = this._getRelevantSections(pageNameLower, examples);
+    
+    // Format examples for the prompt
+    let examplesText = `EXAMPLES OF HIGH-QUALITY SECTIONS FOR ${pageName.toUpperCase()}:\n\n`;
+    
+    // Add each section example
+    for (const section of relevantSections) {
+      const sectionExample = examples[section];
+      if (sectionExample) {
+        examplesText += `${section.toUpperCase()} SECTION EXAMPLE:\n`;
+        examplesText += "```html\n";
+        examplesText += this._customizeExample(sectionExample.html, websiteData);
+        examplesText += "\n```\n\n";
+        examplesText += "```css\n";
+        examplesText += sectionExample.css;
+        examplesText += "\n```\n\n";
+      }
+    }
+    
+    return examplesText;
+  }
+
+  /**
+   * Get relevant section examples for a page type
+   * @param {String} pageType - Type of page
+   * @param {Object} examples - Example collection for that page
+   * @returns {Array} List of section keys to use as examples
+   * @private
+   */
+  _getRelevantSections(pageType, examples) {
+    // Return 2-3 most important sections for each page type
+    switch (pageType) {
+      case 'home':
+        return ['hero', 'services', 'testimonials'];
+      case 'about':
+        return ['header', 'story', 'team'];
+      case 'service':
+      case 'services':
+        return ['header', 'overview', 'serviceDetail'];
+      case 'contact':
+        return ['header', 'form', 'map'];
+      case 'blog':
+      case 'news':
+        return ['header', 'articles', 'sidebar']; // Assuming these exist in blogPageExamples
+      case 'portfolio':
+      case 'gallery':
+        return ['header', 'projects', 'filters']; // Assuming these exist in portfolioPageExamples
+      case 'faq':
+        return ['header', 'questions', 'categories']; // Assuming these exist in faqPageExamples
+      default:
+        return Object.keys(examples).slice(0, 3); // Default to first 3 available
+    }
+  }
+
+  /**
+   * Customize example HTML with business-specific content
+   * @param {String} exampleHtml - Example HTML template
+   * @param {Object} websiteData - Website data for customization
+   * @returns {String} Customized HTML
+   * @private
+   */
+  _customizeExample(exampleHtml, websiteData) {
+    const { businessName, businessCategory, websiteTagline, businessDescription } = websiteData;
+    
+    // Replace generic text with business-specific content
+    let customized = exampleHtml
+      .replace(/Your Company|Our Company|Company Name/g, businessName)
+      .replace(/Expert Plumbing Solutions|Our Services/g, businessName)
+      .replace(/Founded in 2005/g, websiteData.foundingYear ? `Founded in ${websiteData.foundingYear}` : 'Founded in 2005')
+      .replace(/Business Avenue/g, websiteData.address ? websiteData.address : 'Business Avenue')
+      .replace(/info@yourcompany\.com/g, websiteData.email ? websiteData.email : 'info@yourcompany.com')
+      .replace(/\(555\) 123-4567/g, websiteData.phone ? websiteData.phone : '(555) 123-4567')
+      .replace(/Professional plumbing services/g, websiteTagline || `Professional ${businessCategory} services`);
+      
+    // Only replace if business description exists
+    if (businessDescription) {
+      customized = customized.replace(/We provide top-quality plumbing services with reliability, integrity, and expertise/g, businessDescription);
+    }
+        
+    return customized;
+  }
+
+  /**
+   * Lighten a hex color by a percentage
+   * @param {string} color - Hex color to lighten
+   * @param {number} percent - Percentage to lighten by
+   * @returns {string} Lightened color
+   * @private
+   */
+  _lightenColor(color, percent) {
+    // Remove the # if it exists
+    color = color.replace('#', '');
+
+    // Convert to RGB
+    const r = parseInt(color.substring(0, 2), 16);
+    const g = parseInt(color.substring(2, 4), 16);
+    const b = parseInt(color.substring(4, 6), 16);
+
+    // Lighten
+    const lightenAmount = percent / 100;
+    const lr = Math.min(255, Math.floor(r + (255 - r) * lightenAmount));
+    const lg = Math.min(255, Math.floor(g + (255 - g) * lightenAmount));
+    const lb = Math.min(255, Math.floor(b + (255 - b) * lightenAmount));
+
+    // Convert back to hex
+    return `#${lr.toString(16).padStart(2, '0')}${lg.toString(16).padStart(2, '0')}${lb.toString(16).padStart(2, '0')}`;
+  }
+
+  /**
+   * Darken a hex color by a percentage
+   * @param {string} color - Hex color to darken
+   * @param {number} percent - Percentage to darken by
+   * @returns {string} Darkened color
+   * @private
+   */
+  _darkenColor(color, percent) {
+    // Remove the # if it exists
+    color = color.replace('#', '');
+
+    // Convert to RGB
+    const r = parseInt(color.substring(0, 2), 16);
+    const g = parseInt(color.substring(2, 4), 16);
+    const b = parseInt(color.substring(4, 6), 16);
+
+    // Darken
+    const darkenAmount = percent / 100;
+    const dr = Math.floor(r * (1 - darkenAmount));
+    const dg = Math.floor(g * (1 - darkenAmount));
+    const db = Math.floor(b * (1 - darkenAmount));
+
+    // Convert back to hex
+    return `#${dr.toString(16).padStart(2, '0')}${dg.toString(16).padStart(2, '0')}${db.toString(16).padStart(2, '0')}`;
   }
 }
 

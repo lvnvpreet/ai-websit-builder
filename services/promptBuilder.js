@@ -118,7 +118,14 @@ Generate the complete header now.`;
 
     const isMultipage = structure === 'Multipage';
 
-    return `You are a professional web developer creating a footer for a ${structure} website.
+    return `RETURN ONLY JSON! NO EXPLANATION! NO ADDITIONAL TEXT!
+
+{
+  "content": "FOOTER HTML HERE",
+  "css": "FOOTER CSS HERE"
+}
+
+THAT'S THE EXACT FORMAT! NOTHING ELSE!
 
 WEBSITE DETAILS:
 - Business Name: ${businessName}
@@ -147,40 +154,17 @@ NAVIGATION LINKS:
 - Type: ${isMultipage ? 'File-based (.html extensions)' : 'Anchor-based (# links)'}
 - Pages: ${pages.join(', ')}
 
-REQUIRED OUTPUT FORMAT:
+OUTPUT MUST BE VALID JSON ONLY:
 {
   "content": "Complete footer HTML starting with <footer> and ending with </footer>",
   "css": "Complete CSS styles for the footer"
 }
 
-FOOTER REQUIREMENTS:
-- Multi-column layout (3-4 columns)
-- Company information section with:
-  * Business name: ${businessName}
-  * Tagline: ${websiteTagline}
-  * Brief description: ${businessDescription}
-- Quick links navigation for all pages: ${pages.join(', ')}
-- Contact information display
-- Social media links
-- Copyright notice with current year
-- Newsletter signup form (optional)
-- Back to top button
-
-CSS SPECIFICATIONS:
-- Use ${fontFamily} as font family
-- Dark background (${primaryColor} darkened or #2c3e50)
-- Light text color for contrast
-- ${secondaryColor} for links and hover states
-- Responsive grid layout
-- Column stacking on mobile
-
-BUSINESS INTEGRATION:
-- Include business category context: ${businessCategory}
-- Integrate tagline meaningfully
-- Reflect professional tone for ${businessDescription}
-
-Generate the complete footer now.`;
-  }
+DO NOT ADD ANY TEXT BEFORE OR AFTER THE JSON!
+DO NOT ADD ANY EXPLANATIONS!
+DO NOT INCLUDE "Here is" OR "Below is" OR ANY INTRODUCTORY TEXT!
+RESPOND WITH JSON ONLY!`;
+}
 
   /**
    * Create a prompt for generating a website page

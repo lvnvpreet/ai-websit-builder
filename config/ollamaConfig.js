@@ -1,10 +1,156 @@
 module.exports = {
-    serverUrl: process.env.OLLAMA_URL || 'http://localhost:11434',
-    defaultModel: process.env.OLLAMA_MODEL || 'llama2',
-    defaultParams: {
+  serverUrl: process.env.OLLAMA_URL || 'http://175.111.130.242:11434',
+  defaultModel: process.env.OLLAMA_MODEL || 'qwq:32b-preview-q8_0',
+  defaultParams: {
+    temperature: 0.7,
+    max_tokens: 12000,  // Increased from 4096
+    top_p: 0.9,
+    stop: [],
+    timeout: 180000,    // 3 minutes default timeout
+    stream: false,      // Force non-streaming for better token completion
+    options: {
+      num_ctx: 16384,   // Context window size (Ollama specific)
+      num_predict: 12000, // Prediction tokens (Ollama specific)
+      num_thread: 8,      // Number of threads for processing
+      repeat_penalty: 1.1, // Prevent repetitive text
       temperature: 0.7,
-      max_tokens: 4096,
-      top_p: 0.9,
-      stop: []
+      top_k: 40,
+      top_p: 0.9
     }
-  };
+  },
+  
+  // Enhanced params for different generation types
+  headerParams: {
+    temperature: 0.5,    // More consistent for headers
+    max_tokens: 6000,
+    top_p: 0.8,
+    timeout: 120000,     // 2 minutes
+    options: {
+      num_ctx: 8192,
+      num_predict: 6000,
+      temperature: 0.5,
+      top_k: 30,
+      top_p: 0.8
+    }
+  },
+  
+  footerParams: {
+    temperature: 0.5,    // More consistent for footers
+    max_tokens: 6000,
+    top_p: 0.8,
+    timeout: 120000,     // 2 minutes
+    options: {
+      num_ctx: 8192,
+      num_predict: 6000,
+      temperature: 0.5,
+      top_k: 30,
+      top_p: 0.8
+    }
+  },
+  
+  pageParams: {
+    temperature: 0.6,    // Balanced for page content
+    max_tokens: 15000,   // Higher for complete pages
+    top_p: 0.9,
+    timeout: 300000,     // 5 minutes for large pages
+    options: {
+      num_ctx: 20480,    // Larger context for complex pages
+      num_predict: 15000,
+      temperature: 0.6,
+      top_k: 40,
+      top_p: 0.9,
+      repeat_penalty: 1.05
+    }
+  },
+  
+  jsonParams: {
+    temperature: 0.1,    // Very low for JSON consistency
+    max_tokens: 15000,   // High for complete JSON
+    top_p: 0.7,
+    timeout: 300000,     // 5 minutes
+    stream: false,       // Never stream JSON
+    format: 'json',      // Ollama specific format parameter
+    options: {
+      num_ctx: 16384,
+      num_predict: 15000,
+      temperature: 0.1,
+      top_k: 10,
+      top_p: 0.7,
+      repeat_penalty: 1.0  // No penalty for JSON structure
+    }
+  },
+  
+  // Timeouts for different operations
+  timeouts: {
+    // Default timeouts (in milliseconds)
+    default: 180000,     // 3 minutes
+    header: 120000,      // 2 minutes
+    footer: 120000,      // 2 minutes
+    page: 300000,        // 5 minutes
+    json: 300000,        // 5 minutes
+    complex: 600000,     // 10 minutes for very complex content
+    
+    // Retry configuration
+    retryDelay: 2000,    // 2 seconds between retries
+    maxRetries: 3
+  },
+  
+  // Retry configuration
+  retry: {
+    attempts: 5,         // Increased from 3
+    initialDelay: 2000,  // 2 seconds
+    maxDelay: 30000,     // 30 seconds max
+    backoffMultiplier: 2 // Exponential backoff
+  },
+  
+  // Memory management
+  memorySettings: {
+    enableGC: true,      // Force garbage collection
+    maxMemoryUsage: 4096, // 4GB limit
+    checkInterval: 30000, // Check every 30 seconds
+    warningThreshold: 0.8 // Warn at 80% usage
+  },
+  
+  // Logging configuration
+  logging: {
+    level: 'info',       // debug, info, warn, error
+    logTokenUsage: true,
+    logGenerationTime: true,
+    logErrors: true,
+    logToFile: false,
+    logFilePath: './logs/ollama.log'
+  },
+  
+  // Development/testing settings
+  development: {
+    mockResponses: false, // Use mock responses for testing
+    debugMode: false,     // Extra logging and validation
+    saveGenerations: false, // Save all generations to files
+    generationsPath: './debug/generations'
+  },
+  
+  // Model-specific configurations
+  modelConfigs: {
+    'qwq:32b-preview-q8_0': {
+      max_tokens: 16000,
+      num_ctx: 32768,      // Large context window
+      temperature: 0.7,
+      top_p: 0.9,
+      repeat_penalty: 1.1
+    },
+    'llama2': {
+      max_tokens: 8000,
+      num_ctx: 8192,
+      temperature: 0.7,
+      top_p: 0.95,
+      repeat_penalty: 1.05
+    },
+    'codellama': {
+      max_tokens: 12000,
+      num_ctx: 16384,
+      temperature: 0.2,    // Lower for code
+      top_p: 0.95,
+      repeat_penalty: 1.0  // No penalty for code
+    }
+  }
+};

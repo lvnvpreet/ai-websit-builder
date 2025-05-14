@@ -126,6 +126,31 @@ app.on("error", (error) => {
   console.error(error.stack);
 });
 
+// Add to server.js, in the error handling middleware
+app.use((err, req, res, next) => {
+  const logger = require('./services/loggingService');
+  logger.error(`Unhandled application error: ${err.message}`, err);
+  
+  // If it's an export error, try to provide a cleaner error message
+  if (req.originalUrl.includes('/export')) {
+    const isContentError = err.message.includes('content') || 
+                           err.message.includes('header') || 
+                           err.message.includes('footer');
+    
+    if (isContentError) {
+      return res.status(500).render('error', {
+        message: 'Error in generated website content. The system will use fallbacks for incomplete sections.',
+        error: process.env.NODE_ENV === 'development' ? err : {}
+      });
+    }
+  }
+  
+  res.status(500).render('error', { 
+    message: 'Something went wrong',
+    error: process.env.NODE_ENV === 'development' ? err : {}
+  });
+});
+
 // Add before other routes
 app.get('/test-gen', (req, res) => {
   console.log("Test generation route hit");

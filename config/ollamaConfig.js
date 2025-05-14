@@ -3,16 +3,16 @@ module.exports = {
   defaultModel: process.env.OLLAMA_MODEL || 'qwq:32b-preview-q8_0',
   defaultParams: {
     temperature: 0.7,
-    max_tokens: 12000,  // Increased from 4096
+    max_tokens: 16000,  // Increased from 12000
     top_p: 0.9,
     stop: [],
-    timeout: 180000,    // 3 minutes default timeout
-    stream: false,      // Force non-streaming for better token completion
+    timeout: 360000,    // Increased to 6 minutes
+    stream: false,
     options: {
-      num_ctx: 16384,   // Context window size (Ollama specific)
-      num_predict: 12000, // Prediction tokens (Ollama specific)
-      num_thread: 8,      // Number of threads for processing
-      repeat_penalty: 1.1, // Prevent repetitive text
+      num_ctx: 16384,
+      num_predict: 16000, // Increased
+      num_thread: 8,
+      repeat_penalty: 1.1,
       temperature: 0.7,
       top_k: 40,
       top_p: 0.9
@@ -82,25 +82,24 @@ module.exports = {
   
   // Timeouts for different operations
   timeouts: {
-    // Default timeouts (in milliseconds)
-    default: 180000,     // 3 minutes
-    header: 120000,      // 2 minutes
-    footer: 120000,      // 2 minutes
-    page: 300000,        // 5 minutes
-    json: 300000,        // 5 minutes
-    complex: 600000,     // 10 minutes for very complex content
+    default: 360000,    // 6 minutes
+    header: 180000,     // 3 minutes
+    footer: 180000,     // 3 minutes
+    page: 420000,       // 7 minutes
+    json: 420000,       // 7 minutes
+    complex: 600000,    // 10 minutes
     
     // Retry configuration
-    retryDelay: 2000,    // 2 seconds between retries
-    maxRetries: 3
+    retryDelay: 3000,   // 3 seconds
+    maxRetries: 5       // Increased
   },
   
   // Retry configuration
   retry: {
-    attempts: 5,         // Increased from 3
-    initialDelay: 2000,  // 2 seconds
-    maxDelay: 30000,     // 30 seconds max
-    backoffMultiplier: 2 // Exponential backoff
+    attempts: 7,        // Increased from 5
+    initialDelay: 3000, // 3 seconds
+    maxDelay: 45000,    // 45 seconds
+    backoffMultiplier: 1.5
   },
   
   // Memory management

@@ -5,6 +5,8 @@ const generationConfig = require('../config/generationConfig');
 const Website = require('../models/Website');
 const Page = require('../models/Page');
 
+const logger = require('./loggingService');
+
 
 /**
  * Service for coordinating the website generation pipeline
@@ -18,7 +20,7 @@ class GenerationService {
    */
   async generateWebsite(website, progressCallback) {
     try {
-      console.log("Starting website generation for:", website._id);
+      logger.info(`Starting website generation for: ${website._id}`);
       // Update progress
       if (progressCallback) {
         progressCallback(5, 'Starting website generation');
@@ -35,6 +37,7 @@ class GenerationService {
       };
 
       // 1. Generate header
+      logger.debug('Generating header');
       if (progressCallback) {
         progressCallback(10, 'Generating header');
       }
@@ -52,6 +55,9 @@ class GenerationService {
         },
         generationConfig.generation.retry.attempts
       );
+
+      logger.logContent('header', result.header.content, website._id);
+      logger.logContent('header_css', result.header.css, website._id);
 
       // 2. Generate footer
       if (progressCallback) {
@@ -118,14 +124,68 @@ class GenerationService {
       await this._saveToDatabase(website, result);
 
       // Complete generation
+      logger.info(`Website ${website._id} generation complete`);
       if (progressCallback) {
         progressCallback(100, 'Website generation complete');
       }
 
       return result;
     } catch (error) {
-      console.error('Detailed error in generateWebsite:', error);
-      console.error('Error generating website:', error);
+      logger.error(`Error generating website ${website._id}`, error);
+      throw error;
+    }
+  }
+
+  // Add to services/generationService.js
+  async _validateContent(content, type) {
+    // Basic validation for HTML structure completeness
+    if (type === 'header' || type === 'footer') {
+      // Check for complete HTML structure
+      const hasOpeningTags = content.includes('<header') || content.includes('<nav') || content.includes('<footer');
+      const hasClosingTags = content.includes('</header>') || content.includes('</nav>') || content.includes('</footer>');
+
+      if (hasOpeningTags && !hasClosingTags) {
+        console.warn(`Incomplete ${type} HTML structure detected, using fallback`);
+        return false;
+      }
+
+      // Check for navbar structure in header
+      if (type === 'header' && content.includes('navbar') && !content.includes('</nav>')) {
+        console.warn('Incomplete navbar structure detected in header, using fallback');
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  // Update the _saveToDatabase method
+  async _saveToDatabase(websiteDoc, result) {
+    try {
+      // Validate header and footer content
+      const isHeaderValid = await this._validateContent(result.header.content, 'header');
+      const isFooterValid = await this._validateContent(result.footer.content, 'footer');
+
+      // Use fallbacks if validation fails
+      websiteDoc.header = {
+        content: isHeaderValid ? result.header.content : this._createFallbackHeader(this._prepareWebsiteData(websiteDoc)).content,
+        css: isHeaderValid ? result.header.css : this._createFallbackHeader(this._prepareWebsiteData(websiteDoc)).css
+      };
+
+      websiteDoc.footer = {
+        content: isFooterValid ? result.footer.content : this._createFallbackFooter(this._prepareWebsiteData(websiteDoc)).content,
+        css: isFooterValid ? result.footer.css : this._createFallbackFooter(this._prepareWebsiteData(websiteDoc)).css
+      };
+
+      websiteDoc.status = 'completed';
+      websiteDoc.generatedAt = new Date();
+
+      await websiteDoc.save();
+
+      // Continue with pages processing...
+      // Rest of the existing code
+    } catch (error) {
+      console.error('Error saving website content to database:', error);
       throw error;
     }
   }
@@ -328,118 +388,328 @@ class GenerationService {
    * @private
    */
   _createFallbackHeader(websiteData) {
-    let headerContent = generationConfig.templates.fallbackHTML.header;
-  
-    // Replace placeholders with actual data
-    headerContent = headerContent.replace(/{{businessName}}/g, websiteData.businessName);
-  
-    // Add navigation links based on pages
-    if (Array.isArray(websiteData.pages) && websiteData.pages.length > 0) {
-      let navLinks = '';
-      websiteData.pages.forEach((page, index) => {
-        const isActive = page.toLowerCase() === 'home';
-        const href = page.toLowerCase() === 'home' ? '/' : `/${page.toLowerCase().replace(/\s+/g, '-')}`;
-        navLinks += `<li class="nav-item"><a class="nav-link${isActive ? ' active' : ''}" href="${href}">${page}</a></li>`;
-      });
-  
-      headerContent = headerContent.replace(/<ul class="navbar-nav ms-auto">[\s\S]*?<\/ul>/g,
-        `<ul class="navbar-nav ms-auto">${navLinks}</ul>`);
-    }
-  
-    // Create enhanced CSS
+    const { businessName, primaryColor, secondaryColor, pages } = websiteData;
+
+    // Create navigation links for pages
+    const navLinks = Array.isArray(pages) ? pages.map(page => {
+      const isHome = page.toLowerCase() === 'home';
+      const href = isHome ? 'index.html' : `${page.toLowerCase().replace(/\s+/g, '-')}.html`;
+      return `<li class="nav-item">
+      <a class="nav-link${isHome ? ' active' : ''}" href="${href}">${page}</a>
+    </li>`;
+    }).join('\n') : '';
+
+    // Complete header HTML
+    const headerContent = `<header class="navbar navbar-expand-lg fixed-top header bg-color">
+  <div class="container">
+    <a class="navbar-brand" href="index.html" style="font-family: 'Open Sans', sans-serif; font-size: 1.5rem; font-weight: bold; color: white; text-decoration: none;">
+      ${businessName}
+    </a>
+    <p class="tagline d-none d-lg-inline" style="font-family: 'Open Sans', sans-serif; margin-left: 20px; color: #ffffff; font-size: 0.9rem; text-align: center;">
+      ${websiteData.websiteTagline || 'Quality service you can trust'}
+    </p>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" style="border-color: ${secondaryColor}; background-color: transparent;" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav ms-auto">
+        ${navLinks}
+      </ul>
+    </div>
+  </div>
+</header>`;
+
+    // Complete header CSS
     const headerCss = `
-      /* Header Styles */
-      header.navbar {
-        background-color: ${websiteData.primaryColor};
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-        padding: 15px 0;
-        transition: all 0.3s ease;
-      }
-      
-      header .navbar-brand {
-        color: white;
-        font-weight: 700;
-        font-size: 1.5rem;
-        letter-spacing: -0.5px;
-        transition: all 0.3s ease;
-      }
-      
-      header .navbar-brand:hover {
-        transform: translateY(-2px);
-      }
-      
-      header .nav-link {
-        color: rgba(255, 255, 255, 0.85) !important;
-        font-weight: 500;
-        padding: 8px 16px !important;
-        transition: all 0.3s ease;
-        position: relative;
-      }
-      
-      header .nav-link:after {
-        content: '';
-        position: absolute;
-        bottom: 0;
-        left: 50%;
-        width: 0;
-        height: 2px;
-        background-color: white;
-        transition: all 0.3s ease;
-        transform: translateX(-50%);
-      }
-      
-      header .nav-link:hover:after,
-      header .nav-link.active:after {
-        width: 80%;
-      }
-      
-      header .nav-link.active,
-      header .nav-link:hover {
-        color: white !important;
-      }
-      
-      header .navbar-toggler {
-        border-color: rgba(255, 255, 255, 0.1);
-        padding: 5px 10px;
-      }
-      
-      header .navbar-toggler:focus {
-        box-shadow: none;
-        outline: none;
-      }
-      
-      header .navbar-toggler-icon {
-        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%28255, 255, 255, 0.85%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
-      }
-      
-      @media (max-width: 991px) {
-        header .navbar-collapse {
-          background-color: ${websiteData.primaryColor};
-          padding: 15px;
-          border-radius: 8px;
-          margin-top: 10px;
-          box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
-        }
-        
-        header .nav-link {
-          padding: 10px !important;
-          border-radius: 4px;
-        }
-        
-        header .nav-link:hover,
-        header .nav-link.active {
-          background-color: rgba(255, 255, 255, 0.1);
-        }
-        
-        header .nav-link:after {
-          display: none;
-        }
-      }
-    `;
+/* Header Styles */
+.bg-color {
+  background-color: ${primaryColor};
+}
+header.navbar {
+  background-color: ${primaryColor};
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  padding: 15px 0;
+  transition: all 0.3s ease;
+}
+
+header .navbar-brand {
+  color: white;
+  font-weight: 700;
+  font-size: 1.5rem;
+  letter-spacing: -0.5px;
+  transition: all 0.3s ease;
+}
+
+header .navbar-brand:hover {
+  transform: translateY(-2px);
+}
+
+header .nav-link {
+  color: rgba(255, 255, 255, 0.85) !important;
+  font-weight: 500;
+  padding: 8px 16px !important;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+header .nav-link:after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  width: 0;
+  height: 2px;
+  background-color: white;
+  transition: all 0.3s ease;
+  transform: translateX(-50%);
+}
+
+header .nav-link:hover:after,
+header .nav-link.active:after {
+  width: 80%;
+}
+
+header .nav-link.active,
+header .nav-link:hover {
+  color: white !important;
+}
+
+header .navbar-toggler {
+  border-color: rgba(255, 255, 255, 0.1);
+  padding: 5px 10px;
+}
+
+header .navbar-toggler:focus {
+  box-shadow: none;
+  outline: none;
+}
+
+header .navbar-toggler-icon {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%28255, 255, 255, 0.85%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+}
+
+.tagline {
+  margin-bottom: 0;
+}
+
+@media (max-width: 991px) {
+  header .navbar-collapse {
+    background-color: ${primaryColor};
+    padding: 15px;
+    border-radius: 8px;
+    margin-top: 10px;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+  }
   
+  header .nav-link {
+    padding: 10px !important;
+    border-radius: 4px;
+  }
+  
+  header .nav-link:hover,
+  header .nav-link.active {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+  
+  header .nav-link:after {
+    display: none;
+  }
+}`;
+
     return {
       content: headerContent,
       css: headerCss
+    };
+  }
+
+  // Replace the footer fallback with a more complete version
+  _createFallbackFooter(websiteData) {
+    const { businessName, businessDescription, primaryColor, secondaryColor, pages } = websiteData;
+
+    // Create footer navigation
+    const footerLinks = Array.isArray(pages) ? pages.map(page => {
+      const href = page.toLowerCase() === 'home' ? 'index.html' : `${page.toLowerCase().replace(/\s+/g, '-')}.html`;
+      return `<li><a href="${href}">${page}</a></li>`;
+    }).join('\n') : '';
+
+    // Build social links
+    let socialLinksHtml = '';
+    if (websiteData.socialLinks) {
+      if (websiteData.socialLinks.facebook) {
+        socialLinksHtml += `<a href="https://facebook.com/${websiteData.socialLinks.facebook}" class="social-link" target="_blank"><i class="fab fa-facebook-f"></i></a> `;
+      }
+      if (websiteData.socialLinks.twitter) {
+        socialLinksHtml += `<a href="https://twitter.com/${websiteData.socialLinks.twitter}" class="social-link" target="_blank"><i class="fab fa-twitter"></i></a> `;
+      }
+      if (websiteData.socialLinks.instagram) {
+        socialLinksHtml += `<a href="https://instagram.com/${websiteData.socialLinks.instagram}" class="social-link" target="_blank"><i class="fab fa-instagram"></i></a> `;
+      }
+      if (websiteData.socialLinks.linkedin) {
+        socialLinksHtml += `<a href="https://linkedin.com/company/${websiteData.socialLinks.linkedin}" class="social-link" target="_blank"><i class="fab fa-linkedin-in"></i></a>`;
+      }
+    }
+
+    if (!socialLinksHtml) {
+      socialLinksHtml = `
+      <a href="#" class="social-link"><i class="fab fa-facebook-f"></i></a>
+      <a href="#" class="social-link"><i class="fab fa-twitter"></i></a>
+      <a href="#" class="social-link"><i class="fab fa-instagram"></i></a>
+    `;
+    }
+
+    // Complete footer HTML
+    const footerContent = `<footer class="site-footer">
+  <div class="container">
+    <div class="row">
+      <div class="col-md-4 footer-info">
+        <h3>${businessName}</h3>
+        <p>${businessDescription || 'Quality service you can trust'}</p>
+        <div class="social-links">
+          ${socialLinksHtml}
+        </div>
+      </div>
+      
+      <div class="col-md-4 footer-links">
+        <h4>Useful Links</h4>
+        <ul>
+          ${footerLinks}
+        </ul>
+      </div>
+      
+      <div class="col-md-4 footer-contact">
+        <h4>Contact Us</h4>
+        <p>
+          ${websiteData.address || '123 Street Name<br>City, State ZIP'}<br>
+          <strong>Phone:</strong> ${websiteData.phone || '+1 (555) 123-4567'}<br>
+          <strong>Email:</strong> ${websiteData.email || 'info@example.com'}<br>
+        </p>
+      </div>
+    </div>
+  </div>
+  
+  <div class="footer-bottom">
+    <div class="container">
+      <div class="row">
+        <div class="col-md-12">
+          <p class="copyright">
+            &copy; ${new Date().getFullYear()} ${businessName}. All Rights Reserved.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</footer>`;
+
+    // Complete footer CSS
+    const footerCss = `
+/* Footer Styles */
+.site-footer {
+  background-color: #343a40;
+  color: white;
+  padding: 60px 0 20px;
+  position: relative;
+}
+
+.site-footer:before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 5px;
+  background: linear-gradient(to right, ${primaryColor}, ${secondaryColor});
+}
+
+.site-footer h3, .site-footer h4 {
+  color: white;
+  margin-bottom: 20px;
+  position: relative;
+  padding-bottom: 10px;
+}
+
+.site-footer h3:after, .site-footer h4:after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 40px;
+  height: 2px;
+  background-color: ${primaryColor};
+}
+
+.site-footer p {
+  color: rgba(255, 255, 255, 0.7);
+  line-height: 1.7;
+}
+
+.footer-links ul {
+  list-style: none;
+  padding-left: 0;
+}
+
+.footer-links ul li {
+  padding: 8px 0;
+}
+
+.footer-links ul li a {
+  color: rgba(255, 255, 255, 0.7);
+  text-decoration: none;
+  transition: all 0.3s ease;
+}
+
+.footer-links ul li a:hover {
+  color: white;
+  padding-left: 5px;
+}
+
+.social-links {
+  margin-top: 20px;
+}
+
+.social-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.1);
+  color: white;
+  margin-right: 10px;
+  transition: all 0.3s ease;
+}
+
+.social-link:hover {
+  background-color: ${primaryColor};
+  transform: translateY(-3px);
+}
+
+.footer-bottom {
+  background-color: rgba(0, 0, 0, 0.2);
+  padding: 20px 0;
+  margin-top: 40px;
+}
+
+.copyright {
+  text-align: center;
+  margin-bottom: 0;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+@media (max-width: 767px) {
+  .site-footer {
+    padding: 40px 0 10px;
+  }
+  
+  .footer-info, .footer-links, .footer-contact {
+    margin-bottom: 30px;
+  }
+}`;
+
+    return {
+      content: footerContent,
+      css: footerCss
     };
   }
 
@@ -451,11 +721,11 @@ class GenerationService {
    */
   _createFallbackFooter(websiteData) {
     let footerContent = generationConfig.templates.fallbackHTML.footer;
-  
+
     // Replace placeholders with actual data
     footerContent = footerContent.replace(/{{businessName}}/g, websiteData.businessName);
     footerContent = footerContent.replace(/{{businessDescription}}/g, websiteData.businessDescription);
-  
+
     // Add contact information if available
     const addressHtml = websiteData.address
       ? websiteData.address
@@ -466,37 +736,37 @@ class GenerationService {
     const phoneHtml = websiteData.phone
       ? `<a href="tel:${websiteData.phone}" class="text-white">${websiteData.phone}</a>`
       : 'Phone not provided';
-  
+
     footerContent = footerContent.replace(/{{address}}/g, addressHtml);
     footerContent = footerContent.replace(/{{email}}/g, emailHtml);
     footerContent = footerContent.replace(/{{phone}}/g, phoneHtml);
-  
+
     // Add social links if available
     if (websiteData.socialLinks) {
       let socialLinksHtml = '';
-  
+
       if (websiteData.socialLinks.facebook) {
         socialLinksHtml += `<a href="https://facebook.com/${websiteData.socialLinks.facebook}" class="social-link" target="_blank"><i class="fab fa-facebook-f"></i></a>`;
       }
-  
+
       if (websiteData.socialLinks.twitter) {
         socialLinksHtml += `<a href="https://twitter.com/${websiteData.socialLinks.twitter}" class="social-link" target="_blank"><i class="fab fa-twitter"></i></a>`;
       }
-  
+
       if (websiteData.socialLinks.instagram) {
         socialLinksHtml += `<a href="https://instagram.com/${websiteData.socialLinks.instagram}" class="social-link" target="_blank"><i class="fab fa-instagram"></i></a>`;
       }
-  
+
       if (websiteData.socialLinks.linkedin) {
         socialLinksHtml += `<a href="https://linkedin.com/company/${websiteData.socialLinks.linkedin}" class="social-link" target="_blank"><i class="fab fa-linkedin-in"></i></a>`;
       }
-  
+
       if (socialLinksHtml) {
         footerContent = footerContent.replace(/<div class="social-links">[\s\S]*?<\/div>/g,
           `<div class="social-links">${socialLinksHtml}</div>`);
       }
     }
-  
+
     // Create enhanced CSS
     const footerCss = `
       /* Footer Styles */
@@ -598,7 +868,7 @@ class GenerationService {
         }
       }
     `;
-  
+
     return {
       content: footerContent,
       css: footerCss
@@ -995,7 +1265,7 @@ class GenerationService {
    */
   _createBasicSectionCss(sectionId, type, websiteData) {
     const { primaryColor, secondaryColor, fontFamily } = websiteData;
-    
+
     // Basic shared CSS for all sections
     let commonCss = `
       #${sectionId} {
@@ -1127,7 +1397,7 @@ class GenerationService {
         }
       }
     `;
-    
+
     // Add section-specific CSS
     if (type === 'hero') {
       return commonCss + `
@@ -1223,7 +1493,7 @@ class GenerationService {
         }
       `;
     }
-    
+
     if (type === 'cta') {
       return commonCss + `
         #${sectionId} {
@@ -1294,7 +1564,7 @@ class GenerationService {
         }
       `;
     }
-    
+
     if (type === 'testimonials') {
       return commonCss + `
         #${sectionId} {
@@ -1369,60 +1639,60 @@ class GenerationService {
           font-size: 0.9rem;
         }
     `;
+    }
   }
-}
 
-/**
- * Lighten a hex color by a percentage
- * @param {string} color - Hex color to lighten
- * @param {number} percent - Percentage to lighten by
- * @returns {string} Lightened color
- * @private
- */
-_lightenColor(color, percent) {
-  // Remove the # if it exists
-  color = color.replace('#', '');
+  /**
+   * Lighten a hex color by a percentage
+   * @param {string} color - Hex color to lighten
+   * @param {number} percent - Percentage to lighten by
+   * @returns {string} Lightened color
+   * @private
+   */
+  _lightenColor(color, percent) {
+    // Remove the # if it exists
+    color = color.replace('#', '');
 
-  // Convert to RGB
-  const r = parseInt(color.substring(0, 2), 16);
-  const g = parseInt(color.substring(2, 4), 16);
-  const b = parseInt(color.substring(4, 6), 16);
+    // Convert to RGB
+    const r = parseInt(color.substring(0, 2), 16);
+    const g = parseInt(color.substring(2, 4), 16);
+    const b = parseInt(color.substring(4, 6), 16);
 
-  // Lighten
-  const lightenAmount = percent / 100;
-  const lr = Math.min(255, Math.floor(r + (255 - r) * lightenAmount));
-  const lg = Math.min(255, Math.floor(g + (255 - g) * lightenAmount));
-  const lb = Math.min(255, Math.floor(b + (255 - b) * lightenAmount));
+    // Lighten
+    const lightenAmount = percent / 100;
+    const lr = Math.min(255, Math.floor(r + (255 - r) * lightenAmount));
+    const lg = Math.min(255, Math.floor(g + (255 - g) * lightenAmount));
+    const lb = Math.min(255, Math.floor(b + (255 - b) * lightenAmount));
 
-  // Convert back to hex
-  return `#${lr.toString(16).padStart(2, '0')}${lg.toString(16).padStart(2, '0')}${lb.toString(16).padStart(2, '0')}`;
-}
+    // Convert back to hex
+    return `#${lr.toString(16).padStart(2, '0')}${lg.toString(16).padStart(2, '0')}${lb.toString(16).padStart(2, '0')}`;
+  }
 
-/**
- * Darken a hex color by a percentage
- * @param {string} color - Hex color to darken
- * @param {number} percent - Percentage to darken by
- * @returns {string} Darkened color
- * @private
- */
-_darkenColor(color, percent) {
-  // Remove the # if it exists
-  color = color.replace('#', '');
+  /**
+   * Darken a hex color by a percentage
+   * @param {string} color - Hex color to darken
+   * @param {number} percent - Percentage to darken by
+   * @returns {string} Darkened color
+   * @private
+   */
+  _darkenColor(color, percent) {
+    // Remove the # if it exists
+    color = color.replace('#', '');
 
-  // Convert to RGB
-  const r = parseInt(color.substring(0, 2), 16);
-  const g = parseInt(color.substring(2, 4), 16);
-  const b = parseInt(color.substring(4, 6), 16);
+    // Convert to RGB
+    const r = parseInt(color.substring(0, 2), 16);
+    const g = parseInt(color.substring(2, 4), 16);
+    const b = parseInt(color.substring(4, 6), 16);
 
-  // Darken
-  const darkenAmount = percent / 100;
-  const dr = Math.floor(r * (1 - darkenAmount));
-  const dg = Math.floor(g * (1 - darkenAmount));
-  const db = Math.floor(b * (1 - darkenAmount));
+    // Darken
+    const darkenAmount = percent / 100;
+    const dr = Math.floor(r * (1 - darkenAmount));
+    const dg = Math.floor(g * (1 - darkenAmount));
+    const db = Math.floor(b * (1 - darkenAmount));
 
-  // Convert back to hex
-  return `#${dr.toString(16).padStart(2, '0')}${dg.toString(16).padStart(2, '0')}${db.toString(16).padStart(2, '0')}`;
-}
+    // Convert back to hex
+    return `#${dr.toString(16).padStart(2, '0')}${dg.toString(16).padStart(2, '0')}${db.toString(16).padStart(2, '0')}`;
+  }
 
   /**
    * Execute a generator function with retries
@@ -1483,7 +1753,7 @@ _darkenColor(color, percent) {
     };
   }
 
-  // Add this method to the GenerationService class in services/generationService.js
+
 
   /**
  * Generate a specific page with sections

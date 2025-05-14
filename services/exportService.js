@@ -2,6 +2,8 @@ const archiver = require('archiver');
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
+const htmlFixerService = require('./htmlFixerService');
+const cssFixerService = require('./cssFixerService');
 
 /**
  * Generate a website export
@@ -11,19 +13,38 @@ const os = require('os');
  * @returns {Promise<Buffer>} - ZIP file buffer
  */
 exports.generateExport = async (website, pages, format = 'static') => {
-  return new Promise((resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
     try {
+
+      // Create a temp directory for processing
+      const tempDir = path.join(os.tmpdir(), `website-export-${Date.now()}`);
+      if (!fs.existsSync(tempDir)) {
+        fs.mkdirSync(tempDir, { recursive: true });
+      }
+
+      // Process files and add to temp directory first
+      if (format === 'html') {
+        addHtmlOnlyFiles(tempDir, website, pages);
+      } else if (format === 'development') {
+        addDevelopmentFiles(tempDir, website, pages);
+      } else {
+        addStaticFiles(tempDir, website, pages);
+      }
+
+      // Fix CSS selector issues
+      await cssFixerService.fixCssSelectors(tempDir);
+
       // Create a file buffer to store the ZIP data
       const fileBuffers = [];
-      
+
       // Create a ZIP archive
       const archive = archiver('zip', {
         zlib: { level: 9 } // Maximum compression
       });
-      
+
       // Listen for all archive data to be written
       archive.on('data', (chunk) => fileBuffers.push(chunk));
-      
+
       // Listen for archive warnings
       archive.on('warning', (err) => {
         if (err.code === 'ENOENT') {
@@ -32,16 +53,16 @@ exports.generateExport = async (website, pages, format = 'static') => {
           reject(err);
         }
       });
-      
+
       // Listen for archive errors
       archive.on('error', (err) => reject(err));
-      
+
       // Finalize the archive when all data has been added
       archive.on('end', () => {
         const buffer = Buffer.concat(fileBuffers);
         resolve(buffer);
       });
-      
+
       // Set up base file structure based on export format
       if (format === 'html') {
         // Simple HTML-only export
@@ -53,7 +74,7 @@ exports.generateExport = async (website, pages, format = 'static') => {
         // Default: static website export
         addStaticFiles(archive, website, pages);
       }
-      
+
       // Finalize the archive
       archive.finalize();
     } catch (error) {
@@ -84,14 +105,14 @@ ${pages.map(page => `- ${page.slug === '/' ? 'index' : page.slug}.html - ${page.
 ## Generated on
 ${new Date().toLocaleDateString()}
 `;
-  
+
   archive.append(readmeContent, { name: 'README.md' });
-  
+
   // Process each page
   pages.forEach(page => {
     const filename = page.slug === '/' ? 'index.html' : `${page.slug}.html`;
     const content = generatePageHtml(website, page, pages);
-    
+
     archive.append(content, { name: filename });
   });
 }
@@ -107,7 +128,7 @@ function addStaticFiles(archive, website, pages) {
   archive.append(null, { name: 'css/' });
   archive.append(null, { name: 'js/' });
   archive.append(null, { name: 'images/' });
-  
+
   // Create README file
   const readmeContent = `# ${website.businessName}
 
@@ -124,28 +145,28 @@ ${pages.map(page => `- ${page.slug === '/' ? 'index' : page.slug}.html - ${page.
 ## Generated on
 ${new Date().toLocaleDateString()}
 `;
-  
+
   archive.append(readmeContent, { name: 'README.md' });
-  
+
   // Add common CSS
   const commonCss = generateCommonCss(website);
   archive.append(commonCss, { name: 'css/styles.css' });
-  
+
   // Add common JavaScript
   const commonJs = generateCommonJs(website);
   archive.append(commonJs, { name: 'js/main.js' });
-  
+
   // Add placeholder image
   const placeholderSvg = `<svg width="800" height="400" xmlns="http://www.w3.org/2000/svg">
   <rect width="800" height="400" fill="#f8f9fa"/>
   <text x="400" y="200" font-family="Arial" font-size="30" text-anchor="middle" fill="#6c757d">Image Placeholder</text>
 </svg>`;
   archive.append(placeholderSvg, { name: 'images/placeholder.svg' });
-  
+
   // Process each page
   pages.forEach(page => {
     const filename = page.slug === '/' ? 'index.html' : `${page.slug}.html`;
-    
+
     // Generate page-specific CSS
     let pageCSS = '';
     page.sections.forEach(section => {
@@ -153,12 +174,12 @@ ${new Date().toLocaleDateString()}
         pageCSS += section.css + '\n';
       }
     });
-    
+
     if (pageCSS.trim()) {
       const pageCssFilename = `css/${page.slug === '/' ? 'index' : page.slug}.css`;
       archive.append(pageCSS, { name: pageCssFilename });
     }
-    
+
     // Generate and add HTML file
     const content = generatePageHtml(website, page, pages, true);
     archive.append(content, { name: filename });
@@ -179,7 +200,7 @@ function addDevelopmentFiles(archive, website, pages) {
   archive.append(null, { name: 'src/' });
   archive.append(null, { name: 'src/scss/' });
   archive.append(null, { name: 'src/js/' });
-  
+
   // Create README file
   const readmeContent = `# ${website.businessName}
 
@@ -210,9 +231,9 @@ ${pages.map(page => `- ${page.slug === '/' ? 'index' : page.slug}.html - ${page.
 ## Generated on
 ${new Date().toLocaleDateString()}
 `;
-  
+
   archive.append(readmeContent, { name: 'README.md' });
-  
+
   // Add package.json
   const packageJson = {
     "name": website.businessName.toLowerCase().replace(/[^a-z0-9]/gi, '-'),
@@ -230,20 +251,20 @@ ${new Date().toLocaleDateString()}
       "live-server": "^1.2.2"
     }
   };
-  
+
   archive.append(JSON.stringify(packageJson, null, 2), { name: 'package.json' });
-  
+
   // Add .gitignore
   const gitignore = `node_modules/
 package-lock.json
 .DS_Store
 `;
   archive.append(gitignore, { name: '.gitignore' });
-  
+
   // Add common CSS files
   const commonCss = generateCommonCss(website);
   archive.append(commonCss, { name: 'css/styles.css' });
-  
+
   // Add SCSS source files
   const mainScss = `// Main SCSS file
 $primary-color: ${website.primaryColor};
@@ -259,26 +280,26 @@ body {
 @import 'footer';
 @import 'components';
 `;
-  
+
   const headerScss = `// Header styles
 ${website.header?.css || '// No header styles defined'}`;
-  
+
   const footerScss = `// Footer styles
 ${website.footer?.css || '// No footer styles defined'}`;
-  
+
   const componentsScss = `// Component styles
 // Add your custom component styles here
 `;
-  
+
   archive.append(mainScss, { name: 'src/scss/main.scss' });
   archive.append(headerScss, { name: 'src/scss/_header.scss' });
   archive.append(footerScss, { name: 'src/scss/_footer.scss' });
   archive.append(componentsScss, { name: 'src/scss/_components.scss' });
-  
+
   // Add JavaScript files
   const mainJs = generateCommonJs(website);
   archive.append(mainJs, { name: 'js/main.js' });
-  
+
   // Add source JS files
   const srcMainJs = `// Main JavaScript file
 document.addEventListener('DOMContentLoaded', function() {
@@ -302,20 +323,20 @@ function initNavigation() {
   }
 }
 `;
-  
+
   archive.append(srcMainJs, { name: 'src/js/main.js' });
-  
+
   // Add placeholder image
   const placeholderSvg = `<svg width="800" height="400" xmlns="http://www.w3.org/2000/svg">
   <rect width="800" height="400" fill="#f8f9fa"/>
   <text x="400" y="200" font-family="Arial" font-size="30" text-anchor="middle" fill="#6c757d">Image Placeholder</text>
 </svg>`;
   archive.append(placeholderSvg, { name: 'images/placeholder.svg' });
-  
+
   // Process each page
   pages.forEach(page => {
     const filename = page.slug === '/' ? 'index.html' : `${page.slug}.html`;
-    
+
     // Generate page-specific CSS
     let pageCSS = '';
     page.sections.forEach(section => {
@@ -323,16 +344,16 @@ function initNavigation() {
         pageCSS += section.css + '\n';
       }
     });
-    
+
     if (pageCSS.trim()) {
       const pageCssFilename = `css/${page.slug === '/' ? 'index' : page.slug}.css`;
       archive.append(pageCSS, { name: pageCssFilename });
-      
+
       // Also add SCSS source
       const pageScssFilename = `src/scss/pages/_${page.slug === '/' ? 'index' : page.slug}.scss`;
       archive.append(`// ${page.name} page styles\n${pageCSS}`, { name: pageScssFilename });
     }
-    
+
     // Generate and add HTML file
     const content = generatePageHtml(website, page, pages, true);
     archive.append(content, { name: filename });
@@ -349,7 +370,7 @@ function initNavigation() {
  */
 function generatePageHtml(website, page, allPages, useExternalFiles = false) {
   const pageCssFilename = page.slug === '/' ? 'index' : page.slug;
-  
+
   let html = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -365,13 +386,13 @@ function generatePageHtml(website, page, allPages, useExternalFiles = false) {
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=${website.fontFamily.replace(' ', '+')}:wght@300;400;500;700&display=swap" rel="stylesheet">
   `;
-  
+
   if (useExternalFiles) {
     html += `
   <!-- Custom CSS -->
   <link rel="stylesheet" href="css/styles.css">
   `;
-    
+
     // Add page-specific CSS if it exists
     if (page.sections.some(section => section.css)) {
       html += `  <link rel="stylesheet" href="css/${pageCssFilename}.css">\n`;
@@ -401,7 +422,7 @@ function generatePageHtml(website, page, allPages, useExternalFiles = false) {
   </style>
   `;
   }
-  
+
   html += `
 </head>
 <body>
@@ -412,9 +433,9 @@ function generatePageHtml(website, page, allPages, useExternalFiles = false) {
   
   <!-- Main Content -->
   <main>
-    ${page.sections.map(section => 
-      `<section id="${section.sectionReference}">\n      ${section.content}\n    </section>`
-    ).join('\n\n')}
+    ${page.sections.map(section =>
+    `<section id="${section.sectionReference}">\n      ${section.content}\n    </section>`
+  ).join('\n\n')}
   </main>
   
   <!-- Footer -->
@@ -424,7 +445,7 @@ function generatePageHtml(website, page, allPages, useExternalFiles = false) {
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   `;
-  
+
   if (useExternalFiles) {
     html += `  <script src="js/main.js"></script>\n`;
   } else {
@@ -447,9 +468,11 @@ function generatePageHtml(website, page, allPages, useExternalFiles = false) {
   </script>
   `;
   }
-  
+
   html += `</body>
 </html>`;
+
+  html = htmlFixerService.fixHtmlIssues(html);
 
   return html;
 }
@@ -568,12 +591,12 @@ function generateDefaultHeader(website, currentPage, allPages) {
     <div class="collapse navbar-collapse" id="navbarNav">
       <ul class="navbar-nav ms-auto">
         ${allPages.map(p => {
-          const isActive = p._id.toString() === currentPage._id.toString();
-          const href = p.slug === '/' ? 'index.html' : `${p.slug}.html`;
-          return `<li class="nav-item">
+    const isActive = p._id.toString() === currentPage._id.toString();
+    const href = p.slug === '/' ? 'index.html' : `${p.slug}.html`;
+    return `<li class="nav-item">
           <a class="nav-link${isActive ? ' active' : ''}" href="${href}">${p.name}</a>
         </li>`;
-        }).join('\n        ')}
+  }).join('\n        ')}
       </ul>
     </div>
   </div>

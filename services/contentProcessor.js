@@ -90,13 +90,37 @@ class ContentProcessor {
         }
       }
 
+      if (contentType === 'header' || contentType === 'footer' || contentType === 'page') {
+      if (typeof result === 'object' && result !== null) {
+        if (result.content) {
+          result.content = this._ensureCompleteHtml(result.content, contentType);
+        }
+        
+        if (result.sections && Array.isArray(result.sections)) {
+          result.sections = result.sections.map(section => {
+            if (section.content) {
+              section.content = this._ensureCompleteHtml(section.content, contentType);
+            }
+            return section;
+          });
+        }
+      }
+    }
+    
+    return result;
+
+      
+
       // All extraction methods failed, use fallback
-      console.log(`All extraction methods failed for ${contentType} ${pageName}, using fallback`);
-      return this._createFallbackObject(contentType, pageName);
+      // console.log(`All extraction methods failed for ${contentType} ${pageName}, using fallback`);
+      // return this._createFallbackObject(contentType, pageName);
     } catch (error) {
       console.error('Error processing content:', error);
       return this._createFallbackObject(contentType, pageName);
     }
+
+    
+
   }
 
   /**
@@ -267,19 +291,19 @@ class ContentProcessor {
       }
 
       return blocks;
-    } catch(error) {
+    } catch (error) {
       console.log("Inner JSON parsing failed:", jsonError.message);
-  
-  // More aggressive repairs on syntax error
-  if (jsonError.message.includes("Expected ',' or '}'")) {
-    // Apply more aggressive fixes to the specific pattern
-    let moreFixedJson = jsonStr.replace(/([^,{])\s*"([^"]+)":/g, '$1,"$2":');
-    try {
-      return JSON.parse(moreFixedJson);
-    } catch (e) {
-      // Still failed, continue to fallbacks
-    }
-  }
+
+      // More aggressive repairs on syntax error
+      if (jsonError.message.includes("Expected ',' or '}'")) {
+        // Apply more aggressive fixes to the specific pattern
+        let moreFixedJson = jsonStr.replace(/([^,{])\s*"([^"]+)":/g, '$1,"$2":');
+        try {
+          return JSON.parse(moreFixedJson);
+        } catch (e) {
+          // Still failed, continue to fallbacks
+        }
+      }
     }
 
   }
@@ -1163,6 +1187,48 @@ class ContentProcessor {
       return cssContent || '';
     }
   }
+
+  // Add this function to contentProcessor.js
+  _ensureCompleteHtml(content, type) {
+    if (!content) return '';
+
+    // Check for common HTML structure issues
+    if (type === 'header' || type === 'page') {
+      // Ensure header tags are closed
+      if (content.includes('<header') && !content.includes('</header>')) {
+        content += '</header>';
+      }
+
+      // Ensure nav tags are closed
+      if (content.includes('<nav') && !content.includes('</nav>')) {
+        content += '</nav>';
+      }
+
+      // Handle unclosed list items
+      const liOpenCount = (content.match(/<li/g) || []).length;
+      const liCloseCount = (content.match(/<\/li>/g) || []).length;
+      if (liOpenCount > liCloseCount) {
+        for (let i = 0; i < liOpenCount - liCloseCount; i++) {
+          content += '</li>';
+        }
+      }
+
+      // Handle unclosed ul tags
+      if (content.includes('<ul') && !content.includes('</ul>')) {
+        content += '</ul>';
+      }
+
+      // Handle unclosed div tags for navbars
+      if (content.includes('<div class="collapse navbar-collapse"') &&
+        !content.includes('</div>')) {
+        content += '</div></div>';
+      }
+    }
+
+    return content;
+  }
 }
+
+
 
 module.exports = new ContentProcessor();

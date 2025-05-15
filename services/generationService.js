@@ -4,6 +4,8 @@ const contentProcessor = require('./contentProcessor');
 const generationConfig = require('../config/generationConfig');
 const Website = require('../models/Website');
 const Page = require('../models/Page');
+const imageGenerationService = require('./imageGenerationService');
+const imageSearchService = require('./imageSearchService');
 
 
 /**
@@ -130,6 +132,7 @@ class GenerationService {
     }
   }
 
+
   /**
    * Generate a specific page with sections
    * @param {string} pageName - Name of the page to generate
@@ -143,8 +146,38 @@ class GenerationService {
     try {
       console.log(`Generating ${pageName} page content`);
 
+      // Generate images for key sections
+      // const heroImagePrompt = this.promptBuilder.buildImagePrompt('hero', websiteData);
+      // const heroImage = await imageGenerationService.generateImage(heroImagePrompt);
+
+      // // Add image paths to the website data for use in prompts
+      // const enhancedWebsiteData = {
+      //   ...websiteData,
+      //   images: {
+      //     hero: heroImage.success ? heroImage.path : null,
+      //     // Generate other images as needed
+      //   }
+      // };
+
+
+      // Create search queries for different sections
+    const heroSearchQuery = `${websiteData.businessCategory} ${pageName === 'Home' ? 'hero image' : pageName}`;
+    const heroImage = await imageSearchService.searchImages(heroSearchQuery);
+    
+    // Add the image metadata to the website data
+    const enhancedWebsiteData = {
+      ...websiteData,
+      images: {
+        hero: heroImage.success ? {
+          path: heroImage.selectedImage.path,
+          attribution: heroImage.selectedImage.attribution,
+          source: heroImage.selectedImage.source
+        } : null
+      }
+    };
+
       // Get the page prompt
-      const pagePrompt = promptBuilder.buildPagePrompt(pageName, websiteData);
+      const pagePrompt = promptBuilder.buildPagePrompt(pageName, enhancedWebsiteData);
 
       // Set improved parameters for generation
       const generationParams = {
@@ -329,10 +362,10 @@ class GenerationService {
    */
   _createFallbackHeader(websiteData) {
     let headerContent = generationConfig.templates.fallbackHTML.header;
-  
+
     // Replace placeholders with actual data
     headerContent = headerContent.replace(/{{businessName}}/g, websiteData.businessName);
-  
+
     // Add navigation links based on pages
     if (Array.isArray(websiteData.pages) && websiteData.pages.length > 0) {
       let navLinks = '';
@@ -341,11 +374,11 @@ class GenerationService {
         const href = page.toLowerCase() === 'home' ? '/' : `/${page.toLowerCase().replace(/\s+/g, '-')}`;
         navLinks += `<li class="nav-item"><a class="nav-link${isActive ? ' active' : ''}" href="${href}">${page}</a></li>`;
       });
-  
+
       headerContent = headerContent.replace(/<ul class="navbar-nav ms-auto">[\s\S]*?<\/ul>/g,
         `<ul class="navbar-nav ms-auto">${navLinks}</ul>`);
     }
-  
+
     // Create enhanced CSS
     const headerCss = `
       /* Header Styles */
@@ -436,7 +469,7 @@ class GenerationService {
         }
       }
     `;
-  
+
     return {
       content: headerContent,
       css: headerCss
@@ -451,11 +484,11 @@ class GenerationService {
    */
   _createFallbackFooter(websiteData) {
     let footerContent = generationConfig.templates.fallbackHTML.footer;
-  
+
     // Replace placeholders with actual data
     footerContent = footerContent.replace(/{{businessName}}/g, websiteData.businessName);
     footerContent = footerContent.replace(/{{businessDescription}}/g, websiteData.businessDescription);
-  
+
     // Add contact information if available
     const addressHtml = websiteData.address
       ? websiteData.address
@@ -466,37 +499,37 @@ class GenerationService {
     const phoneHtml = websiteData.phone
       ? `<a href="tel:${websiteData.phone}" class="text-white">${websiteData.phone}</a>`
       : 'Phone not provided';
-  
+
     footerContent = footerContent.replace(/{{address}}/g, addressHtml);
     footerContent = footerContent.replace(/{{email}}/g, emailHtml);
     footerContent = footerContent.replace(/{{phone}}/g, phoneHtml);
-  
+
     // Add social links if available
     if (websiteData.socialLinks) {
       let socialLinksHtml = '';
-  
+
       if (websiteData.socialLinks.facebook) {
         socialLinksHtml += `<a href="https://facebook.com/${websiteData.socialLinks.facebook}" class="social-link" target="_blank"><i class="fab fa-facebook-f"></i></a>`;
       }
-  
+
       if (websiteData.socialLinks.twitter) {
         socialLinksHtml += `<a href="https://twitter.com/${websiteData.socialLinks.twitter}" class="social-link" target="_blank"><i class="fab fa-twitter"></i></a>`;
       }
-  
+
       if (websiteData.socialLinks.instagram) {
         socialLinksHtml += `<a href="https://instagram.com/${websiteData.socialLinks.instagram}" class="social-link" target="_blank"><i class="fab fa-instagram"></i></a>`;
       }
-  
+
       if (websiteData.socialLinks.linkedin) {
         socialLinksHtml += `<a href="https://linkedin.com/company/${websiteData.socialLinks.linkedin}" class="social-link" target="_blank"><i class="fab fa-linkedin-in"></i></a>`;
       }
-  
+
       if (socialLinksHtml) {
         footerContent = footerContent.replace(/<div class="social-links">[\s\S]*?<\/div>/g,
           `<div class="social-links">${socialLinksHtml}</div>`);
       }
     }
-  
+
     // Create enhanced CSS
     const footerCss = `
       /* Footer Styles */
@@ -598,7 +631,7 @@ class GenerationService {
         }
       }
     `;
-  
+
     return {
       content: footerContent,
       css: footerCss
@@ -995,7 +1028,7 @@ class GenerationService {
    */
   _createBasicSectionCss(sectionId, type, websiteData) {
     const { primaryColor, secondaryColor, fontFamily } = websiteData;
-    
+
     // Basic shared CSS for all sections
     let commonCss = `
       #${sectionId} {
@@ -1127,7 +1160,7 @@ class GenerationService {
         }
       }
     `;
-    
+
     // Add section-specific CSS
     if (type === 'hero') {
       return commonCss + `
@@ -1223,7 +1256,7 @@ class GenerationService {
         }
       `;
     }
-    
+
     if (type === 'cta') {
       return commonCss + `
         #${sectionId} {
@@ -1294,7 +1327,7 @@ class GenerationService {
         }
       `;
     }
-    
+
     if (type === 'testimonials') {
       return commonCss + `
         #${sectionId} {
@@ -1369,60 +1402,60 @@ class GenerationService {
           font-size: 0.9rem;
         }
     `;
+    }
   }
-}
 
-/**
- * Lighten a hex color by a percentage
- * @param {string} color - Hex color to lighten
- * @param {number} percent - Percentage to lighten by
- * @returns {string} Lightened color
- * @private
- */
-_lightenColor(color, percent) {
-  // Remove the # if it exists
-  color = color.replace('#', '');
+  /**
+   * Lighten a hex color by a percentage
+   * @param {string} color - Hex color to lighten
+   * @param {number} percent - Percentage to lighten by
+   * @returns {string} Lightened color
+   * @private
+   */
+  _lightenColor(color, percent) {
+    // Remove the # if it exists
+    color = color.replace('#', '');
 
-  // Convert to RGB
-  const r = parseInt(color.substring(0, 2), 16);
-  const g = parseInt(color.substring(2, 4), 16);
-  const b = parseInt(color.substring(4, 6), 16);
+    // Convert to RGB
+    const r = parseInt(color.substring(0, 2), 16);
+    const g = parseInt(color.substring(2, 4), 16);
+    const b = parseInt(color.substring(4, 6), 16);
 
-  // Lighten
-  const lightenAmount = percent / 100;
-  const lr = Math.min(255, Math.floor(r + (255 - r) * lightenAmount));
-  const lg = Math.min(255, Math.floor(g + (255 - g) * lightenAmount));
-  const lb = Math.min(255, Math.floor(b + (255 - b) * lightenAmount));
+    // Lighten
+    const lightenAmount = percent / 100;
+    const lr = Math.min(255, Math.floor(r + (255 - r) * lightenAmount));
+    const lg = Math.min(255, Math.floor(g + (255 - g) * lightenAmount));
+    const lb = Math.min(255, Math.floor(b + (255 - b) * lightenAmount));
 
-  // Convert back to hex
-  return `#${lr.toString(16).padStart(2, '0')}${lg.toString(16).padStart(2, '0')}${lb.toString(16).padStart(2, '0')}`;
-}
+    // Convert back to hex
+    return `#${lr.toString(16).padStart(2, '0')}${lg.toString(16).padStart(2, '0')}${lb.toString(16).padStart(2, '0')}`;
+  }
 
-/**
- * Darken a hex color by a percentage
- * @param {string} color - Hex color to darken
- * @param {number} percent - Percentage to darken by
- * @returns {string} Darkened color
- * @private
- */
-_darkenColor(color, percent) {
-  // Remove the # if it exists
-  color = color.replace('#', '');
+  /**
+   * Darken a hex color by a percentage
+   * @param {string} color - Hex color to darken
+   * @param {number} percent - Percentage to darken by
+   * @returns {string} Darkened color
+   * @private
+   */
+  _darkenColor(color, percent) {
+    // Remove the # if it exists
+    color = color.replace('#', '');
 
-  // Convert to RGB
-  const r = parseInt(color.substring(0, 2), 16);
-  const g = parseInt(color.substring(2, 4), 16);
-  const b = parseInt(color.substring(4, 6), 16);
+    // Convert to RGB
+    const r = parseInt(color.substring(0, 2), 16);
+    const g = parseInt(color.substring(2, 4), 16);
+    const b = parseInt(color.substring(4, 6), 16);
 
-  // Darken
-  const darkenAmount = percent / 100;
-  const dr = Math.floor(r * (1 - darkenAmount));
-  const dg = Math.floor(g * (1 - darkenAmount));
-  const db = Math.floor(b * (1 - darkenAmount));
+    // Darken
+    const darkenAmount = percent / 100;
+    const dr = Math.floor(r * (1 - darkenAmount));
+    const dg = Math.floor(g * (1 - darkenAmount));
+    const db = Math.floor(b * (1 - darkenAmount));
 
-  // Convert back to hex
-  return `#${dr.toString(16).padStart(2, '0')}${dg.toString(16).padStart(2, '0')}${db.toString(16).padStart(2, '0')}`;
-}
+    // Convert back to hex
+    return `#${dr.toString(16).padStart(2, '0')}${dg.toString(16).padStart(2, '0')}${db.toString(16).padStart(2, '0')}`;
+  }
 
   /**
    * Execute a generator function with retries

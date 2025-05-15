@@ -108,8 +108,22 @@ function addStaticFiles(archive, website, pages) {
   archive.append(null, { name: 'js/' });
   archive.append(null, { name: 'images/' });
   
+  const imagesDir = path.join(__dirname, '../public/images');
+if (fs.existsSync(imagesDir)) {
+  const files = fs.readdirSync(imagesDir, { recursive: true });
+  files.forEach(file => {
+    const filePath = path.join(imagesDir, file);
+    if (fs.statSync(filePath).isFile()) {
+      archive.file(filePath, { name: `images/${file}` });
+    }
+  });
+}
+
   // Create README file
   const readmeContent = `# ${website.businessName}
+
+  
+
 
 ## Website Overview
 ${website.businessDescription}

@@ -493,9 +493,9 @@ function generatePageHtml(website, page, allPages, useExternalFiles = false) {
 </head>
 <body>
   <!-- Header -->
-  <header>
+  
     ${website.header?.content || generateDefaultHeader(website, page, allPages)}
-  </header>
+  
   
   <!-- Main Content -->
   <main>
@@ -505,9 +505,9 @@ function generatePageHtml(website, page, allPages, useExternalFiles = false) {
   </main>
   
   <!-- Footer -->
-  <footer>
+
     ${website.footer?.content || generateDefaultFooter(website)}
-  </footer>
+  
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   `;

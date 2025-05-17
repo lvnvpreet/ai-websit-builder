@@ -267,6 +267,12 @@ CRITICAL INSTRUCTIONS:
 3. All navigation links must follow the correct pattern
 4. All CSS must be scoped to prevent conflicts
 5. All interactive elements must have JavaScript
+6. ALL IMAGE REFERENCES must use these formats ONLY:
+   - For theme images: "images/theme-name.jpg"
+   - Use placeholder images with complete tags: <img src="images/placeholder.jpg" alt="Description">
+   - NEVER leave image tags incomplete like <img src=
+7. NEVER leave any tag, link, or element incomplete
+8. All links in the footer must point to "index.html" (not "home.html")
 
 OUTPUT FORMAT:
 {

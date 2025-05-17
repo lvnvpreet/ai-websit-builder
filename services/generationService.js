@@ -1582,49 +1582,99 @@ class GenerationService {
  * @returns {Promise<Array>} Array of page sections
  * @private
  */
+  // async _generatePage(pageName, websiteData) {
+  //   try {
+  //     console.log(`Generating ${pageName} page content`);
+  //     // Get the page prompt
+  //     const pagePrompt = promptBuilder.buildPagePrompt(pageName, websiteData);
+
+  //     // Generate page content
+  //     const pageContent = await this._generateWithRetry(
+  //       async () => {
+  //         const response = await ollamaService.generateText(
+  //           pagePrompt,
+  //           {
+  //             ...generationConfig.generation.jsonParams,
+  //             format: "json"  // Add a format hint
+  //           }
+  //         );
+  //         return contentProcessor.processJsonContent(response);
+  //       },
+  //       generationConfig.generation.retry.attempts
+  //     );
+
+  //     // Check if we have valid sections
+  //     if (pageContent && pageContent.sections && Array.isArray(pageContent.sections)) {
+  //       // Make sure each section has all required properties
+  //       return pageContent.sections.map(section => {
+  //         // Ensure we have a valid section reference
+  //         const sectionRef = section.sectionReference || `section-${pageName.toLowerCase()}-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+
+  //         return {
+  //           sectionReference: sectionRef,
+  //           content: section.content || `<div class="container"><h2>${pageName} Content</h2><p>Content for ${pageName}</p></div>`,
+  //           css: section.css || ''
+  //         };
+  //       });
+  //     }
+
+  //     // If generation failed, use fallback sections
+  //     console.warn(`Page generation failed for ${pageName}. Using fallback sections.`);
+  //     return this._createFallbackSections(pageName, websiteData);
+  //   } catch (error) {
+  //     console.error(`Error generating page ${pageName}:`, error);
+  //     return this._createFallbackSections(pageName, websiteData);
+  //   }
+  // }
+
   async _generatePage(pageName, websiteData) {
-    try {
-      // Get the page prompt
-      const pagePrompt = promptBuilder.buildPagePrompt(pageName, websiteData);
+  try {
+    console.log(`Generating ${pageName} page content`);
 
-      // Generate page content
-      const pageContent = await this._generateWithRetry(
-        async () => {
-          const response = await ollamaService.generateText(
-            pagePrompt,
-            {
-              ...generationConfig.generation.jsonParams,
-              format: "json"  // Add a format hint
-            }
-          );
-          return contentProcessor.processJsonContent(response);
-        },
-        generationConfig.generation.retry.attempts
-      );
+    // Get the page prompt
+    const pagePrompt = promptBuilder.buildPagePrompt(pageName, websiteData);
 
-      // Check if we have valid sections
-      if (pageContent && pageContent.sections && Array.isArray(pageContent.sections)) {
-        // Make sure each section has all required properties
-        return pageContent.sections.map(section => {
-          // Ensure we have a valid section reference
-          const sectionRef = section.sectionReference || `section-${pageName.toLowerCase()}-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    // Generate page content with better error handling
+    const pageContent = await this._generateWithRetry(
+      async () => {
+        console.log(`Generating ${pageName} page attempt`);
+        const response = await ollamaService.generateText(pagePrompt, generationParams);
 
-          return {
-            sectionReference: sectionRef,
-            content: section.content || `<div class="container"><h2>${pageName} Content</h2><p>Content for ${pageName}</p></div>`,
-            css: section.css || ''
-          };
-        });
-      }
+        // Process the response
+        const processed = await contentProcessor.processJsonContent(
+          response, 
+          'page', 
+          pageName
+        );
 
-      // If generation failed, use fallback sections
-      console.warn(`Page generation failed for ${pageName}. Using fallback sections.`);
-      return this._createFallbackSections(pageName, websiteData);
-    } catch (error) {
-      console.error(`Error generating page ${pageName}:`, error);
-      return this._createFallbackSections(pageName, websiteData);
+        // Validate the result is still needed, but most issues should have been fixed by the AI
+        if (processed && processed.sections && Array.isArray(processed.sections)) {
+          if (processed.sections.length > 0) {
+            console.log(`Successfully generated ${processed.sections.length} valid sections for ${pageName}`);
+            return processed;
+          }
+        }
+
+        console.log(`Invalid page content structure for ${pageName}`);
+        return null; // Will trigger retry
+      },
+      generationConfig.generation.retry.attempts
+    );
+
+    // Final validation and preparation of page content
+    if (pageContent && pageContent.sections && Array.isArray(pageContent.sections) && pageContent.sections.length > 0) {
+      return pageContent.sections;
     }
+
+    // If generation still failed, use fallback sections
+    console.warn(`Page generation failed for ${pageName}. Using fallback sections.`);
+    return this._createFallbackSections(pageName, websiteData);
+  } catch (error) {
+    console.error(`Error generating page ${pageName}:`, error);
+    return this._createFallbackSections(pageName, websiteData);
   }
+}
+
 }
 
 module.exports = new GenerationService();

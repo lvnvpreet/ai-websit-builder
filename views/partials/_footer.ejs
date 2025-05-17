@@ -1,7 +1,60 @@
+<!-- Landing page custom footer -->
+<% if(typeof isLandingPage !== 'undefined' && isLandingPage) { %>
+<footer class="footer">
+  <div class="footer-container">
+    <div class="footer-column brand">
+      <h3><strong>AI Website</strong> <span class="free">Builder</span></h3>
+      <p>Making professional websites accessible to everyone through the power of AI</p>
+    </div>
+
+    <div class="footer-column">
+      <h4>Support</h4>
+      <ul>
+        <li><a href="#">Documentation</a></li>
+        <li><a href="#">Guides</a></li>
+        <li><a href="#">Contact Us</a></li>
+      </ul>
+    </div>
+
+    <div class="footer-column">
+      <h4>Company</h4>
+      <ul>
+        <li><a href="#">About</a></li>
+        <li><a href="#">Blog</a></li>
+        <li><a href="#">Privacy</a></li>
+        <li><a href="#">Terms</a></li>
+        <li><a href="#">Cookie policy</a></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="footer-bottom">
+    <p>© <%= new Date().getFullYear() %> AI Website Builder, Inc. All rights reserved.</p>
+    <div class="social-icons">
+      <a href="#"><i class="fab fa-facebook-f"></i></a>
+      <a href="#"><i class="fab fa-twitter"></i></a>
+      <a href="#"><i class="fab fa-linkedin-in"></i></a>
+      <a href="#"><i class="fab fa-youtube"></i></a>
+    </div>
+  </div>
+</footer>
+<% } %>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="/js/main.js"></script>
-<script src="/js/wizard.js"></script>
-<script src="/js/generation.js"></script>
-</body>
 
+<!-- Only include these scripts on pages that need them -->
+<% if (typeof isWizardPage !== 'undefined' && isWizardPage) { %>
+  <script src="/js/wizard.js"></script>
+<% } %>
+
+<% if (typeof isGenerationPage !== 'undefined' && isGenerationPage) { %>
+  <script src="/js/generation.js"></script>
+<% } %>
+
+<!-- Landing page specific script -->
+<% if (typeof isLandingPage !== 'undefined' && isLandingPage) { %>
+  <script src="/js/landing.js"></script>
+<% } %>
+</body>
 </html>

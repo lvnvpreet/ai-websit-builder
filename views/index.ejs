@@ -1,15 +1,210 @@
-<%- include('partials/_header') %>
+<%- include('partials/_header', { isLandingPage: true }) %>
 
-<div class="container mt-5">
-  <div class="jumbotron text-center">
-    <h1 class="display-4">Website Builder</h1>
-    <p class="lead">Create your website with a single click using AI</p>
-    <hr class="my-4">
-    <p>Use our powerful wizard to collect your business information, and we'll generate a complete website for you instantly.</p>
-    <a class="btn btn-primary btn-lg" href="<%= user ? '/wizard' : '/login' %>" role="button">
-      <%= user ? 'Create Website' : 'Get Started' %>
-    </a>
-  </div>
+<div class="landing-page">
+  <!-- Hero Section -->
+  <section class="stn-1" id="home">
+    <div class="hero">
+      <h1>Create Your Website</h1>
+      <h2>Powered by <span>AI</span></h2>
+      <p>Build a professional website in minutes, not months. Our AI analyzes your business and generates a fully customized website with optimized content, design, and structure.</p>
+      <div class="cta-buttons">
+        <a href="<%= user ? '/wizard' : '/register' %>" class="get-started btn btn-primary">Get Started</a>
+        <a href="#how-it-works" class="how-it-works-button btn btn-outline-primary">How it Works</a>
+      </div>
+    </div>
+
+    <div class="features" id="features">
+      <h3>Features</h3>
+      <h1>Everything you need to build a professional website</h1>
+      <h2>Our AI-powered platform takes care of all the heavy lifting, from content creation to design optimization</h2>
+    </div>
+  </section>
+
+  <!-- Feature Cards Section -->
+  <section class="stn-2">
+    <div class="feature-section">
+      <div class="card">
+        <img src="/img/ai-content-icon.png" alt="AI Content Icon" />
+        <h3>AI-Powered Content</h3>
+        <p>Generate high-quality, SEO-optimized content tailored specifically to your business and industry.</p>
+        <ul>
+          <li>Industry-specific copy</li>
+          <li>SEO optimization</li>
+          <li>Conversion-focused messaging</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <img src="/img/design-icon.png" alt="Design System Icon" />
+        <h3>Smart Design System</h3>
+        <p>Professional templates optimized for your industry with customizable colors, fonts, and layouts.</p>
+        <ul>
+          <li>Responsive on all devices</li>
+          <li>Industry-matched templates</li>
+          <li>Accessibility compliant</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <img src="/img/fast-setup-icon.png" alt="Fast Setup Icon" />
+        <h3>Lightning Fast Setup</h3>
+        <p>Go from concept to live website in minutes, not weeks. No coding or design skills required.</p>
+        <ul>
+          <li>5-minute setup process</li>
+          <li>One-click publishing</li>
+          <li>Instant updates & changes</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- How It Works Section -->
+  <section class="stn-3" id="how-it-works">
+    <div class="how-it-works">
+      <h4>How It Works</h4>
+      <h2>Create your website in 3 simple steps</h2>
+      <p class="subtitle">Our AI-powered platform takes care of all the heavy lifting, from content creation to design optimization</p>
+
+      <div class="steps">
+        <div class="step-card">
+          <h3>Tell us about your business</h3>
+          <p>Answer a few questions about your business, target audience, and unique selling points.</p>
+        </div>
+
+        <img src="/img/arrow-icon.png" alt="Arrow Icon" class="arrow" />
+
+        <div class="step-card">
+          <h3>Our AI creates your website</h3>
+          <p>The AI analyzes your input and generates content, selects a template, and creates your website.</p>
+        </div>
+
+        <img src="/img/arrow-icon.png" alt="Arrow Icon" class="arrow" />
+
+        <div class="step-card">
+          <h3>Customize and publish</h3>
+          <p>Review your website, make any desired tweaks, and publish it to your domain with one click.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Templates Section -->
+  <section class="stn-4" id="templates">
+    <div class="templates">
+      <h4>Templates</h4>
+      <h2>Professional designs for every industry</h2>
+      <p>Our AI selects the perfect template based on your business type and audience.</p>
+
+      <div class="template-cards">
+        <div class="card">
+          <h3>Modern Business</h3>
+          <p>Professional design for service businesses and consultancies.</p>
+        </div>
+        <div class="card">
+          <h3>Business Services</h3>
+          <p>Optimized for online stores with product showcases.</p>
+        </div>
+        <div class="card">
+          <h3>Retail</h3>
+          <p>Showcase your work with this visually striking layout.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Testimonials Section -->
+  <section class="stn-5">
+    <div class="testimonial-section">
+      <div class="btn-wrapper">
+        <button class="view-all-btn">
+          View All Templates <span>&#9002;&#9002;&#9002;</span>
+        </button>
+      </div>
+
+      <h4>Testimonials</h4>
+      <h2>Hear from our customers</h2>
+
+      <div class="testimonials">
+        <div class="testimonial-card">
+          <strong>Sarah Johnson</strong>
+          <p class="position">Founder, Eco Essentials</p>
+          <p class="quote">
+            "I had my website up and running in less than 30 minutes. The AI-generated content was surprisingly on-point for my business!"
+          </p>
+        </div>
+        <div class="testimonial-card">
+          <strong>Michael Chang</strong>
+          <p class="position">Owner, Chang Consulting</p>
+          <p class="quote">
+            "This platform saved me thousands of dollars in web design costs. The templates are professional and the AI customization is impressive."
+          </p>
+        </div>
+        <div class="testimonial-card">
+          <strong>Jessica Williams</strong>
+          <p class="position">CEO, Digital Dynamics</p>
+          <p class="quote">
+            "As a non-technical founder, I was worried about creating a website. This tool made it incredibly simple and the results exceeded my expectations."
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Pricing Section -->
+  <section class="stn-6" id="pricing">
+    <div class="pricing-section">
+      <h4>Pricing</h4>
+      <h2>Plans for Businesses of all sizes</h2>
+
+      <div class="toggle-buttons">
+        <button class="toggle-btn active">Monthly</button>
+        <button class="toggle-btn">Yearly</button>
+      </div>
+
+      <div class="pricing-cards">
+        <!-- Starter Plan -->
+        <div class="cards">
+          <h3>Starter</h3>
+          <p class="price">$<strong>19</strong><span>/ mo</span></p>
+          <ul>
+            <li>Up to 3 websites</li>
+            <li>Basic AI templates</li>
+            <li>Standard response time</li>
+            <li>Community support</li>
+          </ul>
+          <a href="<%= user ? '/wizard' : '/register' %>" class="btn btn-primary">Get Started</a>
+        </div>
+
+        <!-- Professional Plan -->
+        <div class="cards featured">
+          <h3>Professional</h3>
+          <p class="price">$<strong>50</strong><span>/ mo</span></p>
+          <ul>
+            <li>Up to 10 websites</li>
+            <li>Advanced AI templates</li>
+            <li>Priority content generation</li>
+            <li>Custom domain</li>
+            <li>Remove branding</li>
+          </ul>
+          <a href="<%= user ? '/wizard' : '/register' %>" class="btn btn-primary">Get Started</a>
+        </div>
+
+        <!-- Business Plan -->
+        <div class="cards">
+          <h3>Business</h3>
+          <p class="price">$<strong>200</strong><span>/ mo</span></p>
+          <ul>
+            <li>Up to 50 websites</li>
+            <li>Premium AI templates</li>
+            <li>Advanced analytics</li>
+            <li>Team collaboration</li>
+            <li>Priority support</li>
+          </ul>
+          <a href="<%= user ? '/wizard' : '/register' %>" class="btn btn-primary">Get Started</a>
+        </div>
+      </div>
+    </div>
+  </section>
 </div>
 
-<%- include('partials/_footer') %>
+<%- include('partials/_footer', { isLandingPage: true }) %>

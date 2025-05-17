@@ -152,7 +152,7 @@ class OllamaService {
         stream: false,
         ...requestParams
       }, {
-        timeout: 180000, // 3 minutes
+        timeout: 1800000, // 30 minutes
       });
 
       return response.data.response;

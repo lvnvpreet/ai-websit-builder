@@ -81,6 +81,734 @@ body {
   }
   
   .btn-primary {
-    background-color: #007bff;
+    background-color: #003366;
     color: white;
   }
+
+
+
+/* Styles for the landing page navbar */
+.landing-navbar {
+background-color: white;
+box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+padding: 15px 0;
+position: fixed;
+top: 0;
+left: 0;
+right: 0;
+z-index: 1000;
+width: 100%;
+transition: all 0.3s ease;
+}
+.landing-navbar .navbar-brand {
+font-size: 1.8rem;
+color: #333;
+}
+.landing-navbar .navbar-nav .nav-link {
+color: #555;
+font-weight: 500;
+padding: 10px 20px;
+transition: color 0.3s ease;
+}
+.landing-navbar .navbar-nav .nav-link:hover,
+.landing-navbar .navbar-nav .nav-link.active {
+color: #003366;
+}
+.landing-navbar .navbar-toggler {
+border-color: rgba(0,0,0,0.1);
+}
+.landing-navbar .navbar-toggler-icon {
+background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%280, 0, 0, 0.55%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+}
+/* Show the landing navbar only on the landing page */
+.landing-navbar {
+display: none;
+}
+/* /* General landing page styles / */
+.landing-page {
+padding-top: 80px; 
+font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+/* Section 1: Hero */
+.stn-1 {
+padding-top: 60px;
+min-height: 80vh;
+display: flex;
+flex-direction: column;
+justify-content: center;
+}
+.hero {
+text-align: center;
+padding: 3rem 2rem;
+}
+.hero h1 {
+font-size: 3rem;
+font-weight: 700;
+margin-bottom: 1rem;
+color: #333;
+}
+.hero h2 {
+font-size: 3rem;
+color: #003366;
+margin-bottom: 1.5rem;
+font-weight: 700;
+}
+.hero p {
+max-width: 700px;
+margin: 0 auto 2.5rem auto;
+font-size: 1.2rem;
+line-height: 1.6;
+color: #555;
+}
+.cta-buttons {
+display: flex;
+flex-direction: row;
+justify-content: center;
+gap: 1rem;
+margin-bottom: 3rem;
+}
+.cta-buttons .btn {
+padding: 12px 30px;
+font-size: 1.1rem;
+font-weight: 600;
+border-radius: 5px;
+min-width: 180px;
+}
+.cta-buttons .btn-outline-primary {
+border-width: 2px;
+}
+.features {
+padding: 2rem;
+text-align: center;
+max-width: 1000px;
+margin: 0 auto;
+}
+.features h3 {
+font-size: 1.2rem;
+color: #003366;
+text-transform: uppercase;
+letter-spacing: 1px;
+margin-bottom: 1rem;
+}
+.features h1 {
+font-size: 2.5rem;
+font-weight: 700;
+color: #333;
+margin-bottom: 1rem;
+}
+.features h2 {
+font-size: 1.3rem;
+font-weight: 400;
+color: #666;
+margin-bottom: 1rem;
+max-width: 800px;
+margin-left: auto;
+margin-right: auto;
+}
+/* Section 2: Feature Cards */
+.stn-2 {
+padding: 5rem 0;
+background-color: #f8f9fa;
+}
+.feature-section {
+display: flex;
+justify-content: center;
+gap: 2rem;
+flex-wrap: wrap;
+max-width: 1200px;
+margin: 0 auto;
+}
+.landing-page .card {
+background-color: white;
+border-radius: 10px;
+box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+padding: 2rem;
+width: 350px;
+text-align: center;
+transition: transform 0.3s ease, box-shadow 0.3s ease;
+height: auto;
+min-height: 450px;
+border: none;
+margin-bottom: 2rem;
+}
+.landing-page .card:hover {
+transform: translateY(-10px);
+box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+}
+.landing-page .card img {
+height: 100%;
+margin-bottom: 1rem;
+}
+.landing-page .card h3 {
+font-size: 1.5rem;
+font-weight: 600;
+color: #333;
+margin: 1rem 0;
+}
+.landing-page .card p {
+font-size: 1rem;
+color: #666;
+margin-bottom: 1.5rem;
+line-height: 1.6;
+}
+.landing-page .card ul {
+text-align: left;
+list-style: none;
+padding-left: 0.5rem;
+color: #555;
+}
+.landing-page .card ul li {
+margin-bottom: 0.8rem;
+position: relative;
+padding-left: 1.5rem;
+}
+.landing-page .card ul li:before {
+content: "✓";
+color: #003366;
+position: absolute;
+left: 0;
+top: 0;
+font-weight: bold;
+}
+/* Section 3: How it Works */
+.stn-3 {
+padding: 5rem 0;
+}
+.how-it-works {
+text-align: center;
+max-width: 1200px;
+margin: 0 auto;
+}
+.how-it-works h4 {
+font-size: 1.2rem;
+color: #003366;
+text-transform: uppercase;
+letter-spacing: 1px;
+margin-bottom: 1rem;
+}
+.how-it-works h2 {
+font-size: 2.5rem;
+font-weight: 700;
+color: #333;
+margin-bottom: 1rem;
+}
+.subtitle {
+font-size: 1.1rem;
+color: #666;
+margin-bottom: 3rem;
+max-width: 700px;
+margin-left: auto;
+margin-right: auto;
+}
+.steps {
+display: flex;
+justify-content: center;
+align-items: center;
+gap: 2rem;
+width: 100%;
+flex-wrap: wrap;
+}
+.step-card {
+background: #fff;
+box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+border-radius: 10px;
+padding: 2rem;
+width: 300px;
+text-align: center;
+height: auto;
+min-height: 200px;
+transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.step-card:hover {
+transform: translateY(-5px);
+box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+}
+.step-card h3 {
+font-size: 1.3rem;
+color: #333;
+font-weight: 600;
+margin-bottom: 1rem;
+}
+.step-card p {
+font-size: 1rem;
+color: #666;
+line-height: 1.6;
+}
+.arrow {
+height: 30px;
+width: auto;
+}
+/* Section 4: Templates */
+.stn-4 {
+padding: 5rem 0;
+background-color: #f8f9fa;
+}
+.templates {
+text-align: center;
+max-width: 1200px;
+margin: 0 auto;
+}
+.templates h4 {
+font-size: 1.2rem;
+color: #003366;
+text-transform: uppercase;
+letter-spacing: 1px;
+margin-bottom: 1rem;
+}
+.templates h2 {
+font-size: 2.5rem;
+font-weight: 700;
+color: #333;
+margin-bottom: 1rem;
+}
+.templates p {
+font-size: 1.1rem;
+color: #666;
+margin-bottom: 3rem;
+max-width: 700px;
+margin-left: auto;
+margin-right: auto;
+}
+.template-cards {
+display: flex;
+justify-content: center;
+flex-wrap: wrap;
+gap: 2rem;
+}
+.template-cards .card {
+width: 350px;
+height: 250px;
+display: flex;
+flex-direction: column;
+justify-content: center;
+}
+/* Section 5: Testimonials */
+.stn-5 {
+padding: 5rem 0;
+}
+.testimonial-section {
+text-align: center;
+max-width: 1200px;
+margin: 0 auto;
+}
+.btn-wrapper {
+margin-bottom: 3rem;
+}
+.view-all-btn {
+background-color: #003366;
+color: white;
+padding: 10px 25px;
+font-size: 1rem;
+border: none;
+border-radius: 5px;
+cursor: pointer;
+font-weight: 600;
+transition: all 0.3s ease;
+}
+.view-all-btn:hover {
+background-color: #003366;
+transform: translateY(-3px);
+}
+.view-all-btn span {
+font-size: 1.2rem;
+font-weight: bold;
+margin-left: 5px;
+}
+.testimonial-section h4 {
+font-size: 1.2rem;
+color: #003366;
+text-transform: uppercase;
+letter-spacing: 1px;
+margin-bottom: 1rem;
+}
+.testimonial-section h2 {
+font-size: 2.5rem;
+font-weight: 700;
+color: #333;
+margin-bottom: 3rem;
+}
+.testimonials {
+display: flex;
+justify-content: center;
+gap: 2rem;
+flex-wrap: wrap;
+}
+.testimonial-card {
+background: white;
+padding: 2rem;
+width: 350px;
+height: auto;
+min-height: 230px;
+border-radius: 10px;
+box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+text-align: left;
+transition: transform 0.3s ease, box-shadow 0.3s ease;
+position: relative;
+}
+.testimonial-card:before {
+content: "";
+position: absolute;
+top: 15px;
+left: 15px;
+font-size: 60px;
+color: #f0f0f0;
+font-family: Georgia, serif;
+line-height: 1;
+z-index: 0;
+}
+.testimonial-card:hover {
+transform: translateY(-5px);
+box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+}
+.testimonial-card strong {
+font-size: 1.1rem;
+color: #333;
+font-weight: 600;
+display: block;
+position: relative;
+z-index: 1;
+}
+.testimonial-card .position {
+font-size: 0.9rem;
+color: #666;
+margin-top: 4px;
+margin-bottom: 1rem;
+position: relative;
+z-index: 1;
+}
+.testimonial-card .quote {
+font-size: 1rem;
+color: #555;
+line-height: 1.6;
+position: relative;
+z-index: 1;
+font-style: italic;
+}
+/* Section 6: Pricing */
+.stn-6 {
+padding: 5rem 0;
+background-color: #f8f9fa;
+}
+.pricing-section {
+text-align: center;
+max-width: 1200px;
+margin: 0 auto;
+}
+.pricing-section h4 {
+font-size: 1.2rem;
+color: #003366;
+text-transform: uppercase;
+letter-spacing: 1px;
+margin-bottom: 1rem;
+}
+.pricing-section h2 {
+font-size: 2.5rem;
+font-weight: 700;
+color: #333;
+margin-bottom: 2rem;
+}
+.toggle-buttons {
+margin-bottom: 3rem;
+}
+.toggle-btn {
+border: none;
+background-color: #e9ecef;
+padding: 10px 25px;
+margin: 0 5px;
+font-size: 1rem;
+border-radius: 5px;
+cursor: pointer;
+transition: all 0.3s ease;
+font-weight: 500;
+}
+.toggle-btn.active {
+background-color: #003366;
+color: white;
+}
+.toggle-btn:hover:not(.active) {
+background-color: #dee2e6;
+}
+.pricing-cards {
+display: flex;
+justify-content: center;
+gap: 2rem;
+flex-wrap: wrap;
+}
+.cards {
+background: white;
+border: none;
+width: 350px;
+height: auto;
+min-height: 450px;
+padding: 2.5rem 2rem;
+border-radius: 10px;
+box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+text-align: center;
+transition: all 0.3s ease;
+display: flex;
+flex-direction: column;
+}
+.cards:hover {
+transform: translateY(-5px);
+box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+}
+.cards h3 {
+font-size: 1.5rem;
+font-weight: 600;
+color: #333;
+margin-bottom: 1rem;
+}
+.price {
+font-size: 1.1rem;
+margin: 1.5rem 0 2rem;
+color: #666;
+}
+.price strong {
+font-size: 2.5rem;
+color: #333;
+font-weight: 700;
+}
+.cards ul {
+padding: 0 0 0 1.5rem;
+text-align: left;
+margin-bottom: 2rem;
+list-style-position: outside;
+flex-grow: 1;
+}
+.cards ul li {
+font-size: 1rem;
+padding: 0.5rem 0;
+color: #555;
+line-height: 1.4;
+}
+.cards .btn {
+padding: 12px;
+font-weight: 600;
+margin-top: auto;
+}
+.featured {
+background-color: #003366;
+color: white;
+box-shadow: 0 10px 30px rgba(0,123,255,0.2);
+position: relative;
+z-index: 2;
+transform: scale(1.05);
+}
+.featured:hover {
+transform: scale(1.05) translateY(-5px);
+}
+.featured h3 {
+color: white;
+}
+.featured .price,
+.featured .price strong,
+.featured ul li {
+color: rgba(255, 255, 255, 0.9);
+}
+.featured .btn-primary {
+background-color: white;
+color: #003366;
+border-color: white;
+}
+.featured .btn-primary:hover {
+background-color: #f8f9fa;
+color: #003366;
+}
+/* Responsive adjustments */
+@media (max-width: 992px) {
+.cta-buttons {
+flex-direction: column;
+align-items: center;
+}
+.featured {
+transform: scale(1);
+}
+.featured:hover {
+transform: translateY(-5px);
+}
+}
+@media (max-width: 768px) {
+.hero h1,
+.hero h2,
+.features h1,
+.how-it-works h2,
+.templates h2,
+.testimonial-section h2,
+.pricing-section h2 {
+font-size: 2rem;
+}
+.stn-1 {
+min-height: auto;
+}
+.steps {
+flex-direction: column;
+}
+.arrow {
+transform: rotate(90deg);
+margin: 1rem 0;
+}
+.landing-page .card,
+.step-card,
+.testimonial-card,
+.cards {
+width: 90%;
+max-width: 350px;
+}
+}
+
+/* Add to your existing style.css file */
+/* Style for navbar that shrinks on scroll */
+.landing-navbar.navbar-scrolled {
+padding: 8px 0;
+box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+/* Styling for landing page navbar */
+.landing-navbar {
+background-color: white;
+box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+padding: 15px 0;
+position: fixed;
+top: 0;
+left: 0;
+right: 0;
+z-index: 1000;
+width: 100%;
+transition: all 0.3s ease;
+}
+.landing-navbar .navbar-brand {
+font-size: 1.8rem;
+color: #333;
+}
+.landing-navbar .navbar-nav .nav-link {
+color: #555;
+font-weight: 500;
+padding: 10px 20px;
+transition: color 0.3s ease;
+}
+.landing-navbar .navbar-nav .nav-link:hover,
+.landing-navbar .navbar-nav .nav-link.active {
+color: #003366;
+}
+.landing-navbar .navbar-toggler {
+border-color: rgba(0,0,0,0.1);
+}
+.landing-navbar .navbar-toggler-icon {
+background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%280, 0, 0, 0.55%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+}
+/* Show the landing navbar only on the landing page */
+.landing-navbar {
+display: none;
+}
+
+
+/* Footer styles for landing page - add to your landing.css file */
+.footer {
+background-color: #003366;
+color: white;
+padding: 60px 20px 20px;
+font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+margin-top: 3rem;
+}
+.footer-container {
+display: flex;
+justify-content: space-between;
+flex-wrap: wrap;
+max-width: 1200px;
+margin: 0 auto;
+padding-bottom: 30px;
+border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+.footer-column {
+flex: 1 1 250px;
+margin: 20px;
+}
+.footer-column h4 {
+margin-bottom: 20px;
+font-size: 18px;
+color: #fff;
+font-weight: 600;
+}
+.footer-column ul {
+list-style: none;
+padding: 0;
+margin: 0;
+}
+.footer-column ul li {
+margin: 10px 0;
+}
+.footer-column ul li a {
+color: #cce4ff;
+text-decoration: none;
+font-size: 16px;
+transition: color 0.3s ease;
+}
+.footer-column ul li a:hover {
+color: #ffffff;
+text-decoration: none;
+}
+.brand h3 {
+font-size: 24px;
+margin-bottom: 20px;
+}
+.brand .free {
+font-weight: bold;
+color: #ffffff;
+}
+.brand p {
+font-size: 16px;
+color: rgba(255, 255, 255, 0.8);
+max-width: 300px;
+line-height: 1.6;
+}
+.footer-bottom {
+max-width: 1200px;
+margin: 20px auto 0;
+display: flex;
+justify-content: space-between;
+align-items: center;
+flex-wrap: wrap;
+padding: 10px 0;
+}
+.footer-bottom p {
+font-size: 14px;
+color: rgba(255, 255, 255, 0.7);
+margin: 0;
+}
+.social-icons {
+display: flex;
+gap: 15px;
+}
+.social-icons a {
+display: flex;
+justify-content: center;
+align-items: center;
+width: 36px;
+height: 36px;
+border-radius: 50%;
+background-color: rgba(255, 255, 255, 0.1);
+color: white;
+font-size: 16px;
+transition: all 0.3s ease;
+}
+.social-icons a:hover {
+background-color: #007bff;
+transform: translateY(-3px);
+}
+@media (max-width: 768px) {
+.footer-container {
+flex-direction: column;
+align-items: center;
+text-align: center;
+}
+.footer-column {
+margin: 10px 0;
+width: 100%;
+}
+.brand p {
+margin: 0 auto;
+}
+.footer-bottom {
+flex-direction: column;
+gap: 15px;
+}
+}

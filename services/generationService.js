@@ -4,7 +4,7 @@ const contentProcessor = require('./contentProcessor');
 const generationConfig = require('../config/generationConfig');
 const Website = require('../models/Website');
 const Page = require('../models/Page');
-const imageGenerationService = require('./imageGenerationService');
+
 const imageSearchService = require('./imageSearchService');
 
 
@@ -134,123 +134,180 @@ class GenerationService {
 
 
   /**
-   * Generate a specific page with sections
-   * @param {string} pageName - Name of the page to generate
-   * @param {Object} websiteData - Prepared website data
-   * @returns {Promise<Array>} Array of page sections
-   * @private
-   */
-  // In services/generationService.js
-  // In services/generationService.js
+ * Generate a specific page with sections
+ * @param {string} pageName - Name of the page to generate
+ * @param {Object} websiteData - Prepared website data
+ * @returns {Promise<Array>} Array of page sections
+ * @private
+ */
   async _generatePage(pageName, websiteData) {
     try {
       console.log(`Generating ${pageName} page content`);
 
-      // Generate images for key sections
-      // const heroImagePrompt = this.promptBuilder.buildImagePrompt('hero', websiteData);
-      // const heroImage = await imageGenerationService.generateImage(heroImagePrompt);
-
-      // // Add image paths to the website data for use in prompts
-      // const enhancedWebsiteData = {
-      //   ...websiteData,
-      //   images: {
-      //     hero: heroImage.success ? heroImage.path : null,
-      //     // Generate other images as needed
-      //   }
-      // };
-
-
-      // Create search queries for different sections
-    const heroSearchQuery = `${websiteData.businessCategory} ${pageName === 'Home' ? 'hero image' : pageName}`;
-    const heroImage = await imageSearchService.searchImages(heroSearchQuery);
-    
-    // Add the image metadata to the website data
-    const enhancedWebsiteData = {
-      ...websiteData,
-      images: {
-        hero: heroImage.success ? {
-          path: heroImage.selectedImage.path,
-          attribution: heroImage.selectedImage.attribution,
-          source: heroImage.selectedImage.source
-        } : null
-      }
-    };
-
       // Get the page prompt
-      const pagePrompt = promptBuilder.buildPagePrompt(pageName, enhancedWebsiteData);
+      const pagePrompt = promptBuilder.buildPagePrompt(pageName, websiteData);
 
-      // Set improved parameters for generation
-      const generationParams = {
-        ...generationConfig.generation.jsonParams,
-        temperature: 0.1,  // Very low temperature for better JSON consistency
-        top_p: 0.7,  // More focused sampling
-        max_tokens: 8192   // Ensure enough tokens for full response
-      };
-
-      // Generate page content with better error handling
+      // Generate page content
       const pageContent = await this._generateWithRetry(
         async () => {
-          console.log(`Generating ${pageName} page attempt`);
-          // Generate with the enhanced prompt
-          const response = await ollamaService.generateText(pagePrompt, generationParams);
-
-          // Process the response
-          const processed = contentProcessor.processJsonContent(response);
-
-          // Explicitly validate the result
-          if (processed && processed.sections && Array.isArray(processed.sections)) {
-            // Check if sections have required properties
-            const validSections = processed.sections.filter(section => {
-              return section && typeof section.sectionReference === 'string' &&
-                typeof section.content === 'string';
-            });
-
-            if (validSections.length > 0) {
-              console.log(`Successfully generated ${validSections.length} valid sections for ${pageName}`);
-              return { sections: validSections };
-            }
-          }
-
-          console.log(`Invalid page content structure for ${pageName}`);
-          return null; // Will trigger retry
+          const response = await ollamaService.generateText(
+            pagePrompt,
+            generationConfig.generation.jsonParams
+          );
+          return contentProcessor.processJsonContent(response);
         },
         generationConfig.generation.retry.attempts
       );
 
-      // Final validation and preparation of page content
-      if (pageContent && pageContent.sections && Array.isArray(pageContent.sections) && pageContent.sections.length > 0) {
-        return pageContent.sections.map((section, index) => {
-          // Generate a fallback reference if needed
-          const sectionRef = section.sectionReference ||
-            `section-${pageName.toLowerCase().replace(/\s+/g, '-')}-${index}-${Date.now()}`;
+      // Check if we have valid sections
+      if (pageContent && pageContent.sections && Array.isArray(pageContent.sections)) {
+        // For each section, find suitable locations to add images
+        const enhancedSections = [];
 
-          // Handle missing or invalid content
-          let content = section.content;
-          if (!content || typeof content !== 'string') {
-            content = `<div class="container py-5"><h2>${pageName} Section ${index + 1}</h2><p>Content for ${pageName}</p></div>`;
+        for (let i = 0; i < pageContent.sections.length; i++) {
+          const section = pageContent.sections[i];
+          const sectionType = this._determineSectionType(section, i, pageName);
+
+          // Only add images to certain section types and limit to 2 images per page
+          if ((sectionType === 'hero' || sectionType === 'about') && enhancedSections.length < 2) {
+            try {
+              // Create a search query for this section
+              const searchQuery = imageSearchService.getSearchQuery(
+                pageName,
+                sectionType,
+                websiteData
+              );
+
+              // Search for an image
+              const searchResult = await imageSearchService.searchImages(searchQuery);
+
+              if (searchResult.success) {
+                // Store original section
+                const enhancedSection = { ...section };
+
+                // Add image and attribution to the section content
+                enhancedSection.content = this._insertImageIntoContent(
+                  section.content,
+                  searchResult.selectedImage,
+                  sectionType
+                );
+
+                // Add image metadata for database storage
+                enhancedSection.images = [{
+                  path: searchResult.selectedImage.path,
+                  alt: searchResult.selectedImage.title,
+                  width: searchResult.selectedImage.width,
+                  height: searchResult.selectedImage.height,
+                  sourceUrl: searchResult.selectedImage.sourceUrl,
+                  sourceDomain: searchResult.selectedImage.sourceDomain,
+                  text: searchResult.selectedImage.attribution.text,
+                  html: searchResult.selectedImage.attribution.html,
+                  license: searchResult.selectedImage.attribution.license,
+                  creator: searchResult.selectedImage.attribution.creator
+                }];
+
+                enhancedSections.push(enhancedSection);
+                continue;
+              }
+            } catch (imageError) {
+              console.error(`Error adding image to ${pageName} section ${i}:`, imageError);
+            }
           }
 
-          // Handle missing or invalid CSS
-          let css = section.css;
-          if (!css || typeof css !== 'string') {
-            css = `#${sectionRef} { padding: 3rem 0; }`;
-          }
+          // If we couldn't add an image or didn't try, add the original section
+          enhancedSections.push(section);
+        }
 
-          return {
-            sectionReference: sectionRef,
-            content: content,
-            css: css
-          };
-        });
+        return enhancedSections;
       }
 
-      // If generation still failed, use fallback sections
+      // If generation failed, use fallback sections
       console.warn(`Page generation failed for ${pageName}. Using fallback sections.`);
       return this._createFallbackSections(pageName, websiteData);
     } catch (error) {
       console.error(`Error generating page ${pageName}:`, error);
       return this._createFallbackSections(pageName, websiteData);
     }
+  }
+
+  /**
+   * Determine section type based on content and position
+   * @param {Object} section - Section object
+   * @param {number} index - Section index
+   * @param {string} pageName - Page name
+   * @returns {string} Section type
+   * @private
+   */
+  _determineSectionType(section, index, pageName) {
+    // Check section reference
+    const reference = section.sectionReference?.toLowerCase() || '';
+
+    if (reference.includes('hero') || index === 0) {
+      return 'hero';
+    } else if (reference.includes('about') || pageName.toLowerCase() === 'about') {
+      return 'about';
+    } else if (reference.includes('team')) {
+      return 'team';
+    } else if (reference.includes('service')) {
+      return 'services';
+    } else if (reference.includes('contact')) {
+      return 'contact';
+    } else if (reference.includes('gallery')) {
+      return 'gallery';
+    }
+
+    // Default for unknown sections
+    return 'general';
+  }
+
+  /**
+   * Insert image and attribution into section content
+   * @param {string} content - Section HTML content
+   * @param {Object} image - Image object
+   * @param {string} sectionType - Section type
+   * @returns {string} Updated HTML content
+   * @private
+   */
+  _insertImageIntoContent(content, image, sectionType) {
+    // Create image HTML with attribution
+    const imageHtml = `
+  <div class="image-container mb-4">
+    <img src="${image.path}" alt="${image.title}" class="img-fluid rounded" width="${image.width}" height="${image.height}">
+    <div class="image-attribution" style="font-size: 12px; color: #666; text-align: right; margin-top: 5px; font-style: italic;">
+      ${image.attribution.html}
+    </div>
+  </div>`;
+
+    // Find the best place to insert the image based on section type
+    if (sectionType === 'hero') {
+      // For hero sections, try to insert after heading
+      const headingRegex = /(<h1[^>]*>.*?<\/h1>|<h2[^>]*>.*?<\/h2>)/i;
+      if (headingRegex.test(content)) {
+        return content.replace(headingRegex, '$1' + imageHtml);
+      }
+
+      // If no heading, try to insert at start of container
+      const containerRegex = /(<div[^>]*class="[^"]*container[^"]*"[^>]*>)/i;
+      if (containerRegex.test(content)) {
+        return content.replace(containerRegex, '$1' + imageHtml);
+      }
+    } else if (sectionType === 'about' || sectionType === 'team') {
+      // For about sections, try to insert alongside text in a row
+      const rowRegex = /(<div[^>]*class="[^"]*row[^"]*"[^>]*>)/i;
+      if (rowRegex.test(content)) {
+        // Insert as a column in existing row
+        return content.replace(
+          rowRegex,
+          '$1<div class="col-md-6">' + imageHtml + '</div><div class="col-md-6">'
+        ).replace(
+          /(<\/div>\s*<\/div>\s*<\/div>)(?!.*<\/div>\s*<\/div>\s*<\/div>)/s,
+          '</div></div></div>'
+        );
+      }
+    }
+
+    // Default: insert at the beginning
+    return imageHtml + content;
   }
 
   /**

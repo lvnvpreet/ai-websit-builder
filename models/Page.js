@@ -1,4 +1,18 @@
+// models/Page.js
 const mongoose = require('mongoose');
+
+const ImageAttributionSchema = new mongoose.Schema({
+  path: String,
+  alt: String,
+  width: Number,
+  height: Number,
+  sourceUrl: String,
+  sourceDomain: String,
+  text: String,
+  html: String,
+  license: String,
+  creator: String
+});
 
 const SectionSchema = new mongoose.Schema({
   sectionReference: {
@@ -10,7 +24,9 @@ const SectionSchema = new mongoose.Schema({
     required: true
   },
   css: String,
-  type: String
+  type: String,
+  // Add images field to store attribution
+  images: [ImageAttributionSchema]
 });
 
 const PageSchema = new mongoose.Schema({

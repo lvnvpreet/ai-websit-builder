@@ -101,7 +101,8 @@ exports.previewPage = async (req, res) => {
       website,
       page,
       pages,
-      title: `${page.name} - ${website.businessName}`
+      title: `${page.name} - ${website.businessName}`,
+      showAttributions: true
     });
   } catch (error) {
     console.error('Error previewing page:', error);

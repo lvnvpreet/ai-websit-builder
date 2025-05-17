@@ -4,6 +4,29 @@
  * Service for building prompts for the Ollama generation pipeline
  */
 class PromptBuilder {
+
+  // Add this method to your PromptBuilder class
+  buildImagePrompt(sectionType, websiteData) {
+    const { businessName, businessCategory, businessDescription } = websiteData;
+
+    let prompt = '';
+
+    switch (sectionType) {
+      case 'hero':
+        prompt = `Professional hero image for ${businessName}, a ${businessCategory} business. ${businessDescription}. Modern, clean style.`;
+        break;
+      case 'about':
+        prompt = `Team or workplace image representing ${businessName}, a ${businessCategory} business. Professional setting.`;
+        break;
+      case 'services':
+        prompt = `Image showing services offered by ${businessName}, a ${businessCategory} business. ${businessDescription}`;
+        break;
+      default:
+        prompt = `Professional business image related to ${businessCategory}. ${businessDescription}`;
+    }
+
+    return prompt;
+  }
   /**
    * Create a prompt for generating a website header
    * @param {Object} websiteData - Website configuration data
@@ -24,8 +47,8 @@ class PromptBuilder {
     } = websiteData;
 
     const isMultipage = structure === 'Multipage';
-    const navigationInstructions = isMultipage 
-      ? `Use filenames with .html extensions (e.g., "about.html", "services.html"). Homepage should be "/" or "index.html"` 
+    const navigationInstructions = isMultipage
+      ? `Use filenames with .html extensions (e.g., "about.html", "services.html"). Homepage should be "/" or "index.html"`
       : `Use anchor links with # (e.g., "#about", "#services", "#contact"). Homepage should be "#home"`;
 
     return `You are a professional web developer creating a responsive header navigation for a website.
@@ -139,9 +162,9 @@ ${email ? `- Email: ${email}` : ''}
 ${phone ? `- Phone: ${phone}` : ''}
 
 SOCIAL MEDIA LINKS:
-${Object.entries(socialLinks || {}).map(([platform, username]) => 
-  username ? `- ${platform}: ${platform}.com/${username}` : ''
-).filter(Boolean).join('\n')}
+${Object.entries(socialLinks || {}).map(([platform, username]) =>
+      username ? `- ${platform}: ${platform}.com/${username}` : ''
+    ).filter(Boolean).join('\n')}
 
 NAVIGATION LINKS:
 - Type: ${isMultipage ? 'File-based (.html extensions)' : 'Anchor-based (# links)'}
@@ -208,8 +231,8 @@ Generate the complete footer now.`;
     } = websiteData;
 
     const isMultipage = structure === 'Multipage';
-    const navigationInstructions = isMultipage 
-      ? `Use filenames with .html extensions (e.g., "about.html", "services.html")` 
+    const navigationInstructions = isMultipage
+      ? `Use filenames with .html extensions (e.g., "about.html", "services.html")`
       : `Use anchor links with # (e.g., "#about", "#services")`;
 
     return `You are a professional web developer creating a ${pageName} page for a ${structure} website.
@@ -299,7 +322,7 @@ Generate the ${pageName} page with all required sections now.`;
 
     const isMultipage = structure === 'Multipage';
     const sectionId = `section-${sectionType.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}`;
-    
+
     return `Create a ${sectionType} section for a ${structure} website.
 
 BUSINESS CONTEXT:
@@ -360,7 +383,7 @@ Generate the complete section now.`;
    */
   _getPageSections(pageName, features) {
     const pageNameLower = pageName.toLowerCase();
-    
+
     switch (pageNameLower) {
       case 'home':
       case 'homepage':
@@ -512,12 +535,14 @@ Generate the complete section now.`;
 2. Service Overview Section
    - Service categories (3-4 main services)
    - Brief descriptions
+   - links to detailed pages
    - Visual icons/images
    - CSS: Grid layout, hover effects
-   - JS: Service detail modals
+   - JS: Service detail pages linking
 
-3. Detailed Service Sections
-   - Individual service pages/sections
+3. Detailed dynamic Service pages
+   - Individual service as dynamic pages for seo purposes
+   - Service title, description, and features
    - Pricing information (if applicable)
    - Process breakdown
    - CSS: Tabbed layout, accordion design
@@ -689,7 +714,7 @@ Generate the complete section now.`;
   _getSectionSpecificInstructions(sectionType, context, websiteData) {
     const isMultipage = websiteData.structure === 'Multipage';
     const { websiteTitle, websiteTagline, primaryColor, secondaryColor, fontFamily } = websiteData;
-    
+
     switch (sectionType.toLowerCase()) {
       case 'hero':
         return `
@@ -792,12 +817,12 @@ GENERAL SECTION REQUIREMENTS:
   generateNavigationLinks(pages, currentPage, isMultipage) {
     return pages.map(page => {
       const slug = page.toLowerCase().replace(/\s+/g, '-');
-      const href = isMultipage 
+      const href = isMultipage
         ? (page === 'Home' ? '/' : `${slug}.html`)
         : `#${slug}`;
-      
+
       const isActive = currentPage === page;
-      
+
       return `<li class="nav-item">
       <a class="nav-link ${isActive ? 'active' : ''}" href="${href}">
         ${page}
@@ -816,7 +841,7 @@ GENERAL SECTION REQUIREMENTS:
    */
   generateScopedCSS(sectionId, styles, designVars = {}) {
     const { primaryColor, secondaryColor, fontFamily } = designVars;
-    
+
     return `
 /* Section: ${sectionId} */
 #${sectionId} {
@@ -881,7 +906,7 @@ GENERAL SECTION REQUIREMENTS:
    */
   generateSectionJavaScript(sectionId, functionality) {
     const className = sectionId.replace(/[^a-zA-Z0-9]/g, '');
-    
+
     return `
 // Section: ${sectionId}
 (function() {

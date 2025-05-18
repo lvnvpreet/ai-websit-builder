@@ -267,19 +267,19 @@ class ContentProcessor {
       }
 
       return blocks;
-    } catch(error) {
+    } catch (error) {
       console.log("Inner JSON parsing failed:", jsonError.message);
-  
-  // More aggressive repairs on syntax error
-  if (jsonError.message.includes("Expected ',' or '}'")) {
-    // Apply more aggressive fixes to the specific pattern
-    let moreFixedJson = jsonStr.replace(/([^,{])\s*"([^"]+)":/g, '$1,"$2":');
-    try {
-      return JSON.parse(moreFixedJson);
-    } catch (e) {
-      // Still failed, continue to fallbacks
-    }
-  }
+
+      // More aggressive repairs on syntax error
+      if (jsonError.message.includes("Expected ',' or '}'")) {
+        // Apply more aggressive fixes to the specific pattern
+        let moreFixedJson = jsonStr.replace(/([^,{])\s*"([^"]+)":/g, '$1,"$2":');
+        try {
+          return JSON.parse(moreFixedJson);
+        } catch (e) {
+          // Still failed, continue to fallbacks
+        }
+      }
     }
 
   }
@@ -457,6 +457,119 @@ class ContentProcessor {
     }
 
     return -1; // No matching brace found
+  }
+
+  
+
+  // Add a new method to detect and fix incomplete content
+  async fixIncompleteContent(content, type, pageName) {
+    // Detect incomplete HTML elements
+    const incompleteTagsRegex = /<([a-z][a-z0-9]*)[^>]*?(?:href|src)=["'](?![^"']*["'])/gi;
+    const incompleteClosingTagsRegex = /<([a-z][a-z0-9]*)[^>]*>[^<]*$/g;
+
+    if (content.match(incompleteTagsRegex) || content.match(incompleteClosingTagsRegex)) {
+      // Send back to AI for completion
+      return await this._completeContentWithAI(content, type, pageName);
+    }
+
+    return content;
+  }
+
+  // Method to send incomplete content to AI for completion
+  async _completeContentWithAI(incompleteContent, type, pageName) {
+    try {
+      // Import Ollama service
+      const ollamaService = require('./ollamaService');
+
+      // Create a prompt for fixing the content
+      const fixPrompt = `
+You are a professional web developer. I have HTML content that is incomplete or has errors.
+Please fix the following issues and return ONLY the corrected HTML with no explanations:
+
+1. Complete any truncated tags (like <a href=" with no closing quotes or tags)
+2. Make sure all image tags have proper src attributes and closing tags or are self-closing
+3. Ensure all links use valid URLs (use '#' for placeholder links)
+4. Replace any references to 'home.html' with 'index.html'
+5. Make sure there are no duplicate header tags
+
+Here is the incomplete HTML:
+\`\`\`html
+${incompleteContent}
+\`\`\`
+
+Respond ONLY with the corrected HTML, without any explanations or markdown.
+`;
+
+      // Get the fixed content from Ollama
+      const fixedContent = await ollamaService.generateText(fixPrompt, {
+        temperature: 0.2, // Lower temperature for more precise fixes
+        max_tokens: 4096
+      });
+
+      // Clean up the response (remove markdown code blocks if present)
+      let cleanedContent = fixedContent.replace(/```html\s*|\s*```/g, '');
+
+      // Final validation to ensure it's usable
+      if (!cleanedContent || cleanedContent.length < 20) {
+        console.warn("AI couldn't properly fix the content, using fallback");
+        return this._createFallbackContent(type, pageName);
+      }
+
+      return cleanedContent;
+    } catch (error) {
+      console.error("Error while trying to fix content with AI:", error);
+      return this._createFallbackContent(type, pageName);
+    }
+  }
+
+  // Create appropriate fallback content based on type
+  _createFallbackContent(type, pageName) {
+    if (type === 'section') {
+      return `<div class="container py-4">
+      <h2>${pageName} Section</h2>
+      <p>This section content couldn't be generated properly. Please edit this content.</p>
+    </div>`;
+    }
+    // Add other fallback types as needed
+    return '<div class="alert alert-warning">Content unavailable</div>';
+  }
+
+  // Now integrate this into your processJsonContent method
+  async processJsonContent(rawContent, contentType = 'default', pageName = '') {
+    try {
+      // Your existing processing code...
+
+      // Add this near the end of the method where you're about to return the result
+      if (contentType === 'page' && result && result.sections) {
+        // Process each section asynchronously
+        const fixedSections = await Promise.all(
+          result.sections.map(async (section) => {
+            // Check and fix the content if needed
+            section.content = await this.fixIncompleteContent(
+              section.content,
+              'section',
+              pageName
+            );
+            return section;
+          })
+        );
+
+        result.sections = fixedSections;
+      } else if ((contentType === 'header' || contentType === 'footer') && result) {
+        // Fix header/footer content
+        result.content = await this.fixIncompleteContent(
+          result.content,
+          contentType,
+          pageName
+        );
+      }
+
+      return result;
+
+    } catch (error) {
+      console.error('Error processing content:', error);
+      return this._createFallbackObject(contentType, pageName);
+    }
   }
 
   /**

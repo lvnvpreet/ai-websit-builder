@@ -576,6 +576,46 @@ Generate the complete section now.`;
    - JS: Accordion functionality, search filtering`;
   }
 
+  // Add to services/promptBuilder.js
+
+// Create a new method for generating service detail pages
+buildServiceDetailPrompt(serviceName, websiteData) {
+  const { businessName, businessCategory, businessDescription, primaryColor, secondaryColor } = websiteData;
+  
+  return `
+Generate a detailed service page for ${serviceName} service offered by ${businessName}.
+
+WEBSITE DETAILS:
+- Business Name: ${businessName}
+- Business Category: ${businessCategory} 
+- Business Description: ${businessDescription}
+- Primary Color: ${primaryColor}
+- Secondary Color: ${secondaryColor}
+
+IMPORTANT SERVICE PAGE REQUIREMENTS:
+1. Create a comprehensive page about ${serviceName} service
+2. Include sections for: introduction, benefits, process, pricing (if applicable), FAQs
+3. Use proper HTML structure with semantic tags
+4. Ensure all links are properly closed and formatted
+5. Include navigation back to main services page
+6. All navigation links must include: Home (index.html), About (about.html), Services (services.html), Contact (contact.html)
+7. Include appropriate CTAs throughout the page
+
+OUTPUT FORMAT:
+{
+  "sections": [
+    {
+      "sectionReference": "unique-section-id",
+      "content": "Complete HTML for this section",
+      "css": "Complete CSS scoped to this section with unique selectors"
+    }
+  ]
+}
+
+The filename for this page will be "${serviceName.toLowerCase().replace(/\s+/g, '-')}.html".
+`;
+}
+
   /**
    * Get contact page sections
    * @param {Object} features - Special features

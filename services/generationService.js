@@ -260,6 +260,113 @@ class GenerationService {
     return 'general';
   }
 
+  // In services/generationService.js
+
+// Add this method to identify and generate service detail pages
+async _generateServiceDetailPages(website, allPages) {
+  console.log("Checking for service detail pages to generate...");
+  
+  try {
+    // Find the services page
+    const servicesPage = allPages.find(p => 
+      p.name.toLowerCase() === 'services' || 
+      p.slug === 'services'
+    );
+    
+    if (!servicesPage) {
+      console.log("No services page found, skipping service detail generation");
+      return [];
+    }
+    
+    // Extract service detail page links from the services page content
+    const serviceLinks = [];
+    servicesPage.sections.forEach(section => {
+      // Look for links to service detail pages
+      const linkRegex = /href=["']([\w-]+\.html)["']/g;
+      let match;
+      
+      while ((match = linkRegex.exec(section.content)) !== null) {
+        const linkFile = match[1];
+        // Only include service-specific pages, not main navigation
+        if (!['index.html', 'about.html', 'services.html', 'contact.html'].includes(linkFile)) {
+          // Extract service name from filename
+          const serviceName = linkFile.replace('.html', '').replace(/-/g, ' ');
+          
+          // Add if not already included
+          if (!serviceLinks.some(s => s.file === linkFile)) {
+            serviceLinks.push({
+              file: linkFile,
+              name: serviceName.charAt(0).toUpperCase() + serviceName.slice(1)
+            });
+          }
+        }
+      }
+    });
+    
+    console.log(`Found ${serviceLinks.length} service detail pages to generate`);
+    
+    // Generate each service detail page
+    const servicePages = [];
+    for (const service of serviceLinks) {
+      console.log(`Generating service detail page: ${service.name}`);
+      
+      // Get appropriate prompt for service detail page
+      const servicePrompt = promptBuilder.buildServiceDetailPrompt(service.name, this._prepareWebsiteData(website));
+      
+      // Generate service page content
+      const servicePageContent = await this._generateWithRetry(
+        async () => {
+          const response = await ollamaService.generateText(servicePrompt, generationConfig.generation.jsonParams);
+          return contentProcessor.processJsonContent(response, 'page', service.name);
+        },
+        generationConfig.generation.retry.attempts
+      );
+      
+      if (servicePageContent && servicePageContent.sections) {
+        // Create new page data
+        const newPage = {
+          name: service.name,
+          slug: service.file.replace('.html', ''),
+          content: servicePageContent.sections
+        };
+        
+        servicePages.push(newPage);
+      } else {
+        console.warn(`Failed to generate service page: ${service.name}`);
+      }
+    }
+    
+    return servicePages;
+  } catch (error) {
+    console.error("Error generating service detail pages:", error);
+    return [];
+  }
+}
+
+// Modify the generateWebsite method to include service detail pages
+async generateWebsite(website, progressCallback) {
+  try {
+    // Existing code...
+    
+    // After generating main pages, generate service detail pages
+    if (progressCallback) {
+      progressCallback(85, 'Generating service detail pages');
+    }
+    
+    const serviceDetailPages = await this._generateServiceDetailPages(website, result.pages);
+    
+    // Add service detail pages to the result
+    result.pages = [...result.pages, ...serviceDetailPages];
+    
+    // Continue with saving to database...
+    
+    return result;
+  } catch (error) {
+    console.error('Error generating website:', error);
+    throw error;
+  }
+}
+
   /**
    * Insert image and attribution into section content
    * @param {string} content - Section HTML content

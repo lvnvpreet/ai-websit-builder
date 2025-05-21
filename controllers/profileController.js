@@ -2,6 +2,8 @@ const User = require('../models/User');
 const Website = require('../models/Website');
 const bcrypt = require('bcryptjs');
 const { isOllamaRunning, getOllamaModels } = require('../services/ollamaService');
+const aiService = require('../services/aiService');
+const openRouterService = require('../services/openRouterService');
 
 // Get profile page
 exports.getProfile = async (req, res) => {
@@ -139,24 +141,46 @@ exports.getAiSettings = async (req, res) => {
       running: false,
       models: []
     };
+      // Check OpenRouter status
+    let openRouterStatus = {
+      running: false,
+      models: [],
+      quotaStatus: null
+    };
     
     try {
-      ollamaStatus.running = await isOllamaRunning(
-        user.llmSettings?.ollamaServerUrl || 'http://localhost:11434'
-      );
-      
-      if (ollamaStatus.running) {
-        ollamaStatus.models = await getOllamaModels(
+      // Check Ollama status if that's the configured provider or none is set
+      if (!user.llmSettings?.provider || user.llmSettings.provider === 'ollama') {
+        ollamaStatus.running = await isOllamaRunning(
           user.llmSettings?.ollamaServerUrl || 'http://localhost:11434'
         );
+        
+        if (ollamaStatus.running) {
+          ollamaStatus.models = await getOllamaModels(
+            user.llmSettings?.ollamaServerUrl || 'http://localhost:11434'
+          );
+        }
       }
+        // Check OpenRouter status if that's the configured provider
+      if (user.llmSettings?.provider === 'openrouter' && user.llmSettings?.openRouterApiKey) {
+        // Set the API key before checking status
+        openRouterService.apiKey = user.llmSettings.openRouterApiKey;
+        openRouterStatus.running = await openRouterService.isServerRunning();
+        
+        if (openRouterStatus.running) {
+          openRouterStatus.models = await openRouterService.getAvailableModels();
+          openRouterStatus.quotaStatus = openRouterService.getQuotaStatus();
+        }
+      }
+      
     } catch (error) {
-      console.error('Error checking Ollama status:', error);
+      console.error('Error checking AI services status:', error);
     }
     
     res.render('profile/ai-settings', {
       user,
       ollamaStatus,
+      openRouterStatus,
       success: req.query.success,
       error: req.query.error
     });
@@ -169,10 +193,10 @@ exports.getAiSettings = async (req, res) => {
 // Update AI Provider settings
 exports.updateAiSettings = async (req, res) => {
   try {
-    const { provider, openaiApiKey, ollamaServerUrl, ollamaModelName, anthropicApiKey } = req.body;
+    const { provider, openaiApiKey, ollamaServerUrl, ollamaModelName, anthropicApiKey, openRouterApiKey, openRouterModelName } = req.body;
     
     // Validate provider
-    if (!['openai', 'ollama', 'anthropic'].includes(provider)) {
+    if (!['openai', 'ollama', 'anthropic', 'openrouter'].includes(provider)) {
       return res.redirect('/profile/ai-settings?error=Invalid+provider');
     }
     
@@ -181,15 +205,37 @@ exports.updateAiSettings = async (req, res) => {
       provider,
       ollamaServerUrl: ollamaServerUrl || 'http://localhost:11434',
       ollamaModelName: ollamaModelName || 'llama2',
-      anthropicApiKey: anthropicApiKey || ''
+      anthropicApiKey: anthropicApiKey || '',
+      openRouterApiKey: openRouterApiKey || '',
+      openRouterModelName: openRouterModelName || 'gpt-3.5-turbo'
     };
-    
-    // Update user
+      // Update user
     const updateData = { llmSettings };
     
-    // Only update API key if provided (not empty)
+    // Only update API keys if provided (not empty)
     if (provider === 'openai' && openaiApiKey && openaiApiKey.trim() !== '') {
       updateData.openaiApiKey = openaiApiKey;
+    }
+    
+    if (provider === 'openrouter' && openRouterApiKey && openRouterApiKey.trim() !== '') {
+      // Save to user data
+      llmSettings.openRouterApiKey = openRouterApiKey;
+      
+      // Set in OpenRouter service
+      process.env.OPENROUTER_API_KEY = openRouterApiKey;
+      
+      // If OpenRouter is selected, set it as the active provider in AIService
+      if (provider === 'openrouter') {
+        aiService.setProvider('openrouter');
+        if (openRouterModelName) {
+          openRouterService.setModel(openRouterModelName);
+        }
+      }
+    }
+    
+    // Set the AI provider in our AIService
+    if (['ollama', 'openrouter'].includes(provider)) {
+      aiService.setProvider(provider);
     }
     
     await User.findByIdAndUpdate(req.session.userId, updateData);

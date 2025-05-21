@@ -7,6 +7,9 @@ const session = require("express-session");
 const MongoStore = require('connect-mongo');
 const morgan = require('morgan');
 
+// Import services
+const aiService = require('./services/aiService');
+
 // Import routes
 const authRoutes = require("./routes/authRoutes");
 const profileRoutes = require('./routes/profileRoutes');
@@ -19,6 +22,10 @@ const generationRoutes = require('./routes/generationRoutes');
 const previewRoutes = require('./routes/previewRoutes');
 const exportRoutes = require('./routes/exportRoutes');
 const websiteRoutes = require('./routes/websiteRoutes');
+const themeCustomizationRoutes = require('./routes/themeCustomizationRoutes');
+const abTestingRoutes = require('./routes/abTestingRoutes');
+const partialRegenerationRoutes = require('./routes/partialRegenerationRoutes');
+const documentationRoutes = require('./routes/documentationRoutes');
 
 // Import models
 const User = require('./models/User');
@@ -162,9 +169,20 @@ app.use('/websites', websiteRoutes);
 // Preview Routes
 app.use('/', previewRoutes);
 
-
 // Export Routes
 app.use(exportRoutes);
+
+// Theme Customization Routes
+app.use('/theme-customization', themeCustomizationRoutes);
+
+// A/B Testing Routes
+app.use('/ab-testing', abTestingRoutes);
+
+// Page Editor (Partial Regeneration) Routes
+app.use('/page-editor', partialRegenerationRoutes);
+
+// Documentation Routes
+app.use(documentationRoutes);
 
 // Root path response
 app.get("/", (req, res) => {
@@ -191,8 +209,14 @@ app.use((err, req, res, next) => {
   });
 });
 
+// Initialize AI Service with configuration from environment variables
+const aiConfig = require('./config/aiConfig');
+// Override to use OpenRouter
+aiService.setProvider('openrouter');
+
 // Start the server
 app.listen(port, () => {
   console.log(`Server running at http://localhost:${port}`);
   console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`AI Provider: ${aiService.getProvider()}`);
 });

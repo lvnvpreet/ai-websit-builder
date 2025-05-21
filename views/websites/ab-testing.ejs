@@ -1,0 +1,340 @@
+<!-- views/websites/ab-testing.ejs -->
+<%- include('../partials/_header', { user: true }) %>
+
+<div class="container mt-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="fas fa-flask"></i> A/B Testing for <%= website.businessName %></h2>
+    <a href="/websites/<%= website._id %>" class="btn btn-outline-secondary">
+      <i class="fas fa-arrow-left"></i> Back to Website
+    </a>
+  </div>
+
+  <div class="card mb-4">
+    <div class="card-body">
+      <h4 class="card-title">What is A/B Testing?</h4>
+      <p class="card-text">
+        A/B testing lets you compare different versions of your website to see which one performs better.
+        We'll automatically create variations of your website with different designs, then you can choose the one you like best.
+      </p>
+    </div>
+  </div>
+  
+  <% if (variants && variants.length > 0) { %>
+    <!-- Show test variants -->
+    <div class="card mb-4">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h4 class="mb-0">Your Design Variants</h4>
+        <button class="btn btn-primary" id="createNewVariants">Create New Variants</button>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <% variants.forEach(variant => { %>
+            <div class="col-md-6 col-lg-4 mb-4">
+              <div class="card h-100 variant-card" data-variant-id="<%= variant.id %>">
+                <div class="card-header">
+                  <h5 class="mb-0"><%= variant.name %></h5>
+                </div>
+                <% if (variant.previewPath) { %>
+                  <div class="variant-preview-container">
+                    <iframe src="<%= variant.previewPath %>" class="variant-preview" title="<%= variant.name %> Preview"></iframe>
+                  </div>
+                <% } else { %>
+                  <div class="card-body text-center py-5">
+                    <p class="text-muted">Preview not available</p>
+                  </div>
+                <% } %>
+                <div class="card-footer">
+                  <div class="d-flex justify-content-between align-items-center">
+                    <button class="btn btn-sm btn-outline-primary view-variant-btn" data-variant-path="<%= variant.previewPath || '#' %>">
+                      <i class="fas fa-eye"></i> View
+                    </button>
+                    <button class="btn btn-sm btn-success select-variant-btn" data-variant-id="<%= variant.id %>">
+                      <i class="fas fa-check"></i> Select This Design
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          <% }); %>
+        </div>
+      </div>
+    </div>
+  <% } else { %>
+    <!-- No variants yet, show creation card -->
+    <div class="card mb-4">
+      <div class="card-body text-center py-5">
+        <h4 class="mb-3">No Design Variants Yet</h4>
+        <p class="mb-4">Create design variants to test different colors, fonts, and layouts for your website.</p>
+        <button class="btn btn-primary btn-lg" id="createVariantsBtn">
+          <i class="fas fa-magic"></i> Generate Design Variants
+        </button>
+      </div>
+    </div>
+  <% } %>
+  
+  <!-- Test Configuration Card -->
+  <div class="card mb-4">
+    <div class="card-header">
+      <h4 class="mb-0">Test Configuration</h4>
+    </div>
+    <div class="card-body">
+      <form id="testConfigForm">
+        <div class="row">
+          <div class="col-md-4">
+            <div class="form-check mb-3">
+              <input class="form-check-input" type="checkbox" id="varyColors" checked>
+              <label class="form-check-label" for="varyColors">
+                <i class="fas fa-palette"></i> Vary Colors
+              </label>
+              <small class="form-text text-muted d-block">Test different color schemes</small>
+            </div>
+          </div>
+          
+          <div class="col-md-4">
+            <div class="form-check mb-3">
+              <input class="form-check-input" type="checkbox" id="varyFonts" checked>
+              <label class="form-check-label" for="varyFonts">
+                <i class="fas fa-font"></i> Vary Fonts
+              </label>
+              <small class="form-text text-muted d-block">Test different font combinations</small>
+            </div>
+          </div>
+          
+          <div class="col-md-4">
+            <div class="form-check mb-3">
+              <input class="form-check-input" type="checkbox" id="varyLayout" checked>
+              <label class="form-check-label" for="varyLayout">
+                <i class="fas fa-th-large"></i> Vary Layout
+              </label>
+              <small class="form-text text-muted d-block">Test different layout styles</small>
+            </div>
+          </div>
+        </div>
+        
+        <button type="button" class="btn btn-primary mt-3" id="createVariantsSubmit">
+          <i class="fas fa-magic"></i> Generate Variants
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Variant Preview Modal -->
+<div class="modal fade" id="variantPreviewModal" tabindex="-1" aria-labelledby="variantPreviewModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="variantPreviewModalLabel">Design Variant Preview</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-0">
+        <iframe id="variantPreviewFrame" src="" style="width: 100%; height: 600px; border: none;"></iframe>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-success" id="selectVariantFromModal">Select This Design</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Loading Modal -->
+<div class="modal fade" id="loadingModal" tabindex="-1" aria-labelledby="loadingModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-body text-center py-4">
+        <div class="spinner-border text-primary mb-3" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+        <h5 id="loadingMessage">Generating design variants...</h5>
+        <p class="text-muted">This may take a few moments. Please don't close this window.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Variables
+  const websiteId = '<%= website._id %>';
+  let currentVariantId = null;
+  
+  // Modals
+  const variantPreviewModal = new bootstrap.Modal(document.getElementById('variantPreviewModal'));
+  const loadingModal = new bootstrap.Modal(document.getElementById('loadingModal'));
+  
+  // Create Variants Buttons
+  const createVariantsBtn = document.getElementById('createVariantsBtn');
+  const createNewVariants = document.getElementById('createNewVariants');
+  const createVariantsSubmit = document.getElementById('createVariantsSubmit');
+  
+  // Create variants event handlers
+  if (createVariantsBtn) {
+    createVariantsBtn.addEventListener('click', function() {
+      // Scroll to configuration section
+      document.getElementById('testConfigForm').scrollIntoView({ behavior: 'smooth' });
+    });
+  }
+  
+  if (createNewVariants) {
+    createNewVariants.addEventListener('click', function() {
+      // Scroll to configuration section
+      document.getElementById('testConfigForm').scrollIntoView({ behavior: 'smooth' });
+    });
+  }
+  
+  // Create variants submission
+  createVariantsSubmit.addEventListener('click', function() {
+    // Get configuration
+    const varyColors = document.getElementById('varyColors').checked;
+    const varyFonts = document.getElementById('varyFonts').checked;
+    const varyLayout = document.getElementById('varyLayout').checked;
+    
+    // Validate at least one option is selected
+    if (!varyColors && !varyFonts && !varyLayout) {
+      alert('Please select at least one variation option.');
+      return;
+    }
+    
+    // Show loading modal
+    loadingModal.show();
+    
+    // API call to create variants
+    fetch(`/ab-testing/${websiteId}/create`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        varyColors,
+        varyFonts,
+        varyLayout
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        // Reload page to show variants
+        window.location.reload();
+      } else {
+        alert('Error: ' + data.message);
+        loadingModal.hide();
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      alert('An error occurred while creating variants. Please try again.');
+      loadingModal.hide();
+    });
+  });
+  
+  // View Variant Buttons
+  document.querySelectorAll('.view-variant-btn').forEach(button => {
+    button.addEventListener('click', function() {
+      const variantPath = this.getAttribute('data-variant-path');
+      const variantId = this.closest('.variant-card').getAttribute('data-variant-id');
+      
+      // Set current variant ID for the select button in modal
+      currentVariantId = variantId;
+      
+      // Set iframe source
+      document.getElementById('variantPreviewFrame').src = variantPath;
+      
+      // Show modal
+      variantPreviewModal.show();
+    });
+  });
+  
+  // Select Variant Buttons
+  document.querySelectorAll('.select-variant-btn').forEach(button => {
+    button.addEventListener('click', function() {
+      selectVariant(this.getAttribute('data-variant-id'));
+    });
+  });
+  
+  // Select Variant from Modal
+  document.getElementById('selectVariantFromModal').addEventListener('click', function() {
+    if (currentVariantId) {
+      variantPreviewModal.hide();
+      selectVariant(currentVariantId);
+    }
+  });
+  
+  // Function to select a variant
+  function selectVariant(variantId) {
+    if (!confirm('Are you sure you want to select this design? This will apply the selected design to your website.')) {
+      return;
+    }
+    
+    // Show loading modal
+    loadingModal.show();
+    document.getElementById('loadingMessage').textContent = 'Applying selected design...';
+    
+    // API call to select winning variant
+    fetch(`/ab-testing/${websiteId}/select-winner`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        variantId
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        alert('Design applied successfully!');
+        // Redirect to website details
+        window.location.href = `/websites/${websiteId}`;
+      } else {
+        alert('Error: ' + data.message);
+        loadingModal.hide();
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      alert('An error occurred while applying the design. Please try again.');
+      loadingModal.hide();
+    });
+  }
+});
+</script>
+
+<style>
+.variant-card {
+  transition: all 0.2s ease-in-out;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.variant-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+}
+
+.variant-preview-container {
+  height: 250px;
+  overflow: hidden;
+  position: relative;
+}
+
+.variant-preview {
+  width: 100%;
+  height: 800px;
+  border: none;
+  transform: scale(0.5);
+  transform-origin: 0 0;
+  pointer-events: none;
+}
+
+.color-sample {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  margin-right: 5px;
+}
+</style>
+
+<%- include('../partials/_footer') %>
+
+<script src="/js/ab-testing.js"></script>

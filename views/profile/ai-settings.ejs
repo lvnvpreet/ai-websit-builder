@@ -1,0 +1,314 @@
+<%- include('../partials/_header') %>
+<div class="container mt-5">
+  <div class="row">
+    <div class="col-md-3">
+      <%- include('_sidebar', { active: 'ai-settings' }) %>
+    </div>
+    <div class="col-md-9">
+      <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+          <h2 class="h5 mb-0">AI Provider Settings</h2>
+        </div>
+        <div class="card-body">
+          <% if (success) { %>
+            <div class="alert alert-success alert-dismissible fade show mb-4" role="alert">
+              <%= success %>
+              <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+          <% } %>
+          <% if (error) { %>
+            <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
+              <%= error %>
+              <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+          <% } %>
+          
+          <form action="/profile/ai-settings" method="post" class="mb-4">
+            <div class="mb-4 pb-3 border-bottom">
+              <h3 class="h6 mb-3">Select AI Provider</h3>
+              
+              <div class="form-check mb-2">
+                <input class="form-check-input provider-option" type="radio" name="provider" id="providerOllama" value="ollama"
+                  <%= !user.llmSettings || user.llmSettings.provider === 'ollama' ? 'checked' : '' %>>
+                <label class="form-check-label" for="providerOllama">
+                  <strong>Ollama</strong> - Local AI models (requires separate installation)
+                </label>
+              </div>
+              
+              <div class="form-check mb-2">
+                <input class="form-check-input provider-option" type="radio" name="provider" id="providerOpenRouter" value="openrouter"
+                  <%= user.llmSettings && user.llmSettings.provider === 'openrouter' ? 'checked' : '' %>>
+                <label class="form-check-label" for="providerOpenRouter">
+                  <strong>Open Router</strong> - Access to various AI models via API
+                </label>
+              </div>
+              
+              <div class="form-check mb-2">
+                <input class="form-check-input provider-option" type="radio" name="provider" id="providerOpenAI" value="openai"
+                  <%= user.llmSettings && user.llmSettings.provider === 'openai' ? 'checked' : '' %>>
+                <label class="form-check-label" for="providerOpenAI">
+                  <strong>OpenAI</strong> - Chat GPT integration (requires API key)
+                </label>
+              </div>
+              
+              <div class="form-check">
+                <input class="form-check-input provider-option" type="radio" name="provider" id="providerAnthropic" value="anthropic"
+                  <%= user.llmSettings && user.llmSettings.provider === 'anthropic' ? 'checked' : '' %>>
+                <label class="form-check-label" for="providerAnthropic">
+                  <strong>Anthropic</strong> - Claude AI integration (requires API key)
+                </label>
+              </div>
+            </div>
+            
+            <!-- Ollama Settings -->
+            <div id="ollamaSettings" class="provider-settings <%= !user.llmSettings || user.llmSettings.provider === 'ollama' ? '' : 'd-none' %>">
+              <h3 class="h6 mb-3">Ollama Settings</h3>
+              
+              <div class="mb-3">
+                <label for="ollamaServerUrl" class="form-label">Server URL</label>
+                <input type="text" class="form-control" id="ollamaServerUrl" name="ollamaServerUrl" 
+                  value="<%= user.llmSettings?.ollamaServerUrl || 'http://localhost:11434' %>">
+                <div class="form-text">The URL where your Ollama server is running</div>
+              </div>
+              
+              <div class="mb-3">
+                <label for="ollamaModelName" class="form-label">Model</label>
+                <select class="form-select" id="ollamaModelName" name="ollamaModelName">
+                  <% if (ollamaStatus.models && ollamaStatus.models.length > 0) { %>
+                    <% ollamaStatus.models.forEach(model => { %>
+                      <option value="<%= model.name %>" 
+                        <%= user.llmSettings?.ollamaModelName === model.name ? 'selected' : '' %>>
+                        <%= model.name %>
+                      </option>
+                    <% }); %>
+                  <% } else { %>
+                    <option value="llama2" <%= !user.llmSettings?.ollamaModelName || user.llmSettings?.ollamaModelName === 'llama2' ? 'selected' : '' %>>llama2</option>
+                    <option value="codellama" <%= user.llmSettings?.ollamaModelName === 'codellama' ? 'selected' : '' %>>codellama</option>
+                    <option value="mistral" <%= user.llmSettings?.ollamaModelName === 'mistral' ? 'selected' : '' %>>mistral</option>
+                  <% } %>
+                </select>
+              </div>
+              
+              <div class="mb-3 d-flex justify-content-between align-items-center">
+                <div>
+                  <span class="badge rounded-pill <%= ollamaStatus.running ? 'bg-success' : 'bg-danger' %>">
+                    <%= ollamaStatus.running ? 'Connected' : 'Not Connected' %>
+                  </span>
+                  <span class="ms-2"><%= ollamaStatus.running ? `${ollamaStatus.models.length} models available` : 'Check your connection settings' %></span>
+                </div>
+                <button type="button" id="checkOllamaConnection" class="btn btn-sm btn-outline-primary">Test Connection</button>
+              </div>
+            </div>
+            
+            <!-- Open Router Settings -->
+            <div id="openRouterSettings" class="provider-settings <%= user.llmSettings && user.llmSettings.provider === 'openrouter' ? '' : 'd-none' %>">
+              <h3 class="h6 mb-3">Open Router Settings</h3>
+              
+              <div class="mb-3">
+                <label for="openRouterApiKey" class="form-label">API Key</label>
+                <input type="password" class="form-control" id="openRouterApiKey" name="openRouterApiKey" 
+                  value="<%= user.llmSettings?.openRouterApiKey ? '••••••••••••••••' : '' %>">
+                <div class="form-text">
+                  Your Open Router API key (get one at <a href="https://openrouter.ai/keys" target="_blank">openrouter.ai/keys</a>)
+                  <a href="/docs/openrouter-setup" target="_blank" class="ms-2"><i class="fas fa-question-circle"></i> Setup Guide</a>
+                </div>
+              </div>
+              
+              <div class="mb-3">
+                <label for="openRouterModelName" class="form-label">Model</label>
+                <select class="form-select" id="openRouterModelName" name="openRouterModelName">
+                  <% if (openRouterStatus && openRouterStatus.models && openRouterStatus.models.length > 0) { %>
+                    <% openRouterStatus.models.forEach(model => { %>
+                      <option value="<%= model.id %>" 
+                        <%= user.llmSettings?.openRouterModelName === model.id ? 'selected' : '' %>>
+                        <%= model.name %>
+                      </option>
+                    <% }); %>
+                  <% } else { %>
+                    <option value="gpt-3.5-turbo" <%= !user.llmSettings?.openRouterModelName || user.llmSettings?.openRouterModelName === 'gpt-3.5-turbo' ? 'selected' : '' %>>GPT-3.5 Turbo</option>
+                    <option value="anthropic/claude-3-opus" <%= user.llmSettings?.openRouterModelName === 'anthropic/claude-3-opus' ? 'selected' : '' %>>Claude 3 Opus</option>
+                    <option value="anthropic/claude-3-sonnet" <%= user.llmSettings?.openRouterModelName === 'anthropic/claude-3-sonnet' ? 'selected' : '' %>>Claude 3 Sonnet</option>
+                    <option value="meta-llama/llama-3-70b" <%= user.llmSettings?.openRouterModelName === 'meta-llama/llama-3-70b' ? 'selected' : '' %>>Llama 3 70B</option>
+                  <% } %>
+                </select>
+              </div>
+                <div class="mb-3 d-flex justify-content-between align-items-center">
+                <div>
+                  <span class="badge rounded-pill <%= openRouterStatus && openRouterStatus.running ? 'bg-success' : 'bg-danger' %>">
+                    <%= openRouterStatus && openRouterStatus.running ? 'Connected' : 'Not Connected' %>
+                  </span>
+                  <span class="ms-2"><%= openRouterStatus && openRouterStatus.running ? `${openRouterStatus.models.length} models available` : 'Enter your API key' %></span>
+                </div>
+                <button type="button" id="checkOpenRouterConnection" class="btn btn-sm btn-outline-primary">Test Connection</button>
+              </div>
+              
+              <% if (openRouterStatus && openRouterStatus.quotaStatus) { %>
+              <div class="mb-3 p-2 bg-light rounded border">
+                <h6 class="mb-2">API Usage</h6>
+                <div class="d-flex justify-content-between small">
+                  <div>Requests today:</div>
+                  <div><strong><%= openRouterStatus.quotaStatus.requestCount || 0 %></strong></div>
+                </div>
+                <% if (openRouterStatus.quotaStatus.remainingTokens !== null) { %>
+                <div class="d-flex justify-content-between small">
+                  <div>Tokens remaining:</div>
+                  <div><strong><%= openRouterStatus.quotaStatus.remainingTokens %></strong></div>
+                </div>
+                <% } %>
+                <% if (openRouterStatus.quotaStatus.exceeded) { %>
+                <div class="alert alert-danger small py-1 mt-2 mb-0">
+                  Quota exceeded! Resets at <%= new Date(openRouterStatus.quotaStatus.resetTime).toLocaleString() %>
+                </div>
+                <% } %>
+              </div>
+              <% } %>
+            </div>
+            
+            <!-- OpenAI Settings -->
+            <div id="openaiSettings" class="provider-settings <%= user.llmSettings && user.llmSettings.provider === 'openai' ? '' : 'd-none' %>">
+              <h3 class="h6 mb-3">OpenAI Settings</h3>
+              
+              <div class="mb-3">
+                <label for="openaiApiKey" class="form-label">API Key</label>
+                <input type="password" class="form-control" id="openaiApiKey" name="openaiApiKey" 
+                  value="<%= user.openaiApiKey ? '••••••••••••••••' : '' %>">
+                <div class="form-text">Your OpenAI API key</div>
+              </div>
+            </div>
+            
+            <!-- Anthropic Settings -->
+            <div id="anthropicSettings" class="provider-settings <%= user.llmSettings && user.llmSettings.provider === 'anthropic' ? '' : 'd-none' %>">
+              <h3 class="h6 mb-3">Anthropic Settings</h3>
+              
+              <div class="mb-3">
+                <label for="anthropicApiKey" class="form-label">API Key</label>
+                <input type="password" class="form-control" id="anthropicApiKey" name="anthropicApiKey" 
+                  value="<%= user.llmSettings?.anthropicApiKey ? '••••••••••••••••' : '' %>">
+                <div class="form-text">Your Anthropic API key</div>
+              </div>
+            </div>
+            
+            <div class="mt-4">
+              <button type="submit" class="btn btn-primary">Save Settings</button>
+            </div>
+          </form>
+          
+          <div class="alert alert-info">
+            <h4 class="h6 mb-2">About AI Providers</h4>
+            <p class="small mb-0">
+              Choose the AI provider that best fits your needs. Ollama runs locally on your machine but requires installation.
+              Open Router, OpenAI, and Anthropic are cloud-based services that require API keys but offer powerful models.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Handle provider selection changes
+    const providerOptions = document.querySelectorAll('.provider-option');
+    const providerSettings = document.querySelectorAll('.provider-settings');
+    
+    providerOptions.forEach(option => {
+      option.addEventListener('change', function() {
+        const selectedProvider = this.value;
+        
+        // Hide all provider settings first
+        providerSettings.forEach(settings => {
+          settings.classList.add('d-none');
+        });
+        
+        // Show the selected provider settings
+        document.getElementById(`${selectedProvider}Settings`).classList.remove('d-none');
+      });
+    });
+    
+    // Test Ollama Connection
+    document.getElementById('checkOllamaConnection').addEventListener('click', async function() {
+      const serverUrl = document.getElementById('ollamaServerUrl').value;
+      
+      this.disabled = true;
+      this.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Testing...';
+      
+      try {
+        const response = await fetch('/api/ollama/check-status', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ serverUrl })
+        });
+        
+        const data = await response.json();
+        
+        if (data.running) {
+          alert('Connection successful! ' + data.models.length + ' models available.');
+        } else {
+          alert('Could not connect to Ollama server. Please check the URL and make sure Ollama is running.');
+        }
+      } catch (error) {
+        alert('Error testing connection: ' + error);
+      } finally {
+        this.disabled = false;
+        this.innerHTML = 'Test Connection';
+      }
+    });
+
+    // Test OpenRouter Connection
+    document.getElementById('checkOpenRouterConnection').addEventListener('click', async function() {
+      const apiKey = document.getElementById('openRouterApiKey').value;
+      
+      if (!apiKey || apiKey === '••••••••••••••••') {
+        alert('Please enter your Open Router API key first.');
+        return;
+      }
+      
+      this.disabled = true;
+      this.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Testing...';
+      
+      try {
+        const response = await fetch('/api/openrouter/check-status', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ apiKey })
+        });
+        
+        const data = await response.json();
+          if (data.running) {
+          let message = 'Connection successful! ' + data.models.length + ' models available.';
+          
+          // Add quota information if available
+          if (data.quotaStatus) {
+            message += '\n\nAPI Usage:';
+            message += '\n- Requests today: ' + (data.quotaStatus.requestCount || 0);
+            
+            if (data.quotaStatus.remainingTokens !== null) {
+              message += '\n- Tokens remaining: ' + data.quotaStatus.remainingTokens;
+            }
+            
+            if (data.quotaStatus.exceeded) {
+              message += '\n\nWARNING: API quota exceeded! Will reset at ' + 
+                (data.quotaStatus.resetTime ? new Date(data.quotaStatus.resetTime).toLocaleString() : 'unknown time');
+            }
+          }
+          
+          alert(message);
+        } else {
+          alert('Could not connect to Open Router. Please check your API key.');
+        }
+      } catch (error) {
+        alert('Error testing connection: ' + error);
+      } finally {
+        this.disabled = false;
+        this.innerHTML = 'Test Connection';
+      }
+    });
+  });
+</script>
+
+<%- include('../partials/_footer') %>

@@ -1,0 +1,564 @@
+<!-- views/websites/page-editor.ejs -->
+<%- include('../partials/_header', { user: true }) %>
+
+<div class="container-fluid mt-4">
+  <div class="row">
+    <div class="col-md-8">
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h3 class="mb-0">Editing: <%= page.name %></h3>
+          <div>
+            <button class="btn btn-outline-primary me-2 regenerate-page-btn" data-website-id="<%= website._id %>" data-page-id="<%= page._id %>">
+              <i class="fas fa-sync-alt"></i> Regenerate Entire Page
+            </button>
+            <a href="/preview/<%= website._id %>/<%= page.slug %>" class="btn btn-outline-secondary" target="_blank">
+              <i class="fas fa-eye"></i> Preview
+            </a>
+          </div>
+        </div>
+        
+        <div class="card-body">
+          <div class="alert alert-info mb-4">
+            <i class="fas fa-info-circle"></i> Select any section below to edit or regenerate it. You can also add new sections to your page.
+          </div>
+          
+          <div class="page-sections">
+            <% if (page.sections && page.sections.length > 0) { %>
+              <% page.sections.forEach((section, index) => { %>
+                <div class="section-card mb-4" data-section-id="<%= section.sectionReference %>" data-section-type="<%= section.type || 'default' %>">
+                  <div class="section-header d-flex justify-content-between align-items-center mb-2">
+                    <h5>Section <%= index + 1 %>: <%= section.type || 'Default' %></h5>
+                    <div class="section-actions">
+                      <button class="btn btn-sm btn-primary regenerate-section-btn" data-website-id="<%= website._id %>" data-page-id="<%= page._id %>" data-section-id="<%= section.sectionReference %>">
+                        <i class="fas fa-sync-alt"></i> Regenerate
+                      </button>
+                      <button class="btn btn-sm btn-secondary edit-section-btn">
+                        <i class="fas fa-pencil-alt"></i> Edit
+                      </button>
+                    </div>
+                  </div>
+                  <div class="section-preview border rounded p-3">
+                    <%- section.content %>
+                  </div>
+                  <div class="section-edit-form d-none mt-3">
+                    <form class="section-regenerate-form">
+                      <div class="mb-3">
+                        <label for="customInstructions-<%= section.sectionReference %>" class="form-label">Custom Instructions</label>
+                        <textarea class="form-control" id="customInstructions-<%= section.sectionReference %>" rows="3" placeholder="Provide specific instructions for this section (e.g., 'Make it more professional', 'Add more details about products')"></textarea>
+                      </div>
+                      <div class="d-flex justify-content-end">
+                        <button type="button" class="btn btn-secondary me-2 cancel-edit-btn">Cancel</button>
+                        <button type="button" class="btn btn-primary section-regenerate-submit" data-website-id="<%= website._id %>" data-page-id="<%= page._id %>" data-section-id="<%= section.sectionReference %>">
+                          Regenerate with Instructions
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              <% }); %>
+            <% } else { %>
+              <div class="alert alert-warning">
+                No sections found. Click "Add New Section" to create content.
+              </div>
+            <% } %>
+          </div>
+          
+          <div class="add-section-container mt-4">
+            <button class="btn btn-success w-100" id="addSectionBtn">
+              <i class="fas fa-plus"></i> Add New Section
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-md-4">
+      <div class="card sticky-top" style="top: 20px;">
+        <div class="card-header">
+          <h4>Page Properties</h4>
+        </div>
+        <div class="card-body">
+          <form id="pagePropertiesForm">
+            <div class="mb-3">
+              <label for="pageName" class="form-label">Page Name</label>
+              <input type="text" class="form-control" id="pageName" value="<%= page.name %>" readonly>
+            </div>
+            <div class="mb-3">
+              <label for="pageSlug" class="form-label">URL Slug</label>
+              <input type="text" class="form-control" id="pageSlug" value="<%= page.slug %>" readonly>
+            </div>
+            <div class="mb-3">
+              <label for="seoTitle" class="form-label">SEO Title</label>
+              <input type="text" class="form-control" id="seoTitle" value="<%= page.seoTitle || '' %>">
+            </div>
+            <div class="mb-3">
+              <label for="seoDescription" class="form-label">SEO Description</label>
+              <textarea class="form-control" id="seoDescription" rows="3"><%= page.seoDescription || '' %></textarea>
+            </div>
+            <button type="button" class="btn btn-primary w-100" id="savePagePropertiesBtn">
+              Save Properties
+            </button>
+          </form>
+          
+          <hr>
+          
+          <div class="page-info mt-3">
+            <h5>Page Information</h5>
+            <ul class="list-group list-group-flush">
+              <li class="list-group-item d-flex justify-content-between align-items-center">
+                Total Sections
+                <span class="badge bg-primary rounded-pill"><%= page.sections ? page.sections.length : 0 %></span>
+              </li>
+              <li class="list-group-item d-flex justify-content-between align-items-center">
+                Created
+                <span><%= new Date(page.createdAt).toLocaleDateString() %></span>
+              </li>
+            </ul>
+          </div>
+          
+          <div class="mt-4">
+            <a href="/websites/<%= website._id %>" class="btn btn-outline-secondary w-100">
+              <i class="fas fa-arrow-left"></i> Back to Website
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add Section Modal -->
+<div class="modal fade" id="addSectionModal" tabindex="-1" aria-labelledby="addSectionModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="addSectionModalLabel">Add New Section</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="section-type-selection">
+          <p class="mb-3">Select a section type to add to your page:</p>
+          
+          <div class="row">
+            <div class="col-md-4 mb-3">
+              <div class="card section-type-card" data-section-type="hero">
+                <div class="card-body text-center">
+                  <i class="fas fa-image fa-2x mb-2"></i>
+                  <h5 class="card-title">Hero</h5>
+                  <p class="card-text">Large banner section with headline, text and call-to-action</p>
+                </div>
+              </div>
+            </div>
+            
+            <div class="col-md-4 mb-3">
+              <div class="card section-type-card" data-section-type="features">
+                <div class="card-body text-center">
+                  <i class="fas fa-list-ul fa-2x mb-2"></i>
+                  <h5 class="card-title">Features</h5>
+                  <p class="card-text">Highlight key features with icons and descriptions</p>
+                </div>
+              </div>
+            </div>
+            
+            <div class="col-md-4 mb-3">
+              <div class="card section-type-card" data-section-type="about">
+                <div class="card-body text-center">
+                  <i class="fas fa-info-circle fa-2x mb-2"></i>
+                  <h5 class="card-title">About</h5>
+                  <p class="card-text">Information about your business or organization</p>
+                </div>
+              </div>
+            </div>
+            
+            <div class="col-md-4 mb-3">
+              <div class="card section-type-card" data-section-type="testimonials">
+                <div class="card-body text-center">
+                  <i class="fas fa-quote-right fa-2x mb-2"></i>
+                  <h5 class="card-title">Testimonials</h5>
+                  <p class="card-text">Customer reviews and testimonials</p>
+                </div>
+              </div>
+            </div>
+            
+            <div class="col-md-4 mb-3">
+              <div class="card section-type-card" data-section-type="gallery">
+                <div class="card-body text-center">
+                  <i class="fas fa-images fa-2x mb-2"></i>
+                  <h5 class="card-title">Gallery</h5>
+                  <p class="card-text">Image gallery to showcase your work</p>
+                </div>
+              </div>
+            </div>
+            
+            <div class="col-md-4 mb-3">
+              <div class="card section-type-card" data-section-type="contact">
+                <div class="card-body text-center">
+                  <i class="fas fa-envelope fa-2x mb-2"></i>
+                  <h5 class="card-title">Contact</h5>
+                  <p class="card-text">Contact form and information</p>
+                </div>
+              </div>
+            </div>
+            
+            <div class="col-md-4 mb-3">
+              <div class="card section-type-card" data-section-type="pricing">
+                <div class="card-body text-center">
+                  <i class="fas fa-tag fa-2x mb-2"></i>
+                  <h5 class="card-title">Pricing</h5>
+                  <p class="card-text">Pricing plans and packages</p>
+                </div>
+              </div>
+            </div>
+            
+            <div class="col-md-4 mb-3">
+              <div class="card section-type-card" data-section-type="team">
+                <div class="card-body text-center">
+                  <i class="fas fa-users fa-2x mb-2"></i>
+                  <h5 class="card-title">Team</h5>
+                  <p class="card-text">Team members with photos and bios</p>
+                </div>
+              </div>
+            </div>
+            
+            <div class="col-md-4 mb-3">
+              <div class="card section-type-card" data-section-type="cta">
+                <div class="card-body text-center">
+                  <i class="fas fa-bullhorn fa-2x mb-2"></i>
+                  <h5 class="card-title">Call to Action</h5>
+                  <p class="card-text">Encourage visitors to take action</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="section-customization d-none mt-4">
+          <h5 class="mb-3">Customize Your <span id="selectedSectionType">Section</span></h5>
+          <form id="newSectionForm">
+            <div class="mb-3">
+              <label for="newSectionInstructions" class="form-label">Custom Instructions (Optional)</label>
+              <textarea class="form-control" id="newSectionInstructions" rows="4" placeholder="Provide specific instructions for this section (e.g., 'Include 3 team members with photos', 'Feature our top 4 products')"></textarea>
+            </div>
+          </form>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary" id="generateSectionBtn" disabled>Generate Section</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Loading Modal -->
+<div class="modal fade" id="loadingModal" tabindex="-1" aria-labelledby="loadingModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-body text-center py-4">
+        <div class="spinner-border text-primary mb-3" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+        <h5 id="loadingMessage">Generating content...</h5>
+        <p class="text-muted">This may take a few moments. Please don't close this window.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Variables
+  let selectedSectionType = null;
+  const addSectionModal = new bootstrap.Modal(document.getElementById('addSectionModal'));
+  const loadingModal = new bootstrap.Modal(document.getElementById('loadingModal'));
+  
+  // Add Section Button
+  document.getElementById('addSectionBtn').addEventListener('click', function() {
+    // Reset selection
+    selectedSectionType = null;
+    document.querySelector('.section-customization').classList.add('d-none');
+    document.querySelectorAll('.section-type-card').forEach(card => {
+      card.classList.remove('selected');
+    });
+    document.getElementById('generateSectionBtn').disabled = true;
+    
+    // Show modal
+    addSectionModal.show();
+  });
+  
+  // Section Type Selection
+  document.querySelectorAll('.section-type-card').forEach(card => {
+    card.addEventListener('click', function() {
+      // Update selection
+      document.querySelectorAll('.section-type-card').forEach(c => {
+        c.classList.remove('selected');
+      });
+      this.classList.add('selected');
+      
+      // Store selected type
+      selectedSectionType = this.getAttribute('data-section-type');
+      document.getElementById('selectedSectionType').textContent = selectedSectionType.charAt(0).toUpperCase() + selectedSectionType.slice(1);
+      
+      // Show customization form
+      document.querySelector('.section-customization').classList.remove('d-none');
+      
+      // Enable generate button
+      document.getElementById('generateSectionBtn').disabled = false;
+    });
+  });
+  
+  // Generate Section Button
+  document.getElementById('generateSectionBtn').addEventListener('click', function() {
+    if (!selectedSectionType) return;
+    
+    const websiteId = '<%= website._id %>';
+    const pageId = '<%= page._id %>';
+    const customInstructions = document.getElementById('newSectionInstructions').value;
+    
+    // Show loading modal
+    loadingModal.show();
+    document.getElementById('loadingMessage').textContent = `Generating ${selectedSectionType} section...`;
+    
+    // Hide add section modal
+    addSectionModal.hide();
+    
+    // API call to generate new section
+    fetch(`/page-editor/${websiteId}/${pageId}/section/add`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        sectionType: selectedSectionType,
+        customInstructions: customInstructions
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        // Reload page to show new section
+        window.location.reload();
+      } else {
+        alert('Error: ' + data.message);
+        loadingModal.hide();
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      alert('An error occurred while generating the section. Please try again.');
+      loadingModal.hide();
+    });
+  });
+  
+  // Edit Section Buttons
+  document.querySelectorAll('.edit-section-btn').forEach(button => {
+    button.addEventListener('click', function() {
+      const sectionCard = this.closest('.section-card');
+      const editForm = sectionCard.querySelector('.section-edit-form');
+      
+      editForm.classList.toggle('d-none');
+    });
+  });
+  
+  // Cancel Edit Buttons
+  document.querySelectorAll('.cancel-edit-btn').forEach(button => {
+    button.addEventListener('click', function() {
+      const editForm = this.closest('.section-edit-form');
+      editForm.classList.add('d-none');
+    });
+  });
+  
+  // Regenerate Section Buttons
+  document.querySelectorAll('.regenerate-section-btn').forEach(button => {
+    button.addEventListener('click', function() {
+      const websiteId = this.getAttribute('data-website-id');
+      const pageId = this.getAttribute('data-page-id');
+      const sectionId = this.getAttribute('data-section-id');
+      const sectionCard = this.closest('.section-card');
+      const sectionType = sectionCard.getAttribute('data-section-type');
+      
+      // Show loading modal
+      loadingModal.show();
+      document.getElementById('loadingMessage').textContent = `Regenerating section...`;
+      
+      // API call to regenerate section
+      fetch(`/page-editor/${websiteId}/${pageId}/section/${sectionId}/regenerate`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          customInstructions: ''
+        })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          // Reload page to show regenerated section
+          window.location.reload();
+        } else {
+          alert('Error: ' + data.message);
+          loadingModal.hide();
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while regenerating the section. Please try again.');
+        loadingModal.hide();
+      });
+    });
+  });
+  
+  // Regenerate Section with Instructions
+  document.querySelectorAll('.section-regenerate-submit').forEach(button => {
+    button.addEventListener('click', function() {
+      const websiteId = this.getAttribute('data-website-id');
+      const pageId = this.getAttribute('data-page-id');
+      const sectionId = this.getAttribute('data-section-id');
+      const customInstructions = document.getElementById(`customInstructions-${sectionId}`).value;
+      
+      // Show loading modal
+      loadingModal.show();
+      document.getElementById('loadingMessage').textContent = `Regenerating section with custom instructions...`;
+      
+      // API call to regenerate section with custom instructions
+      fetch(`/page-editor/${websiteId}/${pageId}/section/${sectionId}/regenerate`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          customInstructions: customInstructions
+        })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          // Reload page to show regenerated section
+          window.location.reload();
+        } else {
+          alert('Error: ' + data.message);
+          loadingModal.hide();
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while regenerating the section. Please try again.');
+        loadingModal.hide();
+      });
+    });
+  });
+  
+  // Regenerate Entire Page
+  document.querySelector('.regenerate-page-btn').addEventListener('click', function() {
+    if (!confirm('Are you sure you want to regenerate the entire page? This will replace all current sections.')) {
+      return;
+    }
+    
+    const websiteId = this.getAttribute('data-website-id');
+    const pageId = this.getAttribute('data-page-id');
+    
+    // Show loading modal
+    loadingModal.show();
+    document.getElementById('loadingMessage').textContent = `Regenerating entire page...`;
+    
+    // API call to regenerate page
+    fetch(`/page-editor/${websiteId}/${pageId}/regenerate`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        customInstructions: ''
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        // Reload page to show regenerated content
+        window.location.reload();
+      } else {
+        alert('Error: ' + data.message);
+        loadingModal.hide();
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      alert('An error occurred while regenerating the page. Please try again.');
+      loadingModal.hide();
+    });
+  });
+  
+  // Save Page Properties
+  document.getElementById('savePagePropertiesBtn').addEventListener('click', function() {
+    const seoTitle = document.getElementById('seoTitle').value;
+    const seoDescription = document.getElementById('seoDescription').value;
+    const pageId = '<%= page._id %>';
+    
+    // API call to save page properties
+    fetch(`/websites/page/${pageId}/properties`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        seoTitle: seoTitle,
+        seoDescription: seoDescription
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        alert('Page properties saved successfully!');
+      } else {
+        alert('Error: ' + data.message);
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      alert('An error occurred while saving page properties. Please try again.');
+    });
+  });
+});
+</script>
+
+<style>
+.section-card {
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  padding: 15px;
+  background-color: #f9f9f9;
+}
+
+.section-preview {
+  background-color: #fff;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.section-type-card {
+  cursor: pointer;
+  transition: all 0.2s ease;
+  height: 100%;
+}
+
+.section-type-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.section-type-card.selected {
+  border: 2px solid #007bff;
+  background-color: #f0f7ff;
+}
+
+.sticky-top {
+  position: sticky;
+  top: 20px;
+}
+</style>
+
+<%- include('../partials/_footer') %>
+
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.14.0/Sortable.min.js"></script>
+<script src="/js/page-editor.js"></script>

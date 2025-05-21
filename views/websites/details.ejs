@@ -54,6 +54,48 @@
     </div>
   </div>
   
+  <% if (website.status === 'completed') { %>
+  <div class="card mb-4">
+    <div class="card-header">
+      <h5 class="card-title mb-0">Customization Tools</h5>
+    </div>
+    <div class="card-body">
+      <div class="row">
+        <div class="col-md-4">
+          <div class="card h-100">
+            <div class="card-body text-center">
+              <i class="fas fa-palette fa-3x mb-3 text-primary"></i>
+              <h5 class="card-title">Theme Customization</h5>
+              <p class="card-text">Customize colors, fonts, layouts and more to match your brand.</p>
+              <a href="/theme-customization/<%= website._id %>" class="btn btn-outline-primary">Customize Theme</a>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card h-100">
+            <div class="card-body text-center">
+              <i class="fas fa-chart-line fa-3x mb-3 text-success"></i>
+              <h5 class="card-title">A/B Testing</h5>
+              <p class="card-text">Create and test different versions of your website to see which performs better.</p>
+              <a href="/ab-testing/<%= website._id %>" class="btn btn-outline-success">Start Testing</a>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card h-100">
+            <div class="card-body text-center">
+              <i class="fas fa-edit fa-3x mb-3 text-info"></i>
+              <h5 class="card-title">Page Editor</h5>
+              <p class="card-text">Edit specific sections of your pages without regenerating the entire site.</p>
+              <a href="/page-editor/<%= website._id %>" class="btn btn-outline-info">Edit Pages</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <% } %>
+  
   <% if (pages && pages.length > 0) { %>
     <div class="card">
       <div class="card-header">
@@ -65,9 +107,12 @@
             <div class="list-group-item list-group-item-action">
               <div class="d-flex w-100 justify-content-between">
                 <h5 class="mb-1"><%= page.name %></h5>
-                <% if (website.status === 'completed') { %>
-                  <a href="/preview/<%= website._id %>/page/<%= page._id %>" class="btn btn-sm btn-outline-primary">Preview</a>
-                <% } %>
+                <div>
+                  <% if (website.status === 'completed') { %>
+                    <a href="/preview/<%= website._id %>/page/<%= page._id %>" class="btn btn-sm btn-outline-primary">Preview</a>
+                    <a href="/page-editor/<%= website._id %>/<%= page._id %>" class="btn btn-sm btn-outline-secondary">Edit</a>
+                  <% } %>
+                </div>
               </div>
               <p class="mb-1">
                 <small class="text-muted">Slug: <%= page.slug %></small>

@@ -479,7 +479,7 @@ class ContentProcessor {
   async _completeContentWithAI(incompleteContent, type, pageName) {
     try {
       // Import Ollama service
-      const ollamaService = require('./ollamaService');
+      const aiService = require('./aiService');
 
       // Create a prompt for fixing the content
       const fixPrompt = `
@@ -501,7 +501,7 @@ Respond ONLY with the corrected HTML, without any explanations or markdown.
 `;
 
       // Get the fixed content from Ollama
-      const fixedContent = await ollamaService.generateText(fixPrompt, {
+      const fixedContent = await aiService.generateText(fixPrompt, {
         temperature: 0.2, // Lower temperature for more precise fixes
         max_tokens: 4096
       });

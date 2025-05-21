@@ -18,6 +18,35 @@ const UserSchema = new mongoose.Schema({
   createdAt: {
     type: Date,
     default: Date.now
+  },
+  // OpenAI API key for integration
+  openaiApiKey: {
+    type: String
+  },
+  // AI provider settings
+  llmSettings: {
+    provider: {
+      type: String,
+      enum: ['ollama', 'openai', 'anthropic', 'openrouter'],
+      default: 'ollama'
+    },
+    // Ollama settings
+    ollamaServerUrl: {
+      type: String,
+      default: 'http://localhost:11434'
+    },
+    ollamaModelName: {
+      type: String,
+      default: 'llama2'
+    },
+    // Anthropic settings
+    anthropicApiKey: String,
+    // OpenRouter settings
+    openRouterApiKey: String,
+    openRouterModelName: {
+      type: String,
+      default: 'gpt-3.5-turbo'
+    }
   }
 });
 

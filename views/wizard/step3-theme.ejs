@@ -14,72 +14,248 @@
     <div class="card">
       <div class="card-body">
         <h2 class="card-title text-center">Theme Selection</h2>
-        <p class="card-text text-center">Choose colors and fonts for your website</p>
+        <p class="card-text text-center">Choose colors, fonts, and layout options for your website</p>
+        
+        <ul class="nav nav-tabs" id="themeOptionTabs" role="tablist">
+          <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="basic-tab" data-bs-toggle="tab" data-bs-target="#basic" type="button" role="tab" aria-controls="basic" aria-selected="true">Basic Options</button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" id="templates-tab" data-bs-toggle="tab" data-bs-target="#templates" type="button" role="tab" aria-controls="templates" aria-selected="false">Theme Templates</button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" id="advanced-tab" data-bs-toggle="tab" data-bs-target="#advanced" type="button" role="tab" aria-controls="advanced" aria-selected="false">Advanced Options</button>
+          </li>
+        </ul>
         
         <form action="/wizard/theme" method="POST" class="wizard-form" id="themeForm">
-          <div class="row">
-            <div class="col-md-6">
-              <div class="form-group mb-3">
-                <label for="primaryColor">Primary Color</label>
-                <div class="input-group">
-                  <input type="color" class="form-control form-control-color" id="primaryColor" name="primaryColor" value="<%= typeof data !== 'undefined' && data.primaryColor ? data.primaryColor : '#007bff' %>" data-preview="primaryColorPreview">
-                  <input type="text" class="form-control" id="primaryColorHex" value="<%= typeof data !== 'undefined' && data.primaryColor ? data.primaryColor : '#007bff' %>" readonly>
-                  <span class="input-group-text"><span id="primaryColorPreview" class="color-preview" style="background-color: <%= typeof data !== 'undefined' && data.primaryColor ? data.primaryColor : '#007bff' %>"></span></span>
+          <div class="tab-content py-3" id="themeOptionTabContent">
+            <!-- Basic Options Tab -->
+            <div class="tab-pane fade show active" id="basic" role="tabpanel" aria-labelledby="basic-tab">
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="form-group mb-3">
+                    <label for="primaryColor">Primary Color</label>
+                    <div class="input-group">
+                      <input type="color" class="form-control form-control-color" id="primaryColor" name="primaryColor" value="<%= typeof data !== 'undefined' && data.primaryColor ? data.primaryColor : '#007bff' %>" data-preview="primaryColorPreview">
+                      <input type="text" class="form-control" id="primaryColorHex" value="<%= typeof data !== 'undefined' && data.primaryColor ? data.primaryColor : '#007bff' %>" readonly>
+                      <span class="input-group-text"><span id="primaryColorPreview" class="color-preview" style="background-color: <%= typeof data !== 'undefined' && data.primaryColor ? data.primaryColor : '#007bff' %>"></span></span>
+                    </div>
+                    <div class="form-text">Used for buttons, headings, and accents.</div>
+                  </div>
                 </div>
-                <div class="form-text">Used for buttons, headings, and accents.</div>
+                
+                <div class="col-md-6">
+                  <div class="form-group mb-3">
+                    <label for="secondaryColor">Secondary Color</label>
+                    <div class="input-group">
+                      <input type="color" class="form-control form-control-color" id="secondaryColor" name="secondaryColor" value="<%= typeof data !== 'undefined' && data.secondaryColor ? data.secondaryColor : '#6c757d' %>" data-preview="secondaryColorPreview">
+                      <input type="text" class="form-control" id="secondaryColorHex" value="<%= typeof data !== 'undefined' && data.secondaryColor ? data.secondaryColor : '#6c757d' %>" readonly>
+                      <span class="input-group-text"><span id="secondaryColorPreview" class="color-preview" style="background-color: <%= typeof data !== 'undefined' && data.secondaryColor ? data.secondaryColor : '#6c757d' %>"></span></span>
+                    </div>
+                    <div class="form-text">Used for highlights and secondary elements.</div>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="form-group mb-3">
+                    <label for="fontFamily">Font Family</label>
+                    <select class="form-select" id="fontFamily" name="fontFamily">
+                      <option value="Open Sans" <%= typeof data !== 'undefined' && data.fontFamily === 'Open Sans' ? 'selected' : '' %>>Open Sans</option>
+                      <option value="Roboto" <%= typeof data !== 'undefined' && data.fontFamily === 'Roboto' ? 'selected' : '' %>>Roboto</option>
+                      <option value="Lato" <%= typeof data !== 'undefined' && data.fontFamily === 'Lato' ? 'selected' : '' %>>Lato</option>
+                      <option value="Montserrat" <%= typeof data !== 'undefined' && data.fontFamily === 'Montserrat' ? 'selected' : '' %>>Montserrat</option>
+                      <option value="Raleway" <%= typeof data !== 'undefined' && data.fontFamily === 'Raleway' ? 'selected' : '' %>>Raleway</option>
+                      <option value="Playfair Display" <%= typeof data !== 'undefined' && data.fontFamily === 'Playfair Display' ? 'selected' : '' %>>Playfair Display</option>
+                    </select>
+                  </div>
+                </div>
+                
+                <div class="col-md-6">
+                  <div class="form-group mb-3">
+                    <label for="fontStyle">Font Style Description</label>
+                    <input type="text" class="form-control" id="fontStyle" name="fontStyle" placeholder="e.g., Clean, professional, modern" value="<%= typeof data !== 'undefined' ? data.fontStyle : 'Clean, professional, modern' %>">
+                  </div>
+                </div>
               </div>
             </div>
             
-            <div class="col-md-6">
-              <div class="form-group mb-3">
-                <label for="secondaryColor">Secondary Color</label>
-                <div class="input-group">
-                  <input type="color" class="form-control form-control-color" id="secondaryColor" name="secondaryColor" value="<%= typeof data !== 'undefined' && data.secondaryColor ? data.secondaryColor : '#6c757d' %>" data-preview="secondaryColorPreview">
-                  <input type="text" class="form-control" id="secondaryColorHex" value="<%= typeof data !== 'undefined' && data.secondaryColor ? data.secondaryColor : '#6c757d' %>" readonly>
-                  <span class="input-group-text"><span id="secondaryColorPreview" class="color-preview" style="background-color: <%= typeof data !== 'undefined' && data.secondaryColor ? data.secondaryColor : '#6c757d' %>"></span></span>
+            <!-- Theme Templates Tab -->
+            <div class="tab-pane fade" id="templates" role="tabpanel" aria-labelledby="templates-tab">
+              <div class="row">
+                <div class="col-12 mb-3">
+                  <p>Select a pre-designed theme template to quickly style your website:</p>
                 </div>
-                <div class="form-text">Used for highlights and secondary elements.</div>
-              </div>
-            </div>
-          </div>
-          
-          <div class="row">
-            <div class="col-md-6">
-              <div class="form-group mb-3">
-                <label for="fontFamily">Font Family</label>
-                <select class="form-select" id="fontFamily" name="fontFamily">
-                  <option value="Open Sans" <%= typeof data !== 'undefined' && data.fontFamily === 'Open Sans' ? 'selected' : '' %>>Open Sans</option>
-                  <option value="Roboto" <%= typeof data !== 'undefined' && data.fontFamily === 'Roboto' ? 'selected' : '' %>>Roboto</option>
-                  <option value="Lato" <%= typeof data !== 'undefined' && data.fontFamily === 'Lato' ? 'selected' : '' %>>Lato</option>
-                  <option value="Montserrat" <%= typeof data !== 'undefined' && data.fontFamily === 'Montserrat' ? 'selected' : '' %>>Montserrat</option>
-                  <option value="Raleway" <%= typeof data !== 'undefined' && data.fontFamily === 'Raleway' ? 'selected' : '' %>>Raleway</option>
-                  <option value="Playfair Display" <%= typeof data !== 'undefined' && data.fontFamily === 'Playfair Display' ? 'selected' : '' %>>Playfair Display</option>
-                </select>
+                
+                <div class="col-md-4 mb-3">
+                  <div class="card theme-template-card" data-template="modern">
+                    <div class="card-header" style="background-color: #3498db; color: white;">
+                      Modern Template
+                    </div>
+                    <div class="card-body">
+                      <div class="color-samples d-flex mb-2">
+                        <span class="color-sample me-1" style="background-color: #3498db;"></span>
+                        <span class="color-sample me-1" style="background-color: #2ecc71;"></span>
+                        <span class="color-sample" style="background-color: #e74c3c;"></span>
+                      </div>
+                      <h5 class="card-title" style="font-family: 'Montserrat', sans-serif;">Modern Style</h5>
+                      <p class="card-text" style="font-family: 'Open Sans', sans-serif;">Clean, contemporary design with vibrant colors and modern typography.</p>
+                      <button type="button" class="btn btn-sm apply-template-btn" data-template="modern" style="background-color: #3498db; color: white;">Apply Template</button>
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="col-md-4 mb-3">
+                  <div class="card theme-template-card" data-template="minimal">
+                    <div class="card-header" style="background-color: #212121; color: white;">
+                      Minimal Template
+                    </div>
+                    <div class="card-body">
+                      <div class="color-samples d-flex mb-2">
+                        <span class="color-sample me-1" style="background-color: #212121;"></span>
+                        <span class="color-sample me-1" style="background-color: #757575;"></span>
+                        <span class="color-sample" style="background-color: #f44336;"></span>
+                      </div>
+                      <h5 class="card-title" style="font-family: 'Roboto', sans-serif;">Minimal Style</h5>
+                      <p class="card-text" style="font-family: 'Roboto', sans-serif;">Sleek, minimalist design with monochromatic colors and clean typography.</p>
+                      <button type="button" class="btn btn-sm apply-template-btn" data-template="minimal" style="background-color: #212121; color: white;">Apply Template</button>
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="col-md-4 mb-3">
+                  <div class="card theme-template-card" data-template="elegant">
+                    <div class="card-header" style="background-color: #9c27b0; color: white;">
+                      Elegant Template
+                    </div>
+                    <div class="card-body">
+                      <div class="color-samples d-flex mb-2">
+                        <span class="color-sample me-1" style="background-color: #9c27b0;"></span>
+                        <span class="color-sample me-1" style="background-color: #673ab7;"></span>
+                        <span class="color-sample" style="background-color: #ff9800;"></span>
+                      </div>
+                      <h5 class="card-title" style="font-family: 'Playfair Display', serif;">Elegant Style</h5>
+                      <p class="card-text" style="font-family: 'Lato', sans-serif;">Sophisticated design with rich colors and elegant serif typography.</p>
+                      <button type="button" class="btn btn-sm apply-template-btn" data-template="elegant" style="background-color: #9c27b0; color: white;">Apply Template</button>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
             
-            <div class="col-md-6">
+            <!-- Advanced Options Tab -->
+            <div class="tab-pane fade" id="advanced" role="tabpanel" aria-labelledby="advanced-tab">
+              <div class="row">
+                <div class="col-md-4">
+                  <div class="form-group mb-3">
+                    <label for="accentColor">Accent Color</label>
+                    <div class="input-group">
+                      <input type="color" class="form-control form-control-color" id="accentColor" name="themeCustomizations[accent]" value="<%= typeof data !== 'undefined' && data.themeCustomizations && data.themeCustomizations.accent ? data.themeCustomizations.accent : '#e74c3c' %>" data-preview="accentColorPreview">
+                      <input type="text" class="form-control" id="accentColorHex" value="<%= typeof data !== 'undefined' && data.themeCustomizations && data.themeCustomizations.accent ? data.themeCustomizations.accent : '#e74c3c' %>" readonly>
+                      <span class="input-group-text"><span id="accentColorPreview" class="color-preview" style="background-color: <%= typeof data !== 'undefined' && data.themeCustomizations && data.themeCustomizations.accent ? data.themeCustomizations.accent : '#e74c3c' %>"></span></span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="col-md-4">
+                  <div class="form-group mb-3">
+                    <label for="fontHeadings">Heading Font</label>
+                    <select class="form-select" id="fontHeadings" name="themeCustomizations[fontHeadings]">
+                      <option value="'Montserrat', sans-serif" <%= typeof data !== 'undefined' && data.themeCustomizations && data.themeCustomizations.fontHeadings === "'Montserrat', sans-serif" ? 'selected' : '' %>>Montserrat</option>
+                      <option value="'Playfair Display', serif" <%= typeof data !== 'undefined' && data.themeCustomizations && data.themeCustomizations.fontHeadings === "'Playfair Display', serif" ? 'selected' : '' %>>Playfair Display</option>
+                      <option value="'Raleway', sans-serif" <%= typeof data !== 'undefined' && data.themeCustomizations && data.themeCustomizations.fontHeadings === "'Raleway', sans-serif" ? 'selected' : '' %>>Raleway</option>
+                      <option value="'Oswald', sans-serif" <%= typeof data !== 'undefined' && data.themeCustomizations && data.themeCustomizations.fontHeadings === "'Oswald', sans-serif" ? 'selected' : '' %>>Oswald</option>
+                      <option value="'Merriweather', serif" <%= typeof data !== 'undefined' && data.themeCustomizations && data.themeCustomizations.fontHeadings === "'Merriweather', serif" ? 'selected' : '' %>>Merriweather</option>
+                      <option value="'Abril Fatface', cursive" <%= typeof data !== 'undefined' && data.themeCustomizations && data.themeCustomizations.fontHeadings === "'Abril Fatface', cursive" ? 'selected' : '' %>>Abril Fatface</option>
+                    </select>
+                  </div>
+                </div>
+                
+                <div class="col-md-4">
+                  <div class="form-group mb-3">
+                    <label for="fontBody">Body Font</label>
+                    <select class="form-select" id="fontBody" name="themeCustomizations[fontBody]">
+                      <option value="'Open Sans', sans-serif" <%= typeof data !== 'undefined' && data.themeCustomizations && data.themeCustomizations.fontBody === "'Open Sans', sans-serif" ? 'selected' : '' %>>Open Sans</option>
+                      <option value="'Roboto', sans-serif" <%= typeof data !== 'undefined' && data.themeCustomizations && data.themeCustomizations.fontBody === "'Roboto', sans-serif" ? 'selected' : '' %>>Roboto</option>
+                      <option value="'Lato', sans-serif" <%= typeof data !== 'undefined' && data.themeCustomizations && data.themeCustomizations.fontBody === "'Lato', sans-serif" ? 'selected' : '' %>>Lato</option>
+                      <option value="'Source Sans Pro', sans-serif" <%= typeof data !== 'undefined' && data.themeCustomizations && data.themeCustomizations.fontBody === "'Source Sans Pro', sans-serif" ? 'selected' : '' %>>Source Sans Pro</option>
+                      <option value="'Nunito', sans-serif" <%= typeof data !== 'undefined' && data.themeCustomizations && data.themeCustomizations.fontBody === "'Nunito', sans-serif" ? 'selected' : '' %>>Nunito</option>
+                      <option value="'Work Sans', sans-serif" <%= typeof data !== 'undefined' && data.themeCustomizations && data.themeCustomizations.fontBody === "'Work Sans', sans-serif" ? 'selected' : '' %>>Work Sans</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="row">
+                <div class="col-md-4">
+                  <div class="form-group mb-3">
+                    <label for="borderRadius">Border Radius</label>
+                    <select class="form-select" id="borderRadius" name="themeCustomizations[borderRadius]">
+                      <option value="0" <%= typeof data !== 'undefined' && data.themeCustomizations && data.themeCustomizations.borderRadius === "0" ? 'selected' : '' %>>None (0px)</option>
+                      <option value="2px" <%= typeof data !== 'undefined' && data.themeCustomizations && data.themeCustomizations.borderRadius === "2px" ? 'selected' : '' %>>Subtle (2px)</option>
+                      <option value="4px" <%= typeof data !== 'undefined' && data.themeCustomizations && data.themeCustomizations.borderRadius === "4px" || !data.themeCustomizations ? 'selected' : '' %>>Standard (4px)</option>
+                      <option value="8px" <%= typeof data !== 'undefined' && data.themeCustomizations && data.themeCustomizations.borderRadius === "8px" ? 'selected' : '' %>>Rounded (8px)</option>
+                      <option value="16px" <%= typeof data !== 'undefined' && data.themeCustomizations && data.themeCustomizations.borderRadius === "16px" ? 'selected' : '' %>>Very Rounded (16px)</option>
+                    </select>
+                  </div>
+                </div>
+                
+                <div class="col-md-4">
+                  <div class="form-group mb-3">
+                    <label for="spacing">Content Spacing</label>
+                    <select class="form-select" id="spacing" name="themeCustomizations[spacing]">
+                      <option value="compact" <%= typeof data !== 'undefined' && data.themeCustomizations && data.themeCustomizations.spacing === "compact" ? 'selected' : '' %>>Compact</option>
+                      <option value="normal" <%= typeof data !== 'undefined' && data.themeCustomizations && data.themeCustomizations.spacing === "normal" || !data.themeCustomizations ? 'selected' : '' %>>Normal</option>
+                      <option value="spacious" <%= typeof data !== 'undefined' && data.themeCustomizations && data.themeCustomizations.spacing === "spacious" ? 'selected' : '' %>>Spacious</option>
+                      <option value="creative" <%= typeof data !== 'undefined' && data.themeCustomizations && data.themeCustomizations.spacing === "creative" ? 'selected' : '' %>>Creative</option>
+                    </select>
+                  </div>
+                </div>
+                
+                <div class="col-md-4">
+                  <div class="form-group mb-3">
+                    <label for="layoutType">Layout Style</label>
+                    <select class="form-select" id="layoutType" name="themeCustomizations[layoutType]">
+                      <option value="standard" <%= typeof data !== 'undefined' && data.themeCustomizations && data.themeCustomizations.layoutType === "standard" || !data.themeCustomizations ? 'selected' : '' %>>Standard</option>
+                      <option value="minimal" <%= typeof data !== 'undefined' && data.themeCustomizations && data.themeCustomizations.layoutType === "minimal" ? 'selected' : '' %>>Minimal</option>
+                      <option value="centered" <%= typeof data !== 'undefined' && data.themeCustomizations && data.themeCustomizations.layoutType === "centered" ? 'selected' : '' %>>Centered</option>
+                      <option value="wide" <%= typeof data !== 'undefined' && data.themeCustomizations && data.themeCustomizations.layoutType === "wide" ? 'selected' : '' %>>Wide</option>
+                      <option value="asymmetric" <%= typeof data !== 'undefined' && data.themeCustomizations && data.themeCustomizations.layoutType === "asymmetric" ? 'selected' : '' %>>Asymmetric</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+              
               <div class="form-group mb-3">
-                <label for="fontStyle">Font Style Description</label>
-                <input type="text" class="form-control" id="fontStyle" name="fontStyle" placeholder="e.g., Clean, professional, modern" value="<%= typeof data !== 'undefined' ? data.fontStyle : 'Clean, professional, modern' %>">
+                <label for="customCSS">Custom CSS (Optional)</label>
+                <textarea class="form-control" id="customCSS" name="themeCustomizations[customCSS]" rows="4" placeholder="Add custom CSS code here..."><%= typeof data !== 'undefined' && data.themeCustomizations && data.themeCustomizations.customCSS ? data.themeCustomizations.customCSS : '' %></textarea>
+                <div class="form-text">Advanced users can add custom CSS to further customize their website.</div>
               </div>
             </div>
           </div>
           
           <div class="preview-box mt-3 mb-3 p-3 border rounded">
-            <h4 style="font-family: <%= typeof data !== 'undefined' ? data.fontFamily : 'Open Sans' %>; color: <%= typeof data !== 'undefined' && data.primaryColor ? data.primaryColor : '#007bff' %>;">
+            <h4 class="preview-heading" style="font-family: <%= typeof data !== 'undefined' && data.themeCustomizations && data.themeCustomizations.fontHeadings ? data.themeCustomizations.fontHeadings : (typeof data !== 'undefined' ? data.fontFamily : 'Open Sans') %>; color: <%= typeof data !== 'undefined' && data.primaryColor ? data.primaryColor : '#007bff' %>;">
               Preview Heading
             </h4>
-            <p style="font-family: <%= typeof data !== 'undefined' ? data.fontFamily : 'Open Sans' %>;">
+            <p class="preview-body" style="font-family: <%= typeof data !== 'undefined' && data.themeCustomizations && data.themeCustomizations.fontBody ? data.themeCustomizations.fontBody : (typeof data !== 'undefined' ? data.fontFamily : 'Open Sans') %>;">
               This is how your text will look with the <strong style="color: <%= typeof data !== 'undefined' && data.primaryColor ? data.primaryColor : '#007bff' %>;">selected font family</strong> and colors.
-              <span style="color: <%= typeof data !== 'undefined' && data.secondaryColor ? data.secondaryColor : '#6c757d' %>;">This text uses your secondary color.</span>
+              <span class="preview-secondary" style="color: <%= typeof data !== 'undefined' && data.secondaryColor ? data.secondaryColor : '#6c757d' %>;">This text uses your secondary color.</span>
+              <span class="preview-accent" style="color: <%= typeof data !== 'undefined' && data.themeCustomizations && data.themeCustomizations.accent ? data.themeCustomizations.accent : '#e74c3c' %>;">This text uses your accent color.</span>
             </p>
-            <button class="btn" style="background-color: <%= typeof data !== 'undefined' && data.primaryColor ? data.primaryColor : '#007bff' %>; color: white;">
-              Primary Button
-            </button>
-            <button class="btn" style="background-color: <%= typeof data !== 'undefined' && data.secondaryColor ? data.secondaryColor : '#6c757d' %>; color: white;">
-              Secondary Button
-            </button>
+            <div class="preview-buttons">
+              <button class="btn preview-primary" style="background-color: <%= typeof data !== 'undefined' && data.primaryColor ? data.primaryColor : '#007bff' %>; color: white; border-radius: <%= typeof data !== 'undefined' && data.themeCustomizations && data.themeCustomizations.borderRadius ? data.themeCustomizations.borderRadius : '4px' %>;">
+                Primary Button
+              </button>
+              <button class="btn preview-secondary" style="background-color: <%= typeof data !== 'undefined' && data.secondaryColor ? data.secondaryColor : '#6c757d' %>; color: white; border-radius: <%= typeof data !== 'undefined' && data.themeCustomizations && data.themeCustomizations.borderRadius ? data.themeCustomizations.borderRadius : '4px' %>;">
+                Secondary Button
+              </button>
+              <button class="btn preview-accent" style="background-color: <%= typeof data !== 'undefined' && data.themeCustomizations && data.themeCustomizations.accent ? data.themeCustomizations.accent : '#e74c3c' %>; color: white; border-radius: <%= typeof data !== 'undefined' && data.themeCustomizations && data.themeCustomizations.borderRadius ? data.themeCustomizations.borderRadius : '4px' %>;">
+                Accent Button
+              </button>
+            </div>
           </div>
           
           <div class="wizard-navigation d-flex justify-content-between">
@@ -91,5 +267,168 @@
     </div>
   </div>
 </div>
+
+<!-- Add JavaScript for theme template switching and preview updates -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Color input synchronization
+  document.querySelectorAll('input[type="color"]').forEach(input => {
+    input.addEventListener('input', function() {
+      const hexInput = document.getElementById(this.id + 'Hex');
+      const previewId = this.getAttribute('data-preview');
+      
+      if (hexInput) hexInput.value = this.value;
+      if (previewId) {
+        document.getElementById(previewId).style.backgroundColor = this.value;
+        updatePreview();
+      }
+    });
+  });
+  
+  // Theme template buttons
+  document.querySelectorAll('.apply-template-btn').forEach(button => {
+    button.addEventListener('click', function() {
+      const template = this.getAttribute('data-template');
+      applyThemeTemplate(template);
+    });
+  });
+  
+  // Update preview when any form control changes
+  document.querySelectorAll('select, input').forEach(control => {
+    control.addEventListener('change', updatePreview);
+  });
+  
+  // Theme template application
+  function applyThemeTemplate(template) {
+    const templates = {
+      modern: {
+        primary: '#3498db',
+        secondary: '#2ecc71',
+        accent: '#e74c3c',
+        fontHeadings: "'Montserrat', sans-serif",
+        fontBody: "'Open Sans', sans-serif",
+        borderRadius: '4px',
+        spacing: 'normal',
+        layoutType: 'standard'
+      },
+      minimal: {
+        primary: '#212121',
+        secondary: '#757575',
+        accent: '#f44336',
+        fontHeadings: "'Roboto', sans-serif",
+        fontBody: "'Roboto', sans-serif",
+        borderRadius: '2px',
+        spacing: 'compact',
+        layoutType: 'minimal'
+      },
+      elegant: {
+        primary: '#9c27b0',
+        secondary: '#673ab7',
+        accent: '#ff9800',
+        fontHeadings: "'Playfair Display', serif",
+        fontBody: "'Lato', sans-serif",
+        borderRadius: '8px',
+        spacing: 'spacious',
+        layoutType: 'centered'
+      }
+    };
+    
+    const selected = templates[template];
+    if (!selected) return;
+    
+    // Update form fields
+    document.getElementById('primaryColor').value = selected.primary;
+    document.getElementById('primaryColorHex').value = selected.primary;
+    document.getElementById('primaryColorPreview').style.backgroundColor = selected.primary;
+    
+    document.getElementById('secondaryColor').value = selected.secondary;
+    document.getElementById('secondaryColorHex').value = selected.secondary;
+    document.getElementById('secondaryColorPreview').style.backgroundColor = selected.secondary;
+    
+    document.getElementById('accentColor').value = selected.accent;
+    document.getElementById('accentColorHex').value = selected.accent;
+    document.getElementById('accentColorPreview').style.backgroundColor = selected.accent;
+    
+    document.getElementById('fontHeadings').value = selected.fontHeadings;
+    document.getElementById('fontBody').value = selected.fontBody;
+    document.getElementById('borderRadius').value = selected.borderRadius;
+    document.getElementById('spacing').value = selected.spacing;
+    document.getElementById('layoutType').value = selected.layoutType;
+    
+    // Update preview
+    updatePreview();
+    
+    // Show advanced tab
+    document.getElementById('advanced-tab').click();
+  }
+  
+  // Preview update function
+  function updatePreview() {
+    const primaryColor = document.getElementById('primaryColor').value;
+    const secondaryColor = document.getElementById('secondaryColor').value;
+    const accentColor = document.getElementById('accentColor')?.value || '#e74c3c';
+    
+    const fontHeadings = document.getElementById('fontHeadings')?.value || document.getElementById('fontFamily').value;
+    const fontBody = document.getElementById('fontBody')?.value || document.getElementById('fontFamily').value;
+    const borderRadius = document.getElementById('borderRadius')?.value || '4px';
+    
+    // Update preview elements
+    document.querySelector('.preview-heading').style.fontFamily = fontHeadings;
+    document.querySelector('.preview-heading').style.color = primaryColor;
+    
+    document.querySelector('.preview-body').style.fontFamily = fontBody;
+    document.querySelector('.preview-secondary').style.color = secondaryColor;
+    document.querySelector('.preview-accent').style.color = accentColor;
+    
+    document.querySelector('.preview-primary').style.backgroundColor = primaryColor;
+    document.querySelector('.preview-primary').style.borderRadius = borderRadius;
+    
+    document.querySelector('.preview-secondary').style.color = secondaryColor;
+    document.querySelector('.preview-secondary').style.borderRadius = borderRadius;
+    
+    document.querySelector('.preview-accent').style.backgroundColor = accentColor; 
+    document.querySelector('.preview-accent').style.borderRadius = borderRadius;
+  }
+});
+</script>
+
+<style>
+.color-preview {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+}
+
+.theme-template-card {
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.theme-template-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+}
+
+.color-sample {
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+}
+
+.preview-box {
+  background-color: #fff;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.preview-buttons {
+  margin-top: 15px;
+}
+
+.preview-buttons .btn {
+  margin-right: 8px;
+}
+</style>
 
 <%- include('../partials/_footer') %>

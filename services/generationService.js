@@ -1,4 +1,4 @@
-const ollamaService = require('./ollamaService');
+const aiService = require('./aiService');
 const promptBuilder = require('./promptBuilder');
 const contentProcessor = require('./contentProcessor');
 const generationConfig = require('../config/generationConfig');
@@ -42,9 +42,8 @@ class GenerationService {
       }
 
       result.header = await this._generateWithRetry(
-        async () => {
-          const headerPrompt = promptBuilder.buildHeaderPrompt(websiteData);
-          const response = await ollamaService.generateText(
+        async () => {          const headerPrompt = promptBuilder.buildHeaderPrompt(websiteData);
+          const response = await aiService.generateText(
             headerPrompt,
             generationConfig.generation.jsonParams
           );
@@ -61,9 +60,8 @@ class GenerationService {
       }
 
       result.footer = await this._generateWithRetry(
-        async () => {
-          const footerPrompt = promptBuilder.buildFooterPrompt(websiteData);
-          const response = await ollamaService.generateText(
+        async () => {          const footerPrompt = promptBuilder.buildFooterPrompt(websiteData);
+          const response = await aiService.generateText(
             footerPrompt,
             generationConfig.generation.jsonParams
           );
@@ -112,6 +110,16 @@ class GenerationService {
         }
       }
 
+      // After generating main pages, generate service detail pages
+      if (progressCallback) {
+        progressCallback(85, 'Generating service detail pages');
+      }
+      
+      const serviceDetailPages = await this._generateServiceDetailPages(website, result.pages);
+      
+      // Add service detail pages to the result
+      result.pages = [...result.pages, ...serviceDetailPages];
+
       // 4. Save to database
       if (progressCallback) {
         progressCallback(90, 'Saving website content');
@@ -142,15 +150,13 @@ class GenerationService {
  */
   async _generatePage(pageName, websiteData) {
     try {
-      console.log(`Generating ${pageName} page content`);
-
-      // Get the page prompt
+      console.log(`Generating ${pageName} page content`);      // Get the page prompt
       const pagePrompt = promptBuilder.buildPagePrompt(pageName, websiteData);
 
       // Generate page content
       const pageContent = await this._generateWithRetry(
         async () => {
-          const response = await ollamaService.generateText(
+          const response = await aiService.generateText(
             pagePrompt,
             generationConfig.generation.jsonParams
           );
@@ -312,11 +318,10 @@ async _generateServiceDetailPages(website, allPages) {
       
       // Get appropriate prompt for service detail page
       const servicePrompt = promptBuilder.buildServiceDetailPrompt(service.name, this._prepareWebsiteData(website));
-      
-      // Generate service page content
+        // Generate service page content
       const servicePageContent = await this._generateWithRetry(
         async () => {
-          const response = await ollamaService.generateText(servicePrompt, generationConfig.generation.jsonParams);
+          const response = await aiService.generateText(servicePrompt, generationConfig.generation.jsonParams);
           return contentProcessor.processJsonContent(response, 'page', service.name);
         },
         generationConfig.generation.retry.attempts
@@ -343,29 +348,7 @@ async _generateServiceDetailPages(website, allPages) {
   }
 }
 
-// Modify the generateWebsite method to include service detail pages
-async generateWebsite(website, progressCallback) {
-  try {
-    // Existing code...
-    
-    // After generating main pages, generate service detail pages
-    if (progressCallback) {
-      progressCallback(85, 'Generating service detail pages');
-    }
-    
-    const serviceDetailPages = await this._generateServiceDetailPages(website, result.pages);
-    
-    // Add service detail pages to the result
-    result.pages = [...result.pages, ...serviceDetailPages];
-    
-    // Continue with saving to database...
-    
-    return result;
-  } catch (error) {
-    console.error('Error generating website:', error);
-    throw error;
-  }
-}
+// This section was integrated into the main generateWebsite method
 
   /**
    * Insert image and attribution into section content
@@ -1745,7 +1728,7 @@ async generateWebsite(website, progressCallback) {
     const pageContent = await this._generateWithRetry(
       async () => {
         console.log(`Generating ${pageName} page attempt`);
-        const response = await ollamaService.generateText(pagePrompt, generationParams);
+        const response = await aiService.generateText(pagePrompt, generationParams);
 
         // Process the response
         const processed = await contentProcessor.processJsonContent(

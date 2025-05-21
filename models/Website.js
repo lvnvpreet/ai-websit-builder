@@ -1,5 +1,53 @@
 const mongoose = require('mongoose');
 
+const ThemeCustomizationSchema = new mongoose.Schema({
+  primary: {
+    type: String,
+    default: '#007bff'
+  },
+  secondary: {
+    type: String,
+    default: '#6c757d'
+  },
+  accent: {
+    type: String,
+    default: '#e74c3c'
+  },
+  fontHeadings: {
+    type: String,
+    default: "'Montserrat', sans-serif"
+  },
+  fontBody: {
+    type: String,
+    default: "'Open Sans', sans-serif"
+  },
+  borderRadius: {
+    type: String,
+    default: '4px'
+  },
+  spacing: {
+    type: String,
+    default: 'normal'
+  },
+  layoutType: {
+    type: String,
+    default: 'standard'
+  },
+  customCSS: String
+}, { _id: false });
+
+const TestVariantSchema = new mongoose.Schema({
+  id: String,
+  name: String,
+  themeCustomizations: ThemeCustomizationSchema,
+  previewPath: String,
+  stats: {
+    views: { type: Number, default: 0 },
+    clicks: { type: Number, default: 0 },
+    conversions: { type: Number, default: 0 }
+  }
+}, { _id: false });
+
 const WebsiteSchema = new mongoose.Schema({
   user: {
     type: mongoose.Schema.Types.ObjectId,
@@ -52,6 +100,10 @@ const WebsiteSchema = new mongoose.Schema({
     type: String,
     default: 'Clean, professional'
   },
+  // Advanced theme customization
+  themeCustomizations: ThemeCustomizationSchema,
+  // A/B Testing variants
+  abTestVariants: [TestVariantSchema],
   // Structure
   structure: {
     type: String,

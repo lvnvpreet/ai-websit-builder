@@ -1,0 +1,1011 @@
+<!-- views/websites/theme-customizer.ejs -->
+<%- include('../partials/_header', { user: true }) %>
+
+<div class="container-fluid mt-4">
+  <div class="row">
+    <div class="col-md-3">
+      <div class="card sticky-top" style="top: 20px; z-index: 100;">
+        <div class="card-header">
+          <h4>Theme Customizer</h4>
+        </div>
+        <div class="card-body">
+          <div class="mb-4">
+            <a href="/websites/<%= website._id %>" class="btn btn-outline-secondary w-100">
+              <i class="fas fa-arrow-left"></i> Back to Website
+            </a>
+          </div>
+          
+          <ul class="nav nav-pills flex-column" id="customizeTab" role="tablist">
+            <li class="nav-item" role="presentation">
+              <button class="nav-link active" id="colors-tab" data-bs-toggle="pill" data-bs-target="#colors" type="button" role="tab" aria-controls="colors" aria-selected="true">
+                <i class="fas fa-palette"></i> Colors
+              </button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="typography-tab" data-bs-toggle="pill" data-bs-target="#typography" type="button" role="tab" aria-controls="typography" aria-selected="false">
+                <i class="fas fa-font"></i> Typography
+              </button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="layout-tab" data-bs-toggle="pill" data-bs-target="#layout" type="button" role="tab" aria-controls="layout" aria-selected="false">
+                <i class="fas fa-th-large"></i> Layout
+              </button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="templates-tab" data-bs-toggle="pill" data-bs-target="#templates" type="button" role="tab" aria-controls="templates" aria-selected="false">
+                <i class="fas fa-magic"></i> Templates
+              </button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="advanced-tab" data-bs-toggle="pill" data-bs-target="#advanced" type="button" role="tab" aria-controls="advanced" aria-selected="false">
+                <i class="fas fa-code"></i> Advanced
+              </button>
+            </li>
+          </ul>
+          
+          <hr>
+          
+          <div class="d-grid gap-2 mt-4">
+            <button type="button" class="btn btn-success" id="saveThemeBtn">
+              <i class="fas fa-save"></i> Save Theme
+            </button>
+            <button type="button" class="btn btn-primary" id="applyThemeBtn">
+              <i class="fas fa-check"></i> Apply to Website
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-md-9">
+      <div class="card mb-4">
+        <div class="card-body p-0">
+          <div class="theme-preview">
+            <iframe id="previewFrame" src="/preview/<%= website._id %>" style="width: 100%; height: 600px; border: none;"></iframe>
+          </div>
+        </div>
+      </div>
+      
+      <div class="card">
+        <div class="card-body">
+          <form id="themeCustomizerForm">
+            <div class="tab-content" id="customizeTabContent">
+              <!-- Colors Tab -->
+              <div class="tab-pane fade show active" id="colors" role="tabpanel" aria-labelledby="colors-tab">
+                <h4 class="mb-4">Color Scheme</h4>
+                
+                <div class="row">
+                  <div class="col-md-6 mb-4">
+                    <label for="primaryColor" class="form-label">Primary Color</label>
+                    <div class="input-group">
+                      <input type="color" class="form-control form-control-color" id="primaryColor" name="primary" value="<%= website.themeCustomizations && website.themeCustomizations.primary ? website.themeCustomizations.primary : website.primaryColor || '#007bff' %>">
+                      <input type="text" class="form-control" id="primaryColorHex" value="<%= website.themeCustomizations && website.themeCustomizations.primary ? website.themeCustomizations.primary : website.primaryColor || '#007bff' %>">
+                    </div>
+                    <small class="text-muted">Used for buttons, links, and primary accents</small>
+                  </div>
+                  
+                  <div class="col-md-6 mb-4">
+                    <label for="secondaryColor" class="form-label">Secondary Color</label>
+                    <div class="input-group">
+                      <input type="color" class="form-control form-control-color" id="secondaryColor" name="secondary" value="<%= website.themeCustomizations && website.themeCustomizations.secondary ? website.themeCustomizations.secondary : website.secondaryColor || '#6c757d' %>">
+                      <input type="text" class="form-control" id="secondaryColorHex" value="<%= website.themeCustomizations && website.themeCustomizations.secondary ? website.themeCustomizations.secondary : website.secondaryColor || '#6c757d' %>">
+                    </div>
+                    <small class="text-muted">Used for secondary buttons and accents</small>
+                  </div>
+                </div>
+                
+                <div class="row">
+                  <div class="col-md-6 mb-4">
+                    <label for="accentColor" class="form-label">Accent Color</label>
+                    <div class="input-group">
+                      <input type="color" class="form-control form-control-color" id="accentColor" name="accent" value="<%= website.themeCustomizations && website.themeCustomizations.accent ? website.themeCustomizations.accent : '#e74c3c' %>">
+                      <input type="text" class="form-control" id="accentColorHex" value="<%= website.themeCustomizations && website.themeCustomizations.accent ? website.themeCustomizations.accent : '#e74c3c' %>">
+                    </div>
+                    <small class="text-muted">Used for highlights and special elements</small>
+                  </div>
+                  
+                  <div class="col-md-6 mb-4">
+                    <label class="form-label">Color Preview</label>
+                    <div class="color-preview p-3 border rounded">
+                      <div class="color-sample-row mb-2">
+                        <span class="color-sample" id="primarySample" style="background-color: <%= website.themeCustomizations && website.themeCustomizations.primary ? website.themeCustomizations.primary : website.primaryColor || '#007bff' %>"></span>
+                        <span class="color-sample" id="secondarySample" style="background-color: <%= website.themeCustomizations && website.themeCustomizations.secondary ? website.themeCustomizations.secondary : website.secondaryColor || '#6c757d' %>"></span>
+                        <span class="color-sample" id="accentSample" style="background-color: <%= website.themeCustomizations && website.themeCustomizations.accent ? website.themeCustomizations.accent : '#e74c3c' %>"></span>
+                      </div>
+                      <div class="btn-group">
+                        <button type="button" class="btn" id="primaryPreview" style="background-color: <%= website.themeCustomizations && website.themeCustomizations.primary ? website.themeCustomizations.primary : website.primaryColor || '#007bff' %>; color: white;">Primary</button>
+                        <button type="button" class="btn" id="secondaryPreview" style="background-color: <%= website.themeCustomizations && website.themeCustomizations.secondary ? website.themeCustomizations.secondary : website.secondaryColor || '#6c757d' %>; color: white;">Secondary</button>
+                        <button type="button" class="btn" id="accentPreview" style="background-color: <%= website.themeCustomizations && website.themeCustomizations.accent ? website.themeCustomizations.accent : '#e74c3c' %>; color: white;">Accent</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <hr>
+                
+                <h5 class="mb-3">Color Palettes</h5>
+                <p class="text-muted mb-3">Choose a pre-designed color palette to quickly set your website colors:</p>
+                
+                <div class="row mb-4">
+                  <div class="col-md-3 mb-3">
+                    <div class="card color-palette-card" data-primary="#3498db" data-secondary="#2ecc71" data-accent="#e74c3c">
+                      <div class="card-body p-2">
+                        <div class="palette-preview">
+                          <span class="palette-color" style="background-color: #3498db;"></span>
+                          <span class="palette-color" style="background-color: #2ecc71;"></span>
+                          <span class="palette-color" style="background-color: #e74c3c;"></span>
+                        </div>
+                        <div class="text-center mt-2">
+                          <small>Modern</small>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div class="col-md-3 mb-3">
+                    <div class="card color-palette-card" data-primary="#212121" data-secondary="#757575" data-accent="#f44336">
+                      <div class="card-body p-2">
+                        <div class="palette-preview">
+                          <span class="palette-color" style="background-color: #212121;"></span>
+                          <span class="palette-color" style="background-color: #757575;"></span>
+                          <span class="palette-color" style="background-color: #f44336;"></span>
+                        </div>
+                        <div class="text-center mt-2">
+                          <small>Minimal</small>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div class="col-md-3 mb-3">
+                    <div class="card color-palette-card" data-primary="#9c27b0" data-secondary="#673ab7" data-accent="#ff9800">
+                      <div class="card-body p-2">
+                        <div class="palette-preview">
+                          <span class="palette-color" style="background-color: #9c27b0;"></span>
+                          <span class="palette-color" style="background-color: #673ab7;"></span>
+                          <span class="palette-color" style="background-color: #ff9800;"></span>
+                        </div>
+                        <div class="text-center mt-2">
+                          <small>Elegant</small>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div class="col-md-3 mb-3">
+                    <div class="card color-palette-card" data-primary="#0d47a1" data-secondary="#546e7a" data-accent="#fb8c00">
+                      <div class="card-body p-2">
+                        <div class="palette-preview">
+                          <span class="palette-color" style="background-color: #0d47a1;"></span>
+                          <span class="palette-color" style="background-color: #546e7a;"></span>
+                          <span class="palette-color" style="background-color: #fb8c00;"></span>
+                        </div>
+                        <div class="text-center mt-2">
+                          <small>Corporate</small>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Typography Tab -->
+              <div class="tab-pane fade" id="typography" role="tabpanel" aria-labelledby="typography-tab">
+                <h4 class="mb-4">Typography</h4>
+                
+                <div class="row">
+                  <div class="col-md-6 mb-4">
+                    <label for="fontHeadings" class="form-label">Headings Font</label>
+                    <select class="form-select" id="fontHeadings" name="fontHeadings">
+                      <option value="'Montserrat', sans-serif" <%= website.themeCustomizations && website.themeCustomizations.fontHeadings === "'Montserrat', sans-serif" ? 'selected' : '' %>>Montserrat</option>
+                      <option value="'Playfair Display', serif" <%= website.themeCustomizations && website.themeCustomizations.fontHeadings === "'Playfair Display', serif" ? 'selected' : '' %>>Playfair Display</option>
+                      <option value="'Raleway', sans-serif" <%= website.themeCustomizations && website.themeCustomizations.fontHeadings === "'Raleway', sans-serif" ? 'selected' : '' %>>Raleway</option>
+                      <option value="'Oswald', sans-serif" <%= website.themeCustomizations && website.themeCustomizations.fontHeadings === "'Oswald', sans-serif" ? 'selected' : '' %>>Oswald</option>
+                      <option value="'Merriweather', serif" <%= website.themeCustomizations && website.themeCustomizations.fontHeadings === "'Merriweather', serif" ? 'selected' : '' %>>Merriweather</option>
+                      <option value="'Abril Fatface', cursive" <%= website.themeCustomizations && website.themeCustomizations.fontHeadings === "'Abril Fatface', cursive" ? 'selected' : '' %>>Abril Fatface</option>
+                    </select>
+                    <small class="text-muted">Font used for headings (h1-h6)</small>
+                  </div>
+                  
+                  <div class="col-md-6 mb-4">
+                    <label for="fontBody" class="form-label">Body Font</label>
+                    <select class="form-select" id="fontBody" name="fontBody">
+                      <option value="'Open Sans', sans-serif" <%= website.themeCustomizations && website.themeCustomizations.fontBody === "'Open Sans', sans-serif" ? 'selected' : '' %>>Open Sans</option>
+                      <option value="'Roboto', sans-serif" <%= website.themeCustomizations && website.themeCustomizations.fontBody === "'Roboto', sans-serif" ? 'selected' : '' %>>Roboto</option>
+                      <option value="'Lato', sans-serif" <%= website.themeCustomizations && website.themeCustomizations.fontBody === "'Lato', sans-serif" ? 'selected' : '' %>>Lato</option>
+                      <option value="'Source Sans Pro', sans-serif" <%= website.themeCustomizations && website.themeCustomizations.fontBody === "'Source Sans Pro', sans-serif" ? 'selected' : '' %>>Source Sans Pro</option>
+                      <option value="'Nunito', sans-serif" <%= website.themeCustomizations && website.themeCustomizations.fontBody === "'Nunito', sans-serif" ? 'selected' : '' %>>Nunito</option>
+                      <option value="'Work Sans', sans-serif" <%= website.themeCustomizations && website.themeCustomizations.fontBody === "'Work Sans', sans-serif" ? 'selected' : '' %>>Work Sans</option>
+                    </select>
+                    <small class="text-muted">Font used for body text and paragraphs</small>
+                  </div>
+                </div>
+                
+                <div class="font-preview p-4 mb-4 border rounded">
+                  <h2 id="headingPreview" style="font-family: <%= website.themeCustomizations && website.themeCustomizations.fontHeadings ? website.themeCustomizations.fontHeadings : "'Montserrat', sans-serif" %>; color: <%= website.themeCustomizations && website.themeCustomizations.primary ? website.themeCustomizations.primary : website.primaryColor || '#007bff' %>;">
+                    This is a Heading Preview
+                  </h2>
+                  <p id="bodyPreview" style="font-family: <%= website.themeCustomizations && website.themeCustomizations.fontBody ? website.themeCustomizations.fontBody : "'Open Sans', sans-serif" %>;">
+                    This is a preview of the body text. The quick brown fox jumps over the lazy dog.
+                    <span style="color: <%= website.themeCustomizations && website.themeCustomizations.secondary ? website.themeCustomizations.secondary : website.secondaryColor || '#6c757d' %>;">
+                      This text is in your secondary color.
+                    </span>
+                    <span style="color: <%= website.themeCustomizations && website.themeCustomizations.accent ? website.themeCustomizations.accent : '#e74c3c' %>;">
+                      This text is in your accent color.
+                    </span>
+                  </p>
+                </div>
+                
+                <hr>
+                
+                <h5 class="mb-3">Font Pairings</h5>
+                <p class="text-muted mb-3">Choose a professionally designed font pairing:</p>
+                
+                <div class="row mb-4">
+                  <div class="col-md-4 mb-3">
+                    <div class="card font-pairing-card" data-heading="'Montserrat', sans-serif" data-body="'Open Sans', sans-serif">
+                      <div class="card-body p-3">
+                        <h5 style="font-family: 'Montserrat', sans-serif;">Montserrat</h5>
+                        <p style="font-family: 'Open Sans', sans-serif; font-size: 0.9rem;">Open Sans</p>
+                        <button class="btn btn-sm btn-outline-primary mt-2 w-100">Apply</button>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div class="col-md-4 mb-3">
+                    <div class="card font-pairing-card" data-heading="'Playfair Display', serif" data-body="'Source Sans Pro', sans-serif">
+                      <div class="card-body p-3">
+                        <h5 style="font-family: 'Playfair Display', serif;">Playfair</h5>
+                        <p style="font-family: 'Source Sans Pro', sans-serif; font-size: 0.9rem;">Source Sans Pro</p>
+                        <button class="btn btn-sm btn-outline-primary mt-2 w-100">Apply</button>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div class="col-md-4 mb-3">
+                    <div class="card font-pairing-card" data-heading="'Merriweather', serif" data-body="'Work Sans', sans-serif">
+                      <div class="card-body p-3">
+                        <h5 style="font-family: 'Merriweather', serif;">Merriweather</h5>
+                        <p style="font-family: 'Work Sans', sans-serif; font-size: 0.9rem;">Work Sans</p>
+                        <button class="btn btn-sm btn-outline-primary mt-2 w-100">Apply</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Layout Tab -->
+              <div class="tab-pane fade" id="layout" role="tabpanel" aria-labelledby="layout-tab">
+                <h4 class="mb-4">Layout Options</h4>
+                
+                <div class="row">
+                  <div class="col-md-6 mb-4">
+                    <label for="borderRadius" class="form-label">Border Radius</label>
+                    <select class="form-select" id="borderRadius" name="borderRadius">
+                      <option value="0" <%= website.themeCustomizations && website.themeCustomizations.borderRadius === "0" ? 'selected' : '' %>>None (0px)</option>
+                      <option value="2px" <%= website.themeCustomizations && website.themeCustomizations.borderRadius === "2px" ? 'selected' : '' %>>Subtle (2px)</option>
+                      <option value="4px" <%= website.themeCustomizations && website.themeCustomizations.borderRadius === "4px" || !website.themeCustomizations || !website.themeCustomizations.borderRadius ? 'selected' : '' %>>Standard (4px)</option>
+                      <option value="8px" <%= website.themeCustomizations && website.themeCustomizations.borderRadius === "8px" ? 'selected' : '' %>>Rounded (8px)</option>
+                      <option value="16px" <%= website.themeCustomizations && website.themeCustomizations.borderRadius === "16px" ? 'selected' : '' %>>Very Rounded (16px)</option>
+                    </select>
+                    <small class="text-muted">Controls the roundness of buttons and cards</small>
+                  </div>
+                  
+                  <div class="col-md-6 mb-4">
+                    <label for="spacing" class="form-label">Content Spacing</label>
+                    <select class="form-select" id="spacing" name="spacing">
+                      <option value="compact" <%= website.themeCustomizations && website.themeCustomizations.spacing === "compact" ? 'selected' : '' %>>Compact</option>
+                      <option value="normal" <%= website.themeCustomizations && website.themeCustomizations.spacing === "normal" || !website.themeCustomizations || !website.themeCustomizations.spacing ? 'selected' : '' %>>Normal</option>
+                      <option value="spacious" <%= website.themeCustomizations && website.themeCustomizations.spacing === "spacious" ? 'selected' : '' %>>Spacious</option>
+                      <option value="creative" <%= website.themeCustomizations && website.themeCustomizations.spacing === "creative" ? 'selected' : '' %>>Creative</option>
+                    </select>
+                    <small class="text-muted">Controls the spacing between elements</small>
+                  </div>
+                </div>
+                
+                <div class="row">
+                  <div class="col-12 mb-4">
+                    <label for="layoutType" class="form-label">Layout Style</label>
+                    <select class="form-select" id="layoutType" name="layoutType">
+                      <option value="standard" <%= website.themeCustomizations && website.themeCustomizations.layoutType === "standard" || !website.themeCustomizations || !website.themeCustomizations.layoutType ? 'selected' : '' %>>Standard</option>
+                      <option value="minimal" <%= website.themeCustomizations && website.themeCustomizations.layoutType === "minimal" ? 'selected' : '' %>>Minimal</option>
+                      <option value="centered" <%= website.themeCustomizations && website.themeCustomizations.layoutType === "centered" ? 'selected' : '' %>>Centered</option>
+                      <option value="wide" <%= website.themeCustomizations && website.themeCustomizations.layoutType === "wide" ? 'selected' : '' %>>Wide</option>
+                      <option value="asymmetric" <%= website.themeCustomizations && website.themeCustomizations.layoutType === "asymmetric" ? 'selected' : '' %>>Asymmetric</option>
+                    </select>
+                    <small class="text-muted">Controls the overall layout style of your website</small>
+                  </div>
+                </div>
+                
+                <div class="layout-preview p-3 border rounded mb-4">
+                  <div class="layout-preview-container">
+                    <div class="layout-preview-header" style="background-color: <%= website.themeCustomizations && website.themeCustomizations.primary ? website.themeCustomizations.primary : website.primaryColor || '#007bff' %>"></div>
+                    <div class="layout-preview-content">
+                      <div class="layout-preview-sidebar"></div>
+                      <div class="layout-preview-main">
+                        <div class="layout-preview-block"></div>
+                        <div class="layout-preview-block"></div>
+                      </div>
+                    </div>
+                    <div class="layout-preview-footer" style="background-color: <%= website.themeCustomizations && website.themeCustomizations.secondary ? website.themeCustomizations.secondary : website.secondaryColor || '#6c757d' %>"></div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Templates Tab -->
+              <div class="tab-pane fade" id="templates" role="tabpanel" aria-labelledby="templates-tab">
+                <h4 class="mb-4">Theme Templates</h4>
+                <p class="text-muted mb-4">Apply a pre-designed theme template to quickly style your entire website:</p>
+                
+                <div class="row">
+                  <div class="col-md-4 mb-4">
+                    <div class="card theme-template-card" data-template="modern">
+                      <div class="card-header" style="background-color: #3498db; color: white;">
+                        Modern Template
+                      </div>
+                      <div class="card-body">
+                        <div class="template-preview">
+                          <div class="template-preview-header" style="background-color: #3498db;"></div>
+                          <div class="template-preview-content">
+                            <div class="template-preview-hero" style="background-color: #2ecc71;"></div>
+                            <div class="template-preview-blocks">
+                              <div class="template-preview-block"></div>
+                              <div class="template-preview-block"></div>
+                              <div class="template-preview-block"></div>
+                            </div>
+                          </div>
+                          <div class="template-preview-footer" style="background-color: #3498db;"></div>
+                        </div>
+                        <div class="template-colors mt-2">
+                          <span class="template-color" style="background-color: #3498db;"></span>
+                          <span class="template-color" style="background-color: #2ecc71;"></span>
+                          <span class="template-color" style="background-color: #e74c3c;"></span>
+                        </div>
+                        <button class="btn btn-primary btn-sm mt-3 w-100 apply-template-btn" data-template="modern">Apply Template</button>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div class="col-md-4 mb-4">
+                    <div class="card theme-template-card" data-template="minimal">
+                      <div class="card-header" style="background-color: #212121; color: white;">
+                        Minimal Template
+                      </div>
+                      <div class="card-body">
+                        <div class="template-preview">
+                          <div class="template-preview-header" style="background-color: #212121;"></div>
+                          <div class="template-preview-content">
+                            <div class="template-preview-hero" style="background-color: #757575;"></div>
+                            <div class="template-preview-blocks">
+                              <div class="template-preview-block"></div>
+                              <div class="template-preview-block"></div>
+                              <div class="template-preview-block"></div>
+                            </div>
+                          </div>
+                          <div class="template-preview-footer" style="background-color: #212121;"></div>
+                        </div>
+                        <div class="template-colors mt-2">
+                          <span class="template-color" style="background-color: #212121;"></span>
+                          <span class="template-color" style="background-color: #757575;"></span>
+                          <span class="template-color" style="background-color: #f44336;"></span>
+                        </div>
+                        <button class="btn btn-primary btn-sm mt-3 w-100 apply-template-btn" data-template="minimal">Apply Template</button>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div class="col-md-4 mb-4">
+                    <div class="card theme-template-card" data-template="elegant">
+                      <div class="card-header" style="background-color: #9c27b0; color: white;">
+                        Elegant Template
+                      </div>
+                      <div class="card-body">
+                        <div class="template-preview">
+                          <div class="template-preview-header" style="background-color: #9c27b0;"></div>
+                          <div class="template-preview-content">
+                            <div class="template-preview-hero" style="background-color: #673ab7;"></div>
+                            <div class="template-preview-blocks">
+                              <div class="template-preview-block"></div>
+                              <div class="template-preview-block"></div>
+                              <div class="template-preview-block"></div>
+                            </div>
+                          </div>
+                          <div class="template-preview-footer" style="background-color: #9c27b0;"></div>
+                        </div>
+                        <div class="template-colors mt-2">
+                          <span class="template-color" style="background-color: #9c27b0;"></span>
+                          <span class="template-color" style="background-color: #673ab7;"></span>
+                          <span class="template-color" style="background-color: #ff9800;"></span>
+                        </div>
+                        <button class="btn btn-primary btn-sm mt-3 w-100 apply-template-btn" data-template="elegant">Apply Template</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Advanced Tab -->
+              <div class="tab-pane fade" id="advanced" role="tabpanel" aria-labelledby="advanced-tab">
+                <h4 class="mb-4">Advanced Customization</h4>
+                
+                <div class="alert alert-info mb-4">
+                  <i class="fas fa-info-circle"></i> The custom CSS will be applied to all pages of your website. Use this for advanced styling that's not covered by the theme options.
+                </div>
+                
+                <div class="form-group mb-4">
+                  <label for="customCSS" class="form-label">Custom CSS</label>
+                  <textarea class="form-control" id="customCSS" name="customCSS" rows="12" placeholder="/* Add your custom CSS here */"><%= website.themeCustomizations && website.themeCustomizations.customCSS ? website.themeCustomizations.customCSS : '' %></textarea>
+                </div>
+                
+                <div class="css-hints mb-4">
+                  <h5>CSS Hints:</h5>
+                  <div class="row">
+                    <div class="col-md-6">
+                      <ul class="css-hint-list">
+                        <li><code>header</code> - Styles for the website header</li>
+                        <li><code>footer</code> - Styles for the website footer</li>
+                        <li><code>.btn-primary</code> - Primary button styles</li>
+                        <li><code>.btn-secondary</code> - Secondary button styles</li>
+                      </ul>
+                    </div>
+                    <div class="col-md-6">
+                      <ul class="css-hint-list">
+                        <li><code>h1, h2, h3, h4, h5, h6</code> - Heading styles</li>
+                        <li><code>.container</code> - Main content container</li>
+                        <li><code>.section</code> - Page section styles</li>
+                        <li><code>.hero-section</code> - Hero section styles</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Loading Modal -->
+<div class="modal fade" id="loadingModal" tabindex="-1" aria-labelledby="loadingModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-body text-center py-4">
+        <div class="spinner-border text-primary mb-3" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+        <h5 id="loadingMessage">Saving theme customizations...</h5>
+        <p class="text-muted">This may take a few moments. Please don't close this window.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Variables
+  const websiteId = '<%= website._id %>';
+  const loadingModal = new bootstrap.Modal(document.getElementById('loadingModal'));
+  let themeData = {
+    primary: '<%= website.themeCustomizations && website.themeCustomizations.primary ? website.themeCustomizations.primary : website.primaryColor || "#007bff" %>',
+    secondary: '<%= website.themeCustomizations && website.themeCustomizations.secondary ? website.themeCustomizations.secondary : website.secondaryColor || "#6c757d" %>',
+    accent: '<%= website.themeCustomizations && website.themeCustomizations.accent ? website.themeCustomizations.accent : "#e74c3c" %>',
+    fontHeadings: '<%= website.themeCustomizations && website.themeCustomizations.fontHeadings ? website.themeCustomizations.fontHeadings : "'Montserrat', sans-serif" %>',
+    fontBody: '<%= website.themeCustomizations && website.themeCustomizations.fontBody ? website.themeCustomizations.fontBody : "'Open Sans', sans-serif" %>',
+    borderRadius: '<%= website.themeCustomizations && website.themeCustomizations.borderRadius ? website.themeCustomizations.borderRadius : "4px" %>',
+    spacing: '<%= website.themeCustomizations && website.themeCustomizations.spacing ? website.themeCustomizations.spacing : "normal" %>',
+    layoutType: '<%= website.themeCustomizations && website.themeCustomizations.layoutType ? website.themeCustomizations.layoutType : "standard" %>',
+    customCSS: '<%= website.themeCustomizations && website.themeCustomizations.customCSS ? website.themeCustomizations.customCSS.replace(/\n/g, "\\n").replace(/"/g, "\\\"") : "" %>'
+  };
+  
+  // Preview Frame
+  const previewFrame = document.getElementById('previewFrame');
+  
+  // Color input sync
+  document.querySelectorAll('input[type="color"]').forEach(input => {
+    const hexInput = document.getElementById(input.id + 'Hex');
+    
+    input.addEventListener('input', function() {
+      // Update hex input
+      hexInput.value = this.value;
+      
+      // Update theme data
+      themeData[input.name] = this.value;
+      
+      // Update color previews
+      updateColorPreviews();
+    });
+    
+    hexInput.addEventListener('input', function() {
+      // Validate hex color
+      if (/^#[0-9A-F]{6}$/i.test(this.value)) {
+        // Update color input
+        input.value = this.value;
+        
+        // Update theme data
+        themeData[input.name] = this.value;
+        
+        // Update color previews
+        updateColorPreviews();
+      }
+    });
+  });
+  
+  // Update color previews
+  function updateColorPreviews() {
+    // Color samples
+    document.getElementById('primarySample').style.backgroundColor = themeData.primary;
+    document.getElementById('secondarySample').style.backgroundColor = themeData.secondary;
+    document.getElementById('accentSample').style.backgroundColor = themeData.accent;
+    
+    // Button previews
+    document.getElementById('primaryPreview').style.backgroundColor = themeData.primary;
+    document.getElementById('secondaryPreview').style.backgroundColor = themeData.secondary;
+    document.getElementById('accentPreview').style.backgroundColor = themeData.accent;
+    
+    // Typography preview
+    document.getElementById('headingPreview').style.color = themeData.primary;
+    
+    // Layout preview
+    document.querySelector('.layout-preview-header').style.backgroundColor = themeData.primary;
+    document.querySelector('.layout-preview-footer').style.backgroundColor = themeData.secondary;
+  }
+  
+  // Font selectors
+  document.getElementById('fontHeadings').addEventListener('change', function() {
+    themeData.fontHeadings = this.value;
+    document.getElementById('headingPreview').style.fontFamily = this.value;
+  });
+  
+  document.getElementById('fontBody').addEventListener('change', function() {
+    themeData.fontBody = this.value;
+    document.getElementById('bodyPreview').style.fontFamily = this.value;
+  });
+  
+  // Font pairing cards
+  document.querySelectorAll('.font-pairing-card').forEach(card => {
+    card.addEventListener('click', function() {
+      const headingFont = this.getAttribute('data-heading');
+      const bodyFont = this.getAttribute('data-body');
+      
+      // Update select elements
+      document.getElementById('fontHeadings').value = headingFont;
+      document.getElementById('fontBody').value = bodyFont;
+      
+      // Update theme data
+      themeData.fontHeadings = headingFont;
+      themeData.fontBody = bodyFont;
+      
+      // Update preview
+      document.getElementById('headingPreview').style.fontFamily = headingFont;
+      document.getElementById('bodyPreview').style.fontFamily = bodyFont;
+    });
+  });
+  
+  // Color palette cards
+  document.querySelectorAll('.color-palette-card').forEach(card => {
+    card.addEventListener('click', function() {
+      const primary = this.getAttribute('data-primary');
+      const secondary = this.getAttribute('data-secondary');
+      const accent = this.getAttribute('data-accent');
+      
+      // Update color inputs
+      document.getElementById('primaryColor').value = primary;
+      document.getElementById('primaryColorHex').value = primary;
+      document.getElementById('secondaryColor').value = secondary;
+      document.getElementById('secondaryColorHex').value = secondary;
+      document.getElementById('accentColor').value = accent;
+      document.getElementById('accentColorHex').value = accent;
+      
+      // Update theme data
+      themeData.primary = primary;
+      themeData.secondary = secondary;
+      themeData.accent = accent;
+      
+      // Update color previews
+      updateColorPreviews();
+    });
+  });
+  
+  // Layout selectors
+  document.getElementById('borderRadius').addEventListener('change', function() {
+    themeData.borderRadius = this.value;
+  });
+  
+  document.getElementById('spacing').addEventListener('change', function() {
+    themeData.spacing = this.value;
+  });
+  
+  document.getElementById('layoutType').addEventListener('change', function() {
+    themeData.layoutType = this.value;
+    
+    // Update preview based on layout type
+    updateLayoutPreview(this.value);
+  });
+  
+  // Custom CSS
+  document.getElementById('customCSS').addEventListener('input', function() {
+    themeData.customCSS = this.value;
+  });
+  
+  // Update layout preview based on selected type
+  function updateLayoutPreview(layoutType) {
+    const layoutContainer = document.querySelector('.layout-preview-container');
+    
+    // Reset classes
+    layoutContainer.className = 'layout-preview-container';
+    
+    // Add layout-specific class
+    layoutContainer.classList.add(`layout-${layoutType}`);
+  }
+  
+  // Initialize layout preview
+  updateLayoutPreview(themeData.layoutType);
+  
+  // Template buttons
+  document.querySelectorAll('.apply-template-btn').forEach(button => {
+    button.addEventListener('click', function() {
+      const template = this.getAttribute('data-template');
+      applyTemplate(template);
+    });
+  });
+  
+  // Apply template function
+  function applyTemplate(template) {
+    const templates = {
+      modern: {
+        primary: '#3498db',
+        secondary: '#2ecc71',
+        accent: '#e74c3c',
+        fontHeadings: "'Montserrat', sans-serif",
+        fontBody: "'Open Sans', sans-serif",
+        borderRadius: '4px',
+        spacing: 'normal',
+        layoutType: 'standard'
+      },
+      minimal: {
+        primary: '#212121',
+        secondary: '#757575',
+        accent: '#f44336',
+        fontHeadings: "'Roboto', sans-serif",
+        fontBody: "'Roboto', sans-serif",
+        borderRadius: '2px',
+        spacing: 'compact',
+        layoutType: 'minimal'
+      },
+      elegant: {
+        primary: '#9c27b0',
+        secondary: '#673ab7',
+        accent: '#ff9800',
+        fontHeadings: "'Playfair Display', serif",
+        fontBody: "'Lato', sans-serif",
+        borderRadius: '8px',
+        spacing: 'spacious',
+        layoutType: 'centered'
+      }
+    };
+    
+    const selectedTemplate = templates[template];
+    if (!selectedTemplate) return;
+    
+    // Update form inputs
+    document.getElementById('primaryColor').value = selectedTemplate.primary;
+    document.getElementById('primaryColorHex').value = selectedTemplate.primary;
+    document.getElementById('secondaryColor').value = selectedTemplate.secondary;
+    document.getElementById('secondaryColorHex').value = selectedTemplate.secondary;
+    document.getElementById('accentColor').value = selectedTemplate.accent;
+    document.getElementById('accentColorHex').value = selectedTemplate.accent;
+    document.getElementById('fontHeadings').value = selectedTemplate.fontHeadings;
+    document.getElementById('fontBody').value = selectedTemplate.fontBody;
+    document.getElementById('borderRadius').value = selectedTemplate.borderRadius;
+    document.getElementById('spacing').value = selectedTemplate.spacing;
+    document.getElementById('layoutType').value = selectedTemplate.layoutType;
+    
+    // Update theme data
+    Object.assign(themeData, selectedTemplate);
+    
+    // Update previews
+    updateColorPreviews();
+    document.getElementById('headingPreview').style.fontFamily = selectedTemplate.fontHeadings;
+    document.getElementById('bodyPreview').style.fontFamily = selectedTemplate.fontBody;
+    updateLayoutPreview(selectedTemplate.layoutType);
+  }
+  
+  // Save Theme Button
+  document.getElementById('saveThemeBtn').addEventListener('click', function() {
+    // Show loading modal
+    loadingModal.show();
+    document.getElementById('loadingMessage').textContent = 'Saving theme customizations...';
+    
+    // API call to save theme
+    fetch(`/theme-customization/${websiteId}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        themeCustomizations: themeData,
+        primaryColor: themeData.primary,
+        secondaryColor: themeData.secondary
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      loadingModal.hide();
+      
+      if (data.success) {
+        alert('Theme customizations saved successfully!');
+      } else {
+        alert('Error: ' + data.message);
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      loadingModal.hide();
+      alert('An error occurred while saving theme customizations. Please try again.');
+    });
+  });
+  
+  // Apply Theme Button
+  document.getElementById('applyThemeBtn').addEventListener('click', function() {
+    // First save the theme
+    loadingModal.show();
+    document.getElementById('loadingMessage').textContent = 'Saving theme customizations...';
+    
+    // API call to save theme
+    fetch(`/theme-customization/${websiteId}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        themeCustomizations: themeData,
+        primaryColor: themeData.primary,
+        secondaryColor: themeData.secondary
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        // Now apply the theme
+        document.getElementById('loadingMessage').textContent = 'Applying theme to website...';
+        
+        return fetch(`/theme-customization/${websiteId}/apply`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+      } else {
+        throw new Error(data.message);
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      loadingModal.hide();
+      
+      if (data.success) {
+        alert('Theme applied successfully!');
+        // Reload the preview frame
+        previewFrame.src = previewFrame.src;
+      } else {
+        alert('Error: ' + data.message);
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      loadingModal.hide();
+      alert('An error occurred: ' + error.message);
+    });
+  });
+});
+</script>
+
+<style>
+.color-sample {
+  display: inline-block;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  margin-right: 10px;
+}
+
+.color-sample-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.color-preview {
+  background-color: #f8f9fa;
+}
+
+.palette-preview {
+  display: flex;
+  justify-content: center;
+}
+
+.palette-color {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  margin: 0 5px;
+}
+
+.color-palette-card {
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.color-palette-card:hover {
+  transform: translateY(-5px);
+}
+
+.font-pairing-card {
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.font-pairing-card:hover {
+  transform: translateY(-5px);
+}
+
+.layout-preview-container {
+  height: 150px;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.layout-preview-header {
+  height: 20px;
+  background-color: #007bff;
+}
+
+.layout-preview-content {
+  display: flex;
+  height: 110px;
+}
+
+.layout-preview-sidebar {
+  width: 20%;
+  background-color: #f0f0f0;
+}
+
+.layout-preview-main {
+  width: 80%;
+  padding: 10px;
+}
+
+.layout-preview-block {
+  height: 20px;
+  background-color: #e0e0e0;
+  margin-bottom: 10px;
+  border-radius: 2px;
+}
+
+.layout-preview-footer {
+  height: 20px;
+  background-color: #6c757d;
+}
+
+/* Layout variations */
+.layout-minimal .layout-preview-header {
+  height: 15px;
+}
+
+.layout-minimal .layout-preview-sidebar {
+  display: none;
+}
+
+.layout-minimal .layout-preview-main {
+  width: 100%;
+}
+
+.layout-centered .layout-preview-main {
+  width: 60%;
+  margin: 0 auto;
+}
+
+.layout-centered .layout-preview-sidebar {
+  display: none;
+}
+
+.layout-wide .layout-preview-main {
+  width: 90%;
+  margin: 0 auto;
+}
+
+.layout-wide .layout-preview-sidebar {
+  display: none;
+}
+
+.layout-asymmetric .layout-preview-content {
+  padding-left: 10%;
+}
+
+.layout-asymmetric .layout-preview-sidebar {
+  width: 30%;
+}
+
+.layout-asymmetric .layout-preview-main {
+  width: 70%;
+}
+
+.template-preview {
+  height: 100px;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+
+.template-preview-header {
+  height: 15px;
+}
+
+.template-preview-content {
+  height: 70px;
+}
+
+.template-preview-hero {
+  height: 30px;
+}
+
+.template-preview-blocks {
+  display: flex;
+  justify-content: space-between;
+  padding: 5px;
+}
+
+.template-preview-block {
+  width: 30%;
+  height: 20px;
+  background-color: #e0e0e0;
+  border-radius: 2px;
+}
+
+.template-preview-footer {
+  height: 15px;
+}
+
+.template-colors {
+  display: flex;
+  justify-content: center;
+}
+
+.template-color {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  margin: 0 5px;
+}
+
+.theme-template-card {
+  transition: transform 0.2s;
+}
+
+.theme-template-card:hover {
+  transform: translateY(-5px);
+}
+
+.css-hint-list {
+  padding-left: 20px;
+}
+
+.css-hint-list li {
+  margin-bottom: 8px;
+}
+
+code {
+  background-color: #f8f9fa;
+  padding: 2px 5px;
+  border-radius: 3px;
+}
+</style>
+
+<%- include('../partials/_footer') %>
+
+<script src="/js/theme-customizer.js"></script>
